@@ -19,8 +19,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 120,
     color: "Estoril Blue Metallic",
-    image:
-      "https://source.unsplash.com/featured/?bmw,x1,blue,luxury,suv",
+    image: "https://source.unsplash.com/featured/?bmw,x1,blue,luxury,suv",
     description:
       "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
@@ -32,8 +31,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Urban Gray Pearl",
-    image:
-      "https://source.unsplash.com/featured/?honda,crv,grey,suv",
+    image: "https://source.unsplash.com/featured/?honda,crv,grey,suv",
     description:
       "Fuel-efficient hybrid SUV with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
@@ -45,8 +43,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 90,
     color: "Silver",
-    image:
-      "https://source.unsplash.com/featured/?nissan,versa,silver,sedan",
+    image: "https://source.unsplash.com/featured/?nissan,versa,silver,sedan",
     description:
       "Compact, efficient, and budget-friendly sedan ideal for city trips, errands, and everyday transportation.",
     available: true,
@@ -58,8 +55,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 75,
     color: "Grey",
-    image:
-      "https://source.unsplash.com/featured/?kia,forte,grey,sedan",
+    image: "https://source.unsplash.com/featured/?kia,forte,grey,sedan",
     description:
       "Modern compact sedan with strong fuel economy, sharp styling, and a comfortable interior.",
     available: true,
@@ -97,8 +93,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Metallic Grey",
-    image:
-      "https://source.unsplash.com/featured/?bmw,3-series,sport,sedan",
+    image: "https://source.unsplash.com/featured/?bmw,3-series,sport,sedan",
     description:
       "Iconic sport sedan that blends sharp handling with everyday comfort and a clean, modern interior.",
     available: true,
@@ -191,13 +186,67 @@ const HERO_SLIDES = [
     id: "s5",
     title: "BMW X1 M Package",
     subtitle: "Premium economy SUV • Estoril Blue Metallic",
-    image:
-      "https://source.unsplash.com/featured/?bmw,x1,blue,suv",
+    image: "https://source.unsplash.com/featured/?bmw,x1,blue,suv",
   },
 ];
 
 function formatCurrency(n) {
   return `$${n.toFixed(2)}`;
+}
+
+// Helper to filter & sort vehicles
+function applyVehicleFilters(vehicles, filterCategory, sortOrder) {
+  let result = [...vehicles];
+  if (filterCategory && filterCategory !== "all") {
+    result = result.filter((v) => v.category === filterCategory);
+  }
+  if (sortOrder === "price-asc") {
+    result.sort((a, b) => a.pricePerDay - b.pricePerDay);
+  } else if (sortOrder === "price-desc") {
+    result.sort((a, b) => b.pricePerDay - a.pricePerDay);
+  }
+  return result;
+}
+
+function FleetFilters({
+  categories,
+  filterCategory,
+  setFilterCategory,
+  sortOrder,
+  setSortOrder,
+}) {
+  const uniqueCategories = Array.from(new Set(categories)).filter(Boolean);
+
+  return (
+    <div className="mt-6 mb-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between text-sm">
+      <div className="flex items-center gap-2">
+        <span className="text-zinc-600">Vehicle type:</span>
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="border rounded-2xl px-3 py-2 bg-white text-zinc-800"
+        >
+          <option value="all">All vehicle types</option>
+          {uniqueCategories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-zinc-600">Sort by:</span>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          className="border rounded-2xl px-3 py-2 bg-white text-zinc-800"
+        >
+          <option value="price-asc">Price — low to high</option>
+          <option value="price-desc">Price — high to low</option>
+        </select>
+      </div>
+    </div>
+  );
 }
 
 function Header({ onNav }) {
@@ -946,10 +995,7 @@ function ProfilePage({
 
     alert("Logged in (demo). No real authentication configured yet.");
     setIsLoggedIn(true);
-    if (
-      auth.email &&
-      auth.email.toLowerCase() === COMPANY.email.toLowerCase()
-    ) {
+    if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
       setIsAdmin(true);
     } else {
       setIsAdmin(false);
@@ -989,6 +1035,8 @@ function ProfilePage({
               [field]:
                 field === "pricePerDay" || field === "seats"
                   ? Number(value) || 0
+                  : field === "available"
+                  ? value
                   : value,
             }
           : v
@@ -1232,16 +1280,17 @@ function ProfilePage({
                 Existing vehicles
               </h4>
               <div className="min-w-full text-xs sm:text-sm">
-                <div className="grid grid-cols-6 gap-2 font-semibold text-zinc-700 mb-2">
+                <div className="grid grid-cols-7 gap-2 font-semibold text-zinc-700 mb-2">
                   <div>Name</div>
                   <div>Category</div>
                   <div>Price / day</div>
                   <div>Seats</div>
+                  <div>Available</div>
                   <div>Color</div>
                   <div>Image URL</div>
                 </div>
                 {drafts.map((v) => (
-                  <div key={v.id} className="grid grid-cols-6 gap-2 mb-2">
+                  <div key={v.id} className="grid grid-cols-7 gap-2 mb-2">
                     <input
                       value={v.name}
                       onChange={(e) =>
@@ -1276,6 +1325,15 @@ function ProfilePage({
                       }
                       className="p-1 border rounded text-xs"
                     />
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={v.available !== false}
+                        onChange={(e) =>
+                          updateVehicleField(v.id, "available", e.target.checked)
+                        }
+                      />
+                    </div>
                     <input
                       value={v.color || ""}
                       onChange={(e) =>
@@ -1688,6 +1746,8 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [newsletter, setNewsletter] = useState([]);
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortOrder, setSortOrder] = useState("price-asc");
 
   function newsletterSignUp(email) {
     if (!email) return;
@@ -1697,10 +1757,23 @@ function App() {
 
   function handleBookingComplete(booking) {
     setBookings((b) => [...b, booking]);
+    // mark the vehicle as unavailable once booked
+    setVehicles((prev) =>
+      prev.map((v) =>
+        v.id === booking.vehicleId ? { ...v, available: false } : v
+      )
+    );
     alert("Reservation created (demo). A confirmation email would be sent.");
     setSelected(null);
     setRoute("home");
   }
+
+  const categories = vehicles.map((v) => v.category);
+  const filteredSortedVehicles = applyVehicleFilters(
+    vehicles,
+    filterCategory,
+    sortOrder
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-zinc-50 text-zinc-900 flex flex-col">
@@ -1714,15 +1787,24 @@ function App() {
       {route === "home" && (
         <>
           <Hero onNav={(r) => setRoute(r)} />
-          <VehiclesPage
-            vehicles={vehicles}
-            onSelect={(v) => {
-              setSelected(v);
-              setRoute("book");
-            }}
-            canReserve={true}
-          />
-          <section className="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row gap-6">
+          <section className="max-w-6xl mx-auto px-6 py-12">
+            <FleetFilters
+              categories={categories}
+              filterCategory={filterCategory}
+              setFilterCategory={setFilterCategory}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+            />
+            <VehiclesPage
+              vehicles={filteredSortedVehicles}
+              onSelect={(v) => {
+                setSelected(v);
+                setRoute("book");
+              }}
+              canReserve={true}
+            />
+          </section>
+          <section className="max-w-6xl mx-auto px-6 pb-12 flex flex-col md:flex-row gap-6">
             <div className="flex-1 p-6 border rounded-2xl shadow-sm bg-white">
               <h3 className="font-bold text-xl text-zinc-900">Why Asani</h3>
               <p className="mt-3 text-sm text-zinc-600">
@@ -1745,18 +1827,40 @@ function App() {
       )}
 
       {route === "vehicles" && (
-        <VehiclesPage vehicles={vehicles} canReserve={false} />
+        <section className="max-w-6xl mx-auto px-6 py-12">
+          <h2 className="text-3xl font-bold text-zinc-900">Fleet</h2>
+          <p className="text-zinc-600 mt-2">
+            Explore our full range of premium economy, luxury, and exotic
+            rentals.
+          </p>
+          <FleetFilters
+            categories={categories}
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+          />
+          <VehiclesPage vehicles={filteredSortedVehicles} canReserve={false} />
+        </section>
       )}
 
       {route === "book" && (
         <section className="max-w-6xl mx-auto px-6 py-12">
           <h2 className="text-2xl font-bold text-zinc-900">Reserve</h2>
           <p className="text-zinc-600 mt-2 text-sm">
-            Select a vehicle to begin — a $350 security deposit is collected at
-            booking to hold your reservation.
+            Filter by vehicle type, sort by price, then select a vehicle to
+            begin. A $350 security deposit is collected at booking to hold your
+            reservation.
           </p>
+          <FleetFilters
+            categories={categories}
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+          />
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {vehicles.map((v) => (
+            {filteredSortedVehicles.map((v) => (
               <VehicleCard
                 key={v.id}
                 v={v}
