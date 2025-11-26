@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-// Asani Rentals - Single-file React starter app
+// Asani Rentals - Single-file React app
 // Tailwind CSS assumed.
 
 const COMPANY = {
@@ -10,6 +10,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
 };
 
+// Using Unsplash "featured" URLs so images are stable & always return something.
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
@@ -19,9 +20,9 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 120,
     color: "Estoril Blue Metallic",
     image:
-      "https://images.unsplash.com/photo-1616788373313-5e5d3a9cbb18?auto=format&fit=crop&w=1200&q=80",
+      "https://source.unsplash.com/featured/?bmw,x1,blue,luxury,suv",
     description:
-      "Sporty compact SUV with M styling, agile handling, and everyday comfort.",
+      "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
   },
   {
@@ -32,9 +33,9 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 150,
     color: "Urban Gray Pearl",
     image:
-      "https://images.unsplash.com/photo-1627454824211-d8c47ec95bf2?auto=format&fit=crop&w=1200&q=80",
+      "https://source.unsplash.com/featured/?honda,crv,grey,suv",
     description:
-      "Fuel-efficient hybrid SUV offering smooth performance, tech features, and versatile cargo space.",
+      "Fuel-efficient hybrid SUV with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
   },
   {
@@ -45,9 +46,9 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 90,
     color: "Silver",
     image:
-      "https://images.unsplash.com/photo-1617814076365-8c5c2b3928e7?auto=format&fit=crop&w=1200&q=80",
+      "https://source.unsplash.com/featured/?nissan,versa,silver,sedan",
     description:
-      "Reliable, compact, and budget-friendly transportation for daily use and local travel.",
+      "Compact, efficient, and budget-friendly sedan ideal for city trips, errands, and everyday transportation.",
     available: true,
   },
   {
@@ -58,9 +59,100 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 75,
     color: "Grey",
     image:
-      "https://images.unsplash.com/photo-1605352081963-d1a87e4d6f90?auto=format&fit=crop&w=1200&q=80",
+      "https://source.unsplash.com/featured/?kia,forte,grey,sedan",
     description:
-      "Stylish sedan with modern tech, excellent mileage, and a comfortable driving experience.",
+      "Modern compact sedan with strong fuel economy, sharp styling, and a comfortable interior.",
+    available: true,
+  },
+  {
+    id: "v005",
+    name: "Lamborghini Urus",
+    category: "Super SUV",
+    seats: 5,
+    pricePerDay: 1500,
+    color: "Yellow",
+    image:
+      "https://source.unsplash.com/featured/?lamborghini,urus,yellow,suv,luxury",
+    description:
+      "Super-SUV performance with exotic styling, towering presence, and a cockpit built for high-end luxury travel.",
+    available: true,
+  },
+  {
+    id: "v006",
+    name: "Rolls Royce Ghost",
+    category: "Ultra Luxury Sedan",
+    seats: 4,
+    pricePerDay: 1800,
+    color: "Black",
+    image:
+      "https://source.unsplash.com/featured/?rolls,royce,ghost,black,luxury,sedan",
+    description:
+      "The definition of quiet luxury — effortless power, handcrafted materials, and a serene rear-seat experience.",
+    available: true,
+  },
+  {
+    id: "v007",
+    name: "BMW 3 Series",
+    category: "Sport Sedan",
+    seats: 5,
+    pricePerDay: 150,
+    color: "Metallic Grey",
+    image:
+      "https://source.unsplash.com/featured/?bmw,3-series,sport,sedan",
+    description:
+      "Iconic sport sedan that blends sharp handling with everyday comfort and a clean, modern interior.",
+    available: true,
+  },
+  {
+    id: "v008",
+    name: "BMW 5 Series",
+    category: "Executive Sedan",
+    seats: 5,
+    pricePerDay: 220,
+    color: "Jet Black",
+    image:
+      "https://source.unsplash.com/featured/?bmw,5-series,executive,sedan",
+    description:
+      "Executive-class sedan with a spacious cabin, advanced tech, and a refined, confident drive.",
+    available: true,
+  },
+  {
+    id: "v009",
+    name: "Mercedes S Class",
+    category: "Flagship Luxury Sedan",
+    seats: 4,
+    pricePerDay: 350,
+    color: "Obsidian Black",
+    image:
+      "https://source.unsplash.com/featured/?mercedes,s-class,luxury,sedan,black",
+    description:
+      "Flagship Mercedes sedan with first-class comfort, ambient lighting, and a true chauffeured-experience rear seat.",
+    available: true,
+  },
+  {
+    id: "v010",
+    name: "Cadillac Escalade",
+    category: "Full-size Luxury SUV",
+    seats: 7,
+    pricePerDay: 350,
+    color: "Black",
+    image:
+      "https://source.unsplash.com/featured/?cadillac,escalade,black,suv",
+    description:
+      "Large luxury SUV with three rows, bold presence, and plenty of room for VIP groups, luggage, and gear.",
+    available: true,
+  },
+  {
+    id: "v011",
+    name: "Mercedes G-Wagon G63 AMG",
+    category: "Luxury Performance SUV",
+    seats: 5,
+    pricePerDay: 950,
+    color: "Matte Black",
+    image:
+      "https://source.unsplash.com/featured/?mercedes,g63,g-wagon,black,suv",
+    description:
+      "Iconic G-Wagon with AMG power, off-road attitude, and a high-status cabin suited for red-carpet arrivals.",
     available: true,
   },
 ];
@@ -69,38 +161,38 @@ const SAMPLE_VEHICLES = [
 const HERO_SLIDES = [
   {
     id: "s1",
-    title: "BMW X1 M Package",
-    subtitle: "Premium economy SUV • Estoril Blue Metallic",
+    title: "Lamborghini Urus",
+    subtitle: "Super SUV • 1500/day • Limited availability",
     image:
-      "https://images.unsplash.com/photo-1616788373313-5e5d3a9cbb18?auto=format&fit=crop&w=1600&q=80",
+      "https://source.unsplash.com/featured/?lamborghini,urus,yellow,luxury",
   },
   {
     id: "s2",
-    title: "Honda CR-V Hybrid Sport",
-    subtitle: "Hybrid comfort • Urban Gray Pearl",
+    title: "Rolls Royce Ghost",
+    subtitle: "Ultra luxury sedan • Chauffeur-ready",
     image:
-      "https://images.unsplash.com/photo-1627454824211-d8c47ec95bf2?auto=format&fit=crop&w=1600&q=80",
+      "https://source.unsplash.com/featured/?rolls,royce,ghost,luxury,sedan,night",
   },
   {
     id: "s3",
-    title: "Nissan Versa",
-    subtitle: "Efficient city-ready sedan • Silver",
+    title: "Mercedes S Class",
+    subtitle: "Flagship chauffeured comfort • Black with privacy glass",
     image:
-      "https://images.unsplash.com/photo-1617814076365-8c5c2b3928e7?auto=format&fit=crop&w=1600&q=80",
+      "https://source.unsplash.com/featured/?mercedes,s-class,black,luxury,sedan",
   },
   {
     id: "s4",
-    title: "Kia Forte",
-    subtitle: "Premium economy sedan • Grey",
+    title: "Cadillac Escalade",
+    subtitle: "Full-size luxury SUV • Perfect for groups & events",
     image:
-      "https://images.unsplash.com/photo-1605352081963-d1a87e4d6f90?auto=format&fit=crop&w=1600&q=80",
+      "https://source.unsplash.com/featured/?cadillac,escalade,black,luxury,suv",
   },
   {
     id: "s5",
-    title: "Executive black SUV",
-    subtitle: "Perfect for airport transfers and VIP nights",
+    title: "BMW X1 M Package",
+    subtitle: "Premium economy SUV • Estoril Blue Metallic",
     image:
-      "https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1600&q=80",
+      "https://source.unsplash.com/featured/?bmw,x1,blue,suv",
   },
 ];
 
@@ -182,8 +274,8 @@ function Hero({ onNav }) {
           </h2>
           <p className="text-sm md:text-base text-zinc-400 max-w-md">
             A curated range from premium economy to flagship luxury, seamless
-            reservations, and white–glove service. Hold your vehicle instantly with
-            a secure deposit and arrive in style, every time.
+            reservations, and white–glove service. Hold your vehicle instantly
+            with a secure deposit and arrive in style, every time.
           </p>
           <div className="flex flex-wrap gap-4 pt-2">
             <button
@@ -228,7 +320,7 @@ function Hero({ onNav }) {
                         Chauffeur & self-drive options
                       </div>
                       <div className="text-emerald-400 text-[11px]">
-                        Instant inquiry • Curated fleet
+                        Armed & unarmed chauffeur available
                       </div>
                     </div>
                   </div>
@@ -249,7 +341,9 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
       <div className="p-5">
         <div className="flex justify-between items-start gap-3">
           <div>
-            <h3 className="font-semibold text-zinc-900 tracking-tight">{v.name}</h3>
+            <h3 className="font-semibold text-zinc-900 tracking-tight">
+              {v.name}
+            </h3>
             <div className="text-xs text-zinc-500 mt-1">
               {v.category} • {v.seats} seats
               {v.color ? " • " + v.color : ""}
@@ -374,7 +468,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     amenityCount > 0 ? amenityDailyRate * amenityCount * billableDays : 0;
 
   const fuelPrepayCost = prepayFuel ? 65 : 0;
-  const extrasTotal = insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
+  const extrasTotal =
+    insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
   function handlePay() {
@@ -509,8 +604,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                 </div>
                 <p className="mt-1 text-xs text-zinc-500">
                   Third-party protection product that may reduce your financial
-                  responsibility for covered damage or theft, subject to the terms
-                  of your rental agreement.
+                  responsibility for covered damage or theft, subject to the
+                  terms of your rental agreement.
                 </p>
                 <button
                   type="button"
@@ -526,15 +621,15 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                   <p className="mt-1 text-[11px] text-zinc-500">
                     This optional protection is provided by{" "}
                     <strong>Rental Car Cover</strong>, a third-party protection
-                    provider. Their policies typically help reduce your financial
-                    responsibility for covered collision damage, theft, vandalism,
-                    and eligible towing or loss-of-use charges, up to the limits
-                    and subject to the exclusions stated in their policy wording.
-                    Exact coverage, deductibles, territories, and exclusions are
-                    defined by Rental Car Cover in the documentation you receive
-                    from them — always review their policy and your rental
-                    agreement carefully before deciding to add or decline this
-                    protection.
+                    provider. Their policies typically help reduce your
+                    financial responsibility for covered collision damage,
+                    theft, vandalism, and eligible towing or loss-of-use
+                    charges, up to the limits and subject to the exclusions
+                    stated in their policy wording. Exact coverage, deductibles,
+                    territories, and exclusions are defined by Rental Car Cover
+                    in the documentation you receive from them — always review
+                    their policy and your rental agreement carefully before
+                    deciding to add or decline this protection.
                   </p>
                 )}
                 <div className="mt-2 space-y-1 text-xs">
@@ -592,8 +687,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Toll usage will be billed after your rental with any applicable
-                  service fees as outlined in your rental agreement.
+                  Toll usage will be billed after your rental with any
+                  applicable service fees as outlined in your rental agreement.
                 </p>
                 <button
                   type="button"
@@ -671,9 +766,9 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                 {showAmenitiesDetails && (
                   <p className="mt-1 text-[11px] text-zinc-500">
                     Choose from infant, child, or booster seats to match your
-                    passenger's age and size. Availability may vary by vehicle
-                    and local regulations. Our team can help confirm fit and
-                    installation guidelines at pickup.
+                    passenger&apos;s age and size. Availability may vary by
+                    vehicle and local regulations. Our team can help confirm fit
+                    and installation guidelines at pickup.
                   </p>
                 )}
                 <div className="mt-2 grid grid-cols-1 gap-1 text-xs">
@@ -874,7 +969,9 @@ function ProfilePage({
     } else {
       setIsAdmin(false);
     }
-    alert("Profile created (demo). In production this will create a secure account.");
+    alert(
+      "Profile created (demo). In production this will create a secure account."
+    );
   }
 
   function save() {
@@ -977,9 +1074,7 @@ function ProfilePage({
               type="email"
               required
               value={auth.email}
-              onChange={(e) =>
-                setAuth({ ...auth, email: e.target.value })
-              }
+              onChange={(e) => setAuth({ ...auth, email: e.target.value })}
               placeholder="Email"
               className="p-3 border rounded"
             />
@@ -987,9 +1082,7 @@ function ProfilePage({
               type="password"
               required
               value={auth.password}
-              onChange={(e) =>
-                setAuth({ ...auth, password: e.target.value })
-              }
+              onChange={(e) => setAuth({ ...auth, password: e.target.value })}
               placeholder="Password"
               className="p-3 border rounded"
             />
@@ -1076,9 +1169,7 @@ function ProfilePage({
       <div className="mt-6 grid grid-cols-1 gap-4 max-w-xl">
         <input
           value={local.fullName}
-          onChange={(e) =>
-            setLocal({ ...local, fullName: e.target.value })
-          }
+          onChange={(e) => setLocal({ ...local, fullName: e.target.value })}
           placeholder="Full name"
           className="p-3 border rounded"
         />
@@ -1169,7 +1260,11 @@ function ProfilePage({
                       type="number"
                       value={v.pricePerDay}
                       onChange={(e) =>
-                        updateVehicleField(v.id, "pricePerDay", e.target.value)
+                        updateVehicleField(
+                          v.id,
+                          "pricePerDay",
+                          e.target.value
+                        )
                       }
                       className="p-1 border rounded text-xs"
                     />
@@ -1347,8 +1442,10 @@ function ChauffeurRequest() {
     <section className="max-w-4xl mx-auto px-6 py-12">
       <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
       <p className="mt-2 text-sm text-zinc-600">
-        Request a professional chauffeur for a Sprinter, black SUV, or elite
-        luxury experience.
+        Request a professional chauffeur for a Sprinter, black SUV, elite luxury
+        sedan, or our{" "}
+        <span className="font-semibold">armed chauffeur</span> option for
+        elevated security.
       </p>
       <form
         className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 border rounded-2xl bg-white"
@@ -1391,7 +1488,10 @@ function ChauffeurRequest() {
           >
             <option value="sprinter">Sprinter</option>
             <option value="black-suv">Black truck / black SUV</option>
-            <option value="elite-luxury">Elite luxury</option>
+            <option value="elite-luxury">Elite luxury sedan</option>
+            <option value="armed-chauffeur">
+              Armed chauffeur (licensed protection)
+            </option>
           </select>
         </label>
         <label className="flex flex-col text-sm text-zinc-700">
@@ -1456,7 +1556,7 @@ function ChauffeurRequest() {
             name="notes"
             rows={4}
             className="mt-2 p-2 border rounded"
-            placeholder="Flight details, occasion (wedding, corporate, night out), or special requests."
+            placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
           />
         </label>
         <div className="md:col-span-2 flex justify-end">
@@ -1626,15 +1726,17 @@ function App() {
             <div className="flex-1 p-6 border rounded-2xl shadow-sm bg-white">
               <h3 className="font-bold text-xl text-zinc-900">Why Asani</h3>
               <p className="mt-3 text-sm text-zinc-600">
-                From premium economy to top-tier luxury, white-glove service and
-                corporate-friendly policies make us the preferred partner for
-                business travel and private events.
+                From premium economy to top-tier exotics, our curated fleet,
+                white-glove handoff, and corporate-friendly policies make us the
+                preferred partner for business travel, events, and private
+                getaways.
               </p>
             </div>
             <div className="w-full md:w-96 p-6 border rounded-2xl shadow-sm bg-white">
               <h3 className="font-bold text-zinc-900">Sign up for offers</h3>
               <p className="text-sm text-zinc-600 mt-2">
-                Exclusive rates and early access to new vehicles.
+                Exclusive rates, last-minute upgrades, and early access to new
+                vehicles.
               </p>
               <NewsletterForm onSign={newsletterSignUp} />
             </div>
