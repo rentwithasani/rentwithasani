@@ -31,7 +31,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Urban Gray Pearl",
-    image: "https://vexstockimages.fastly.carvana.io/stockimages/2023_HONDA_CR-V%20HYBRID_SPORT%20TOURING%20SPORT%20UTILITY%204D_BEIGE_stock_desktop_1920x1080.png?v=1680131793.405&width=680",
+    image: "https://static.tcimg.net/vehicles/primary/d7a12b7bd5b922a0/2024-Honda-CR-V-silver-full_color-driver_side_front_quarter.png",
     description:
       "Fuel-efficient hybrid SUV with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
