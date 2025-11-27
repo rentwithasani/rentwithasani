@@ -19,7 +19,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 120,
     color: "Estoril Blue Metallic",
-    image: "https://platform.cstatic-images.com/in/v2/stock_photos/51d15ed1-aafa-4e07-bc3c-2dd2d7b963cf/21ed7959-5342-4951-a1d1-e90812f23bf1.png",
+    image: "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
     description:
       "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
@@ -186,7 +186,7 @@ const HERO_SLIDES = [
     id: "s5",
     title: "BMW X1 M Package",
     subtitle: "Premium economy SUV • Estoril Blue Metallic",
-    image: "https://platform.cstatic-images.com/in/v2/stock_photos/51d15ed1-aafa-4e07-bc3c-2dd2d7b963cf/21ed7959-5342-4951-a1d1-e90812f23bf1.png",
+    image: "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
   },
 ];
 
