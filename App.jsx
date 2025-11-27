@@ -31,7 +31,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Urban Gray Pearl",
-    image: "https://images.dealer.com/ddc/vehicles/2024/Honda/CR-V%20Hybrid/SUV/trim_SportL_0bddbc/perspective/front-left/2024_76.png",
+    image: "https://vehicle-images.dealerinspire.com/3dc5-110004598/thumbnails/large/7FARS6H54SE100583/c7206170b726e1316bdc1efa8374f7ae.png",
     description:
       "Fuel-efficient hybrid SUV with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
