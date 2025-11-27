@@ -68,7 +68,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 1500,
     color: "Yellow",
     image:
-      "https://static.tcimg.net/vehicles/primary/0d93da4d99734039/2022-Lamborghini-Urus-white-full_color-driver_side_front_quarter.png",
+      "https://static.wixstatic.com/media/34f039_9c7fb6f21ab645e6bb88188e55202640~mv2.png/v1/fill/w_800,h_800,al_c/Urus.png",
     description:
       "Super-SUV performance with exotic styling, towering presence, and a cockpit built for high-end luxury travel.",
     available: true,
@@ -159,7 +159,7 @@ const HERO_SLIDES = [
     title: "Lamborghini Urus",
     subtitle: "Super SUV • 1500/day • Limited availability",
     image:
-      "https://static.tcimg.net/vehicles/primary/0d93da4d99734039/2022-Lamborghini-Urus-white-full_color-driver_side_front_quarter.png",
+      "https://static.wixstatic.com/media/34f039_9c7fb6f21ab645e6bb88188e55202640~mv2.png/v1/fill/w_800,h_800,al_c/Urus.png",
   },
   {
     id: "s2",
