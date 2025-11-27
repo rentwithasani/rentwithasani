@@ -447,7 +447,7 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
       <p className="text-zinc-600 mt-2">
         Hand-picked premium economy and luxury vehicles for every occasion.
       </p>
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         {vehicles.map((v) => (
           <VehicleCard
             key={v.id}
