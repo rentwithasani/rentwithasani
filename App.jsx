@@ -19,7 +19,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 120,
     color: "Estoril Blue Metallic",
-    image: "https://www.nicepng.com/png/detail/379-3798850_x1trans-bmw-x1-2017-white.png",
+    image: "https://e7.pngegg.com/pngimages/517/798/png-clipart-2017-bmw-x1-car-bmw-x1-sdrive18d-sport-utility-vehicle-bmw-compact-car-car.png",
     description:
       "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
@@ -132,7 +132,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 350,
     color: "Black",
     image:
-      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/55025/2024-Cadillac-Escalade%20ESV-front_55025_032_2400x1800_GBA.png",
+      "https://d2ivfcfbdvj3sm.cloudfront.net/8nQjctTo7dtJ6WW6/54121/stills_0640_png/MY2024/54121/54121_st0640_116.webp?c=172&p=164&m=1&o=png&s=wuewtb27_XAtqo0e5m3jQS",
     description:
       "Large luxury SUV with three rows, bold presence, and plenty of room for VIP groups, luggage, and gear.",
     available: true,
@@ -180,13 +180,13 @@ const HERO_SLIDES = [
     title: "Cadillac Escalade",
     subtitle: "Full-size luxury SUV • Perfect for groups & events",
     image:
-      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/55025/2024-Cadillac-Escalade%20ESV-front_55025_032_2400x1800_GBA.png",
+      "https://d2ivfcfbdvj3sm.cloudfront.net/8nQjctTo7dtJ6WW6/54121/stills_0640_png/MY2024/54121/54121_st0640_116.webp?c=172&p=164&m=1&o=png&s=wuewtb27_XAtqo0e5m3jQS",
   },
   {
     id: "s5",
     title: "BMW X1 M Package",
     subtitle: "Premium economy SUV • Estoril Blue Metallic",
-    image: "https://www.nicepng.com/png/detail/379-3798850_x1trans-bmw-x1-2017-white.png",
+    image: "https://e7.pngegg.com/pngimages/517/798/png-clipart-2017-bmw-x1-car-bmw-x1-sdrive18d-sport-utility-vehicle-bmw-compact-car-car.png",
   },
 ];
 
