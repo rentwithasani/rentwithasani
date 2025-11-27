@@ -309,7 +309,7 @@ function Hero({ onNav }) {
   }, []);
 
   return (
-    <section className="bg-black text-white py-24 border-b border-zinc-900">
+    <section className="bg-black text-white py-16 md:py-24 border-b border-zinc-900">
       <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6">
           <p className="text-xs tracking-[0.25em] uppercase text-zinc-400">
