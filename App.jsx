@@ -81,7 +81,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 1800,
     color: "Black",
     image:
-      "https://images.dealer.com/ddc/vehicles/2022/Rolls-Royce/Ghost/Sedan/perspective/front-left/2022_76.png",
+      "https://static.tcimg.net/vehicles/primary/078ae5c649fbf526/2021-Rolls-Royce-Ghost-white-full_color-driver_side_front_quarter.png",
     description:
       "The definition of quiet luxury — effortless power, handcrafted materials, and a serene rear-seat experience.",
     available: true,
@@ -166,7 +166,7 @@ const HERO_SLIDES = [
     title: "Rolls Royce Ghost",
     subtitle: "Ultra luxury sedan • Chauffeur-ready",
     image:
-      "https://images.dealer.com/ddc/vehicles/2022/Rolls-Royce/Ghost/Sedan/perspective/front-left/2022_76.png",
+      "https://static.tcimg.net/vehicles/primary/078ae5c649fbf526/2021-Rolls-Royce-Ghost-white-full_color-driver_side_front_quarter.png",
   },
   {
     id: "s3",
