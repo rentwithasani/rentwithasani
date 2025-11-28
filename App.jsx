@@ -81,7 +81,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 1800,
     color: "Black",
     image:
-      "https://www.vehiclerevolution.com/cdn/shop/collections/Rolls_Ghost_2023_spec.png?v=1715271202&width=1500",
+      "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_auto/v1/svp/dep/21rollsroyceghost/rollsroyce_21ghost_angularfront_gray",
     description:
       "The definition of quiet luxury — effortless power, handcrafted materials, and a serene rear-seat experience.",
     available: true,
@@ -166,7 +166,7 @@ const HERO_SLIDES = [
     title: "Rolls Royce Ghost",
     subtitle: "Ultra luxury sedan • Chauffeur-ready",
     image:
-      "https://www.vehiclerevolution.com/cdn/shop/collections/Rolls_Ghost_2023_spec.png?v=1715271202&width=1500",
+      "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_auto/v1/svp/dep/21rollsroyceghost/rollsroyce_21ghost_angularfront_gray",
   },
   {
     id: "s3",
