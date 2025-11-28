@@ -68,7 +68,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 1500,
     color: "Yellow",
     image:
-      "https://www.pngarts.com/files/3/Lamborghini-Urus-PNG-Image-Background.png",
+      "https://www.pngmart.com/files/22/Lamborghini-Urus-PNG-Image.png",
     description:
       "Super-SUV performance with exotic styling, towering presence, and a cockpit built for high-end luxury travel.",
     available: true,
@@ -159,7 +159,7 @@ const HERO_SLIDES = [
     title: "Lamborghini Urus",
     subtitle: "Super SUV • 1500/day • Limited availability",
     image:
-      "https://www.pngarts.com/files/3/Lamborghini-Urus-PNG-Image-Background.png",
+      "https://www.pngmart.com/files/22/Lamborghini-Urus-PNG-Image.png",
   },
   {
     id: "s2",
