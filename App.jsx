@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "./lib/supabaseClient"; // 🔹 make sure this file exists
 
 // Asani Rentals - Single-file React app
 // Tailwind CSS assumed.
@@ -10,7 +11,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
 };
 
-// Using Unsplash "featured" URLs so images are stable & always return something.
+// Using concrete image URLs so images are stable.
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
@@ -19,7 +20,8 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 120,
     color: "Estoril Blue Metallic",
-    image: "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
+    image:
+      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
     description:
       "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
@@ -31,7 +33,8 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Urban Gray Pearl",
-    image: "https://vehicle-images.dealerinspire.com/3dc5-110004598/thumbnails/large/7FARS6H54SE100583/c7206170b726e1316bdc1efa8374f7ae.png",
+    image:
+      "https://vehicle-images.dealerinspire.com/3dc5-110004598/thumbnails/large/7FARS6H54SE100583/c7206170b726e1316bdc1efa8374f7ae.png",
     description:
       "Fuel-efficient hybrid SUV with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
@@ -43,7 +46,8 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 90,
     color: "Silver",
-    image: "https://cdn.jdpower.com/ChromeImageGallery/Expanded/Transparent/640/2023NIC10_640/2023NIC100001_640_01.png",
+    image:
+      "https://cdn.jdpower.com/ChromeImageGallery/Expanded/Transparent/640/2023NIC10_640/2023NIC100001_640_01.png",
     description:
       "Compact, efficient, and budget-friendly sedan ideal for city trips, errands, and everyday transportation.",
     available: true,
@@ -55,7 +59,8 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 75,
     color: "Grey",
-    image: "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_500/v1/svp/dep/21kiafortelxssd3t/kia_21fortelxssd3t_angularfront_gravitygray",
+    image:
+      "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_500/v1/svp/dep/21kiafortelxssd3t/kia_21fortelxssd3t_angularfront_gravitygray",
     description:
       "Modern compact sedan with strong fuel economy, sharp styling, and a comfortable interior.",
     available: true,
@@ -93,7 +98,8 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Metallic Grey",
-    image: "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/DDcY5uJ1Hoc2PfKiaPzOoTor54RCDSxmNSMjhIMjMcSABjV1Plsg4az8WgGOqVD42Px_fBnRGfbq6YMoQr9Bwgwa4vs3hsjk7OZwcAD2au-Xj2_jOK1rejFnAEpjN8liQtu0_zWdBrt_zZ94kYd0yB-LZ9J239IX_tK5l7rorkk7c-qGpYTQuQ/cc_2025BMC222011556_01_640_668.png",
+    image:
+      "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/DDcY5uJ1Hoc2PfKiaPzOoTor54RCDSxmNSMjhIMjMcSABjV1Plsg4az8WgGOqVD42Px_fBnRGfbq6YMoQr9Bwgwa4vs3hsjk7OZwcAD2au-Xj2_jOK1rejFnAEpjN8liQtu0_zWdBrt_zZ94kYd0yB-LZ9J239IX_tK5l7rorkk7c-qGpYTQuQ/cc_2025BMC222011556_01_640_668.png",
     description:
       "Iconic sport sedan that blends sharp handling with everyday comfort and a clean, modern interior.",
     available: true,
@@ -186,7 +192,8 @@ const HERO_SLIDES = [
     id: "s5",
     title: "BMW X1 M Package",
     subtitle: "Premium economy SUV • Estoril Blue Metallic",
-    image: "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
+    image:
+      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
   },
 ];
 
@@ -521,7 +528,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
-  function handlePay() {
+  // 🔹 UPDATED: now saves booking to Supabase
+  async function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
@@ -534,6 +542,20 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       return;
     }
 
+    // 1️⃣ Check user from Supabase auth
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      alert(
+        "Please sign in or create a profile (with Supabase auth) before completing your reservation."
+      );
+      return;
+    }
+
+    // 2️⃣ Local booking object (for frontend)
     const booking = {
       vehicleId: vehicle.id,
       startDate,
@@ -560,8 +582,35 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       },
     };
 
-    alert("Demo mode: deposit not actually charged. Booking saved locally.");
-    onComplete(booking);
+    // 3️⃣ Save booking in Supabase "bookings" table
+    const { data: bookingRow, error: bookingError } = await supabase
+      .from("bookings")
+      .insert({
+        user_id: user.id,
+        vehicle_id: vehicle.id,
+        start_date: startDate,
+        end_date: endDate,
+        days: billableDays,
+        subtotal,
+        total,
+        deposit_amount: deposit,
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (bookingError) {
+      console.error("Booking insert error", bookingError);
+      alert("We couldn't create your booking right now. Please try again.");
+      return;
+    }
+
+    // 4️⃣ Confirmation — still demo (no real payment yet)
+    alert(
+      "Reservation created in demo mode. Deposit has NOT been charged yet. (Stripe comes next.)"
+    );
+
+    onComplete({ ...booking, id: bookingRow.id });
   }
 
   function toggleAmenity(key) {
@@ -995,7 +1044,10 @@ function ProfilePage({
 
     alert("Logged in (demo). No real authentication configured yet.");
     setIsLoggedIn(true);
-    if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
+    if (
+      auth.email &&
+      auth.email.toLowerCase() === COMPANY.email.toLowerCase()
+    ) {
       setIsAdmin(true);
     } else {
       setIsAdmin(false);
@@ -1130,7 +1182,9 @@ function ProfilePage({
               type="password"
               required
               value={auth.password}
-              onChange={(e) => setAuth({ ...auth, password: e.target.value })}
+              onChange={(e) =>
+                setAuth({ ...auth, password: e.target.value })
+              }
               placeholder="Password"
               className="p-3 border rounded"
             />
@@ -1330,7 +1384,11 @@ function ProfilePage({
                         type="checkbox"
                         checked={v.available !== false}
                         onChange={(e) =>
-                          updateVehicleField(v.id, "available", e.target.checked)
+                          updateVehicleField(
+                            v.id,
+                            "available",
+                            e.target.checked
+                          )
                         }
                       />
                     </div>
