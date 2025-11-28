@@ -81,7 +81,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 1800,
     color: "Black",
     image:
-      "https://www.motortrend.com/uploads/2021/12/2022-Rolls-Royce-Ghost.png",
+      "https://www.vehiclerevolution.com/cdn/shop/collections/Rolls_Ghost_2023_spec.png?v=1715271202&width=1500",
     description:
       "The definition of quiet luxury — effortless power, handcrafted materials, and a serene rear-seat experience.",
     available: true,
@@ -166,7 +166,7 @@ const HERO_SLIDES = [
     title: "Rolls Royce Ghost",
     subtitle: "Ultra luxury sedan • Chauffeur-ready",
     image:
-      "https://www.motortrend.com/uploads/2021/12/2022-Rolls-Royce-Ghost.png",
+      "https://www.vehiclerevolution.com/cdn/shop/collections/Rolls_Ghost_2023_spec.png?v=1715271202&width=1500",
   },
   {
     id: "s3",
