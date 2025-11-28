@@ -68,7 +68,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 1500,
     color: "Yellow",
     image:
-      "https://www.pngmart.com/files/22/Lamborghini-Urus-PNG-Image.png",
+      "https://www.lamborghinilongisland.com/imagetag/2333/main/l/New-2019-Lamborghini-Urus-1540414873.jpg",
     description:
       "Super-SUV performance with exotic styling, towering presence, and a cockpit built for high-end luxury travel.",
     available: true,
@@ -159,7 +159,7 @@ const HERO_SLIDES = [
     title: "Lamborghini Urus",
     subtitle: "Super SUV • 1500/day • Limited availability",
     image:
-      "https://www.pngmart.com/files/22/Lamborghini-Urus-PNG-Image.png",
+      "https://www.lamborghinilongisland.com/imagetag/2333/main/l/New-2019-Lamborghini-Urus-1540414873.jpg",
   },
   {
     id: "s2",
