@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "./lib/supabaseClient";
 
 // Asani Rentals - Single-file React app
 // Tailwind CSS assumed.
@@ -999,24 +1000,39 @@ function ProfilePage({
     }
   }
 
-  function handleCreate(e) {
-    e.preventDefault();
-    setProfile(local);
-    if (local.email) newsletterSignUp(local.email);
-    setIsLoggedIn(true);
-    if (
-      local.email &&
-      local.email.toLowerCase() === COMPANY.email.toLowerCase()
-    ) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
-    alert(
-      "Profile created (demo). In production this will create a secure account."
-    );
+  async function handleCreate(e) {
+  e.preventDefault();
+  setProfile(local);
+  if (local.email) newsletterSignUp(local.email);
+
+  // Save/Upsert in Supabase
+  const { error } = await supabase
+    .from("users")
+    .upsert({
+      email: local.email,
+      full_name: local.fullName,
+      phone: local.phone,
+      drivers_license: local.driversLicense,
+    });
+
+  if (error) {
+    console.error("Supabase user upsert error", error);
   }
 
+  setIsLoggedIn(true);
+  if (
+    local.email &&
+    local.email.toLowerCase() === COMPANY.email.toLowerCase()
+  ) {
+    setIsAdmin(true);
+  } else {
+    setIsAdmin(false);
+  }
+  alert(
+    "Profile created (demo). In production this will create a secure account."
+  );
+}
+  
   function save() {
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
