@@ -1,79 +1,103 @@
-export default async function handler(req, res) {
+// api/booking.js
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Helper to format dollars
+function money(n) {
+  if (typeof n !== "number") return "";
+  return `$${n.toFixed(2)}`;
+}
+
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
-    res.statusCode = 405;
-    res.json({ error: "Method not allowed" });
+    res.status(405).json({ error: "Method not allowed" });
     return;
   }
 
   try {
-    const booking = req.body || {};
-    const apiKey = process.env.RESEND_API_KEY;
+    const { booking } = req.body || {};
 
-    if (!apiKey) {
-      console.error("Missing RESEND_API_KEY");
-      res.statusCode = 500;
-      res.json({ error: "Server email config error" });
+    if (
+      !booking ||
+      !booking.customer ||
+      !booking.customer.email ||
+      !booking.vehicleName
+    ) {
+      res.status(400).json({ error: "Missing booking or customer details" });
       return;
     }
 
-    const {
-      vehicleId,
-      startDate,
-      endDate,
-      days,
-      subtotal,
-      deposit,
-      total,
-      customer = {},
-      extras = {},
-    } = booking;
+    const customer = booking.customer;
+    const vehicleName = booking.vehicleName;
+    const start = booking.startDate;
+    const end = booking.endDate;
+    const days = booking.days;
+    const subtotal = booking.subtotal;
+    const deposit = booking.deposit;
+    const total = booking.total;
 
-    const subject = `New booking — ${customer.fullName || "Unknown customer"}`;
-    const html = `
-      <h2>New booking</h2>
-      <p><strong>Customer:</strong> ${customer.fullName || "N/A"}</p>
-      <p><strong>Email:</strong> ${customer.email || "N/A"}</p>
-      <p><strong>Phone:</strong> ${customer.phone || "N/A"}</p>
-      <p><strong>Vehicle ID:</strong> ${vehicleId}</p>
-      <p><strong>Dates:</strong> ${startDate} → ${endDate}</p>
-      <p><strong>Days:</strong> ${days}</p>
-      <p><strong>Subtotal (rental):</strong> $${subtotal?.toFixed?.(2) ?? subtotal}</p>
-      <p><strong>Extras total (est.):</strong> $${((total || 0) - (subtotal || 0))?.toFixed?.(2) ?? ""}</p>
-      <p><strong>Deposit due now:</strong> $${deposit?.toFixed?.(2) ?? deposit}</p>
-      <p><strong>Estimated trip total:</strong> $${total?.toFixed?.(2) ?? total}</p>
-      <h3>Extras</h3>
-      <pre style="background:#f4f4f5;padding:8px;border-radius:6px;font-size:12px;">
-${JSON.stringify(extras, null, 2)}
-      </pre>
-    `;
+    const adminRecipients = [
+      "reserve@rentwithasani.com",
+      "notifications@rentwithasani.com",
+    ];
 
-    const resp = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from: "Asani Rentals <onboarding@resend.dev>",
-        to: ["reserve@rentwithasani.com"],
-        subject,
-        html,
-      }),
+    // 1) Email to customer
+    await resend.emails.send({
+      from: "Asani Rentals <reserve@rentwithasani.com>",
+      to: customer.email,
+      subject: `Your Asani Rentals booking — ${vehicleName}`,
+      html: `
+        <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0b0b0b">
+          <h2>Thank you for booking with Asani Rentals</h2>
+          <p>Hi ${customer.fullName || ""},</p>
+          <p>We’ve received your reservation request for:</p>
+          <ul>
+            <li><strong>Vehicle:</strong> ${vehicleName}</li>
+            <li><strong>Dates:</strong> ${start} → ${end}</li>
+            <li><strong>Days billed:</strong> ${days}</li>
+            <li><strong>Rental subtotal:</strong> ${money(subtotal)}</li>
+            <li><strong>Estimated extras:</strong> ${money(
+              booking.extrasTotal || 0
+            )}</li>
+            <li><strong>Estimated trip total:</strong> ${money(total)}</li>
+            <li><strong>Deposit due:</strong> ${money(deposit)}</li>
+          </ul>
+          <p>Our team will review your reservation and send final confirmation and next steps.</p>
+          <p style="margin-top: 16px">— Asani Rentals</p>
+        </div>
+      `,
     });
 
-    if (!resp.ok) {
-      const text = await resp.text();
-      console.error("Resend error:", text);
-      res.statusCode = 500;
-      res.json({ error: "Failed to send email" });
-      return;
-    }
+    // 2) Email to you (admin notification)
+    await resend.emails.send({
+      from: "Asani Rentals <notifications@rentwithasani.com>",
+      to: adminRecipients,
+      subject: `New booking — ${vehicleName} (${customer.fullName || ""})`,
+      html: `
+        <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0b0b0b">
+          <h2>New booking received</h2>
+          <p><strong>Vehicle:</strong> ${vehicleName}</p>
+          <p><strong>Dates:</strong> ${start} → ${end} (${days} day${
+        days > 1 ? "s" : ""
+      })</p>
+          <p><strong>Customer:</strong> ${customer.fullName || ""}</p>
+          <p><strong>Email:</strong> ${customer.email}</p>
+          <p><strong>Phone:</strong> ${customer.phone || ""}</p>
+          <p><strong>Subtotal:</strong> ${money(subtotal)}</p>
+          <p><strong>Estimated total:</strong> ${money(total)}</p>
+          <p><strong>Deposit:</strong> ${money(deposit)}</p>
+          <h3 style="margin-top: 16px">Extras</h3>
+          <pre style="font-size: 12px; background:#f4f4f5; padding:12px; border-radius:8px; white-space:pre-wrap">
+${JSON.stringify(booking.extras || {}, null, 2)}
+          </pre>
+        </div>
+      `,
+    });
 
-    res.statusCode = 200;
-    res.json({ ok: true });
+    res.status(200).json({ ok: true });
   } catch (err) {
-    console.error("Booking handler error:", err);
-    res.statusCode = 500;
-    res.json({ error: "Unexpected server error" });
+    console.error("Booking email error", err);
+    res.status(500).json({ error: "Booking email failed" });
   }
-}
+};
