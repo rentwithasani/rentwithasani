@@ -1468,7 +1468,6 @@ function ChauffeurRequest() {
 
 if (!res.ok) {
   // show the "We had a problem submitting..." alert
-  ...
   return;
 }
 
