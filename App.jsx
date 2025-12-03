@@ -538,49 +538,77 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function handlePay() {
-    if (!startDate || !endDate) {
-      alert("Please select your start and end dates.");
-      return;
-    }
-
-    if (insurance === "none" && !riskAccepted) {
-      alert(
-        "Please confirm that you understand and accept the risk of driving without the optional protection plan."
-      );
-      return;
-    }
-
-    const booking = {
-      vehicleId: vehicle.id,
-      startDate,
-      endDate,
-      days: billableDays,
-      subtotal,
-      deposit,
-      total,
-      customer,
-      extras: {
-        insurance,
-        insuranceDailyRate,
-        insuranceCost,
-        ezPass,
-        ezPassDailyRate,
-        ezPassCost,
-        prepayFuel,
-        fuelPrepayCost,
-        amenities,
-        amenityDailyRate,
-        amenityCount,
-        amenitiesCost,
-        riskAccepted,
-      },
-    };
-
-    alert("Demo mode: deposit not actually charged. Booking saved locally.");
-    onComplete(booking);
+async function handlePay() {
+  if (!startDate || !endDate) {
+    alert("Please select your start and end dates.");
+    return;
   }
 
+  if (insurance === "none" && !riskAccepted) {
+    alert(
+      "Please confirm that you understand and accept the risk of driving without the optional protection plan."
+    );
+    return;
+  }
+
+  const booking = {
+    vehicleId: vehicle.id,
+    vehicleName: vehicle.name,
+    startDate,
+    endDate,
+    days: billableDays,
+    subtotal,
+    deposit,
+    total,
+    customer,
+    extras: {
+      insurance,
+      insuranceDailyRate,
+      insuranceCost,
+      ezPass,
+      ezPassDailyRate,
+      ezPassCost,
+      prepayFuel,
+      fuelPrepayCost,
+      amenities,
+      amenityDailyRate,
+      amenityCount,
+      amenitiesCost,
+      riskAccepted,
+    },
+  };
+
+  // Call backend to log booking + send email
+  try {
+    const res = await fetch("/api/booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ booking }),
+    });
+
+    if (!res.ok) {
+      console.error("Booking API responded with error", await res.text());
+      alert(
+        "We had a problem submitting your booking, but we saved it locally. Please contact us directly at " +
+          COMPANY.email
+      );
+    } else {
+      alert(
+        "Your reservation request has been submitted. We'll review and confirm by email."
+      );
+    }
+  } catch (err) {
+    console.error("Booking API network error:", err);
+    alert(
+      "We had a problem submitting your booking, but we saved it locally. Please contact us directly at " +
+        COMPANY.email
+    );
+  }
+
+  // Always keep local behavior too (updates UI and marks car unavailable)
+  onComplete(booking);
+}
+  
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 px-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-4 md:p-6 max-h-[90vh] overflow-y-auto">
