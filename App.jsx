@@ -1740,18 +1740,31 @@ function App() {
     console.log("Newsletter sign-up (demo):", email);
   }
 
-  function handleBookingComplete(booking) {
-    setBookings((b) => [...b, booking]);
-    // mark the vehicle as unavailable once booked
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.id === booking.vehicleId ? { ...v, available: false } : v
-      )
-    );
-    alert("Reservation created (demo). A confirmation email would be sent.");
-    setSelected(null);
-    setRoute("home");
+async function handleBookingComplete(booking) {
+  setBookings((b) => [...b, booking]);
+
+  // Mark the vehicle as unavailable once booked
+  setVehicles((prev) =>
+    prev.map((v) =>
+      v.id === booking.vehicleId ? { ...v, available: false } : v
+    )
+  );
+
+  // Notify backend to send email
+  try {
+    await fetch("/api/booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(booking),
+    });
+  } catch (err) {
+    console.error("Booking email error", err);
   }
+
+  alert("Reservation created. You’ll receive a confirmation email shortly.");
+  setSelected(null);
+  setRoute("home");
+}
 
   const categories = vehicles.map((v) => v.category);
   const filteredSortedVehicles = applyVehicleFilters(
