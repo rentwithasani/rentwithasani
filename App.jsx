@@ -527,12 +527,12 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
-  function handlePay() {
+    async function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
     }
-    
+
     if (insurance === "none" && !riskAccepted) {
       alert(
         "Please confirm that you understand and accept the risk of driving without the optional protection plan."
@@ -540,8 +540,14 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       return;
     }
 
+    if (!customer.email) {
+      alert("Please enter an email so we can send your confirmation.");
+      return;
+    }
+
     const booking = {
       vehicleId: vehicle.id,
+      vehicleName: vehicle.name,
       startDate,
       endDate,
       days: billableDays,
@@ -564,10 +570,31 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
         amenitiesCost,
         riskAccepted,
       },
+      extrasTotal,
     };
 
-    alert("Demo mode: deposit not actually charged. Booking saved locally.");
-    onComplete(booking);
+    try {
+      const res = await fetch("/api/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking }),
+      });
+
+      if (!res.ok) {
+        console.error("Booking API error", await res.text());
+        alert(
+          "We had a problem submitting your booking. Please try again or contact us directly at reserve@rentwithasani.com."
+        );
+        return;
+      }
+
+      onComplete(booking);
+    } catch (err) {
+      console.error("Booking network error", err);
+      alert(
+        "We had a problem submitting your booking. Please try again or contact us directly at reserve@rentwithasani.com."
+      );
+    }
   }
 
   function toggleAmenity(key) {
