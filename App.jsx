@@ -532,7 +532,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       alert("Please select your start and end dates.");
       return;
     }
-
+    
     if (insurance === "none" && !riskAccepted) {
       alert(
         "Please confirm that you understand and accept the risk of driving without the optional protection plan."
