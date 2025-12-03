@@ -3,7 +3,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// TEMP: send all contact messages to your Gmail while in test mode
+// Test mode: always send to your own Gmail
 const TO_EMAIL = "rentwithasani@gmail.com";
 
 export default async function handler(req, res) {
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
     const result = await resend.emails.send({
       from,
-      to: TO_EMAIL,
+      to: TO_EMAIL, // 🔒 locked to Gmail
       subject,
       html,
     });
