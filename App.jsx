@@ -1442,8 +1442,14 @@ function ProfilePage({
 }
 
 function ChauffeurRequest() {
+  const [status, setStatus] = useState({ type: "idle", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   async function handleSubmit(e) {
     e.preventDefault();
+    setStatus({ type: "idle", message: "" });
+    setIsSubmitting(true);
+
     const formData = new FormData(e.target);
     const payload = {
       name: formData.get("name"),
@@ -1457,32 +1463,39 @@ function ChauffeurRequest() {
       pickup: formData.get("pickup"),
       dropoff: formData.get("dropoff"),
       notes: formData.get("notes"),
+      to: COMPANY.email,
     };
 
     try {
       const res = await fetch("/api/chauffeur", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload),
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-if (!res.ok) {
-  // show the "We had a problem submitting..." alert
-  return;
-}
+      if (!res.ok) {
+        // backend returned error
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Request failed");
+      }
 
-alert("Request submitted. Our team will contact you...");
-
-
-      alert(
-        "Request submitted. Our team will contact you to confirm availability and pricing."
-      );
+      setStatus({
+        type: "success",
+        message:
+          "Request submitted. Our team will contact you to confirm availability and pricing.",
+      });
       e.target.reset();
     } catch (err) {
       console.error("Chauffeur request error", err);
-      alert(
-        "We couldn’t reach the server. Please check your connection or email us directly at reserve@rentwithasani.com."
-      );
+      setStatus({
+        type: "error",
+        message:
+          "We had a problem submitting your request. Please try again or contact us directly at " +
+          COMPANY.email +
+          ".",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -1491,8 +1504,9 @@ alert("Request submitted. Our team will contact you...");
       <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
       <p className="mt-2 text-sm text-zinc-600">
         Request a professional chauffeur for a Sprinter, black SUV, elite luxury
-        sedan, or our <span className="font-semibold">armed chauffeur</span> option
-        for elevated security.
+        sedan, or our{" "}
+        <span className="font-semibold">armed chauffeur</span> option for
+        elevated security.
       </p>
       <form
         className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 border rounded-2xl bg-white"
@@ -1606,13 +1620,28 @@ alert("Request submitted. Our team will contact you...");
             placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
           />
         </label>
-        <div className="md:col-span-2 flex justify-end">
+        <div className="md:col-span-2 flex flex-col gap-3">
           <button
             type="submit"
-            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold"
+            disabled={isSubmitting}
+            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold disabled:opacity-60"
           >
-            Submit request
+            {isSubmitting ? "Submitting..." : "Submit request"}
           </button>
+
+          {status.message && (
+            <p
+              className={`text-sm ${
+                status.type === "success"
+                  ? "text-emerald-600"
+                  : status.type === "error"
+                  ? "text-red-600"
+                  : "text-zinc-600"
+              }`}
+            >
+              {status.message}
+            </p>
+          )}
         </div>
       </form>
     </section>
@@ -1620,8 +1649,14 @@ alert("Request submitted. Our team will contact you...");
 }
 
 function Contact() {
+  const [status, setStatus] = useState({ type: "idle", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   async function handleSubmit(e) {
     e.preventDefault();
+    setStatus({ type: "idle", message: "" });
+    setIsSubmitting(true);
+
     const formData = new FormData(e.target);
     const payload = {
       name: formData.get("name"),
@@ -1637,15 +1672,27 @@ function Contact() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Request failed");
-      alert("Message sent. We'll be in touch shortly.");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Request failed");
+      }
+
+      setStatus({
+        type: "success",
+        message: "Message sent. We'll be in touch shortly.",
+      });
       e.target.reset();
     } catch (err) {
       console.error("Contact error", err);
-      alert(
-        "Message sent in demo mode. Connect /api/contact on your backend to receive emails at " +
-          COMPANY.email
-      );
+      setStatus({
+        type: "error",
+        message:
+          "We had a problem submitting your request. Please try again or contact us directly at " +
+          COMPANY.email +
+          ".",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -1685,10 +1732,27 @@ function Contact() {
               required
             />
           </label>
-          <div className="mt-4">
-            <button className="px-4 py-2 rounded-2xl bg-black text-white text-sm">
-              Send message
+          <div className="mt-4 flex flex-col gap-3">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-2xl bg-black text-white text-sm disabled:opacity-60"
+            >
+              {isSubmitting ? "Sending..." : "Send message"}
             </button>
+            {status.message && (
+              <p
+                className={`text-sm ${
+                  status.type === "success"
+                    ? "text-emerald-600"
+                    : status.type === "error"
+                    ? "text-red-600"
+                    : "text-zinc-600"
+                }`}
+              >
+                {status.message}
+              </p>
+            )}
           </div>
         </form>
       </div>
