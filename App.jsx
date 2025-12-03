@@ -1506,8 +1506,134 @@ function ChauffeurRequest() {
         className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 border rounded-2xl bg-white"
         onSubmit={handleSubmit}
       >
-        {/* the rest of your fields stay the same */}
-        {/* ... keep your existing JSX from your current ChauffeurRequest for the labels/inputs ... */}
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Full name
+          <input
+            name="name"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="John Doe"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Email
+          <input
+            name="email"
+            type="email"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="you@domain.com"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Phone
+          <input
+            name="phone"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="(555) 555-5555"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Service type
+          <select
+            name="serviceType"
+            className="mt-2 p-2 border rounded"
+            defaultValue="sprinter"
+          >
+            <option value="sprinter">Sprinter</option>
+            <option value="black-suv">Black truck / black SUV</option>
+            <option value="elite-luxury">Elite luxury sedan</option>
+            <option value="armed-chauffeur">
+              Armed chauffeur (licensed protection)
+            </option>
+          </select>
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Date
+          <input
+            name="date"
+            type="date"
+            className="mt-2 p-2 border rounded"
+            required
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Time
+          <input
+            name="time"
+            type="time"
+            className="mt-2 p-2 border rounded"
+            required
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Number of passengers
+          <input
+            name="passengers"
+            type="number"
+            min="1"
+            className="mt-2 p-2 border rounded"
+            placeholder="2"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Estimated hours
+          <input
+            name="hours"
+            type="number"
+            min="1"
+            className="mt-2 p-2 border rounded"
+            placeholder="4"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
+          Pick-up location
+          <input
+            name="pickup"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="Hotel / address / airport"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
+          Drop-off or itinerary
+          <input
+            name="dropoff"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="Destination or brief itinerary"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
+          Notes
+          <textarea
+            name="notes"
+            rows={4}
+            className="mt-2 p-2 border rounded"
+            placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
+          />
+        </label>
+
+        <div className="md:col-span-2 flex justify-end">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold disabled:opacity-60"
+          >
+            {submitting ? "Submitting..." : "Submit request"}
+          </button>
+        </div>
       </form>
     </section>
   );
