@@ -1457,7 +1457,6 @@ function ChauffeurRequest() {
       pickup: formData.get("pickup"),
       dropoff: formData.get("dropoff"),
       notes: formData.get("notes"),
-      to: COMPANY.email,
     };
 
     try {
@@ -1467,7 +1466,15 @@ function ChauffeurRequest() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Request failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("Chauffeur API error:", res.status, data);
+        alert(
+          "We had a problem submitting your request. Please try again or contact us directly at reserve@rentwithasani.com."
+        );
+        return;
+      }
+
       alert(
         "Request submitted. Our team will contact you to confirm availability and pricing."
       );
@@ -1475,8 +1482,7 @@ function ChauffeurRequest() {
     } catch (err) {
       console.error("Chauffeur request error", err);
       alert(
-        "Request submitted in demo mode. Connect /api/chauffeur on your backend to receive chauffeur inquiries at " +
-          COMPANY.email
+        "We couldn’t reach the server. Please check your connection or email us directly at reserve@rentwithasani.com."
       );
     }
   }
@@ -1486,9 +1492,8 @@ function ChauffeurRequest() {
       <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
       <p className="mt-2 text-sm text-zinc-600">
         Request a professional chauffeur for a Sprinter, black SUV, elite luxury
-        sedan, or our{" "}
-        <span className="font-semibold">armed chauffeur</span> option for
-        elevated security.
+        sedan, or our <span className="font-semibold">armed chauffeur</span> option
+        for elevated security.
       </p>
       <form
         className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 border rounded-2xl bg-white"
