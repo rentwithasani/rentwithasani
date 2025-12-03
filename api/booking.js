@@ -1,6 +1,5 @@
 // api/booking.js
 import { Resend } from "resend";
-import { supabase } from "../lib/supabaseAdmin.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -16,53 +15,46 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing booking in body" });
     }
 
-    // 1) Store in Supabase
-    const { error: dbError } = await supabase.from("bookings").insert({
-      vehicle_id: booking.vehicleId,
-      full_name: booking.customer?.fullName || null,
-      email: booking.customer?.email || null,
-      phone: booking.customer?.phone || null,
-      start_date: booking.startDate || null,
-      end_date: booking.endDate || null,
-      days: booking.days || null,
-      subtotal: booking.subtotal ?? null,
-      deposit: booking.deposit ?? null,
-      total: booking.total ?? null,
-      extras: booking.extras || {},
-    });
+    const {
+      vehicleId,
+      vehicleName,
+      startDate,
+      endDate,
+      days,
+      subtotal,
+      total,
+      deposit,
+      customer,
+      extras,
+    } = booking;
 
-    if (dbError) {
-      console.error("Supabase bookings insert error:", dbError);
-      // we don't fail the whole request just because logging failed
-    }
+    const subject = `New booking — ${vehicleName || vehicleId || "Unknown vehicle"}`;
 
-    // 2) Send notification email
-    const subject = `New booking — ${booking.vehicleName || booking.vehicleId}`;
+    const customerName = customer?.fullName || "N/A";
+    const customerEmail = customer?.email || "N/A";
+    const customerPhone = customer?.phone || "N/A";
 
-    const lines = [
-      `<p><strong>Vehicle:</strong> ${booking.vehicleName || booking.vehicleId}</p>`,
-      `<p><strong>Name:</strong> ${booking.customer?.fullName || "N/A"}</p>`,
-      `<p><strong>Email:</strong> ${booking.customer?.email || "N/A"}</p>`,
-      `<p><strong>Phone:</strong> ${booking.customer?.phone || "N/A"}</p>`,
-      `<p><strong>Dates:</strong> ${booking.startDate || "?"} → ${
-        booking.endDate || "?"
-      } (${booking.days} day(s))</p>`,
-      `<p><strong>Subtotal:</strong> $${booking.subtotal?.toFixed?.(2) || booking.subtotal}</p>`,
-      `<p><strong>Estimated total:</strong> $${booking.total?.toFixed?.(2) || booking.total}</p>`,
-      `<p><strong>Deposit:</strong> $${booking.deposit?.toFixed?.(2) || booking.deposit}</p>`,
-    ];
+    const html = `
+      <div>
+        <h2>New Booking Received</h2>
+        <p><strong>Vehicle:</strong> ${vehicleName || vehicleId}</p>
+        <p><strong>Name:</strong> ${customerName}</p>
+        <p><strong>Email:</strong> ${customerEmail}</p>
+        <p><strong>Phone:</strong> ${customerPhone}</p>
+        <p><strong>Dates:</strong> ${startDate || "?"} → ${endDate || "?"} (${days} day(s))</p>
+        <p><strong>Subtotal:</strong> $${subtotal}</p>
+        <p><strong>Estimated total:</strong> $${total}</p>
+        <p><strong>Deposit:</strong> $${deposit}</p>
+        <p><strong>Extras:</strong></p>
+        <pre>${JSON.stringify(extras, null, 2)}</pre>
+      </div>
+    `;
 
     await resend.emails.send({
-      from: "notifications@rentwithasani.com",
+      from: "notifications@rentwithasani.com", // must be on your verified domain
       to: ["reserve@rentwithasani.com"],
       subject,
-      html: `
-        <div>
-          <h2>New Booking Received</h2>
-          ${lines.join("")}
-          <p>Logged in Supabase & ready to review.</p>
-        </div>
-      `,
+      html,
     });
 
     return res.status(200).json({ ok: true });
