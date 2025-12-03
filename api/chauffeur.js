@@ -1,98 +1,108 @@
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+/**
+ * Handle chauffeur service requests.
+ * Frontend: ChauffeurRequest() -> fetch("/api/chauffeur", { ... })
+ */
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    res.statusCode = 405;
-    res.json({ error: "Method not allowed" });
-    return;
+    res.setHeader("Allow", ["POST"]);
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const {
-    name,
-    email,
-    phone,
-    serviceType,
-    date,
-    time,
-    passengers,
-    hours,
-    pickup,
-    dropoff,
-    notes,
-  } = req.body || {};
+  try {
+    const {
+      name,
+      email,
+      phone,
+      serviceType,
+      date,
+      time,
+      passengers,
+      hours,
+      pickup,
+      dropoff,
+      notes,
+      to,
+    } = req.body || {};
 
-  // Basic validation
-  if (!name || !email || !phone || !serviceType || !date || !time || !pickup || !dropoff) {
-    res.statusCode = 400;
-    res.json({ error: "Missing required fields" });
-    return;
-  }
-
-  // Log to server logs so you can see every request in Vercel → Functions → Logs
-  console.log("New chauffeur request:", {
-    name,
-    email,
-    phone,
-    serviceType,
-    date,
-    time,
-    passengers,
-    hours,
-    pickup,
-    dropoff,
-    notes,
-  });
-
-  let emailSent = false;
-
-  // Try to send via Resend **if** the API key exists,
-  // but DO NOT fail the request if email sending breaks.
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (apiKey) {
-    try {
-      const subject = `New chauffeur request from ${name}`;
-      const html = `
-        <h2>New chauffeur service request</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Service type:</strong> ${serviceType}</p>
-        <p><strong>Date:</strong> ${date}</p>
-        <p><strong>Time:</strong> ${time}</p>
-        <p><strong>Passengers:</strong> ${passengers || "N/A"}</p>
-        <p><strong>Estimated hours:</strong> ${hours || "N/A"}</p>
-        <p><strong>Pickup:</strong> ${pickup}</p>
-        <p><strong>Dropoff / itinerary:</strong> ${dropoff}</p>
-        <p><strong>Notes:</strong><br/>${(notes || "").replace(/\n/g, "<br/>")}</p>
-      `;
-
-      const resp = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          from: "Asani Rentals <onboarding@resend.dev>", // change later to your verified domain if you want
-          to: ["reserve@rentwithasani.com"],
-          subject,
-          html,
-        }),
+    if (!name || !email || !phone || !serviceType || !date || !time || !pickup) {
+      return res.status(400).json({
+        error:
+          "Missing required fields (name, email, phone, service type, date, time, pickup).",
       });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        console.error("Resend error:", text);
-      } else {
-        emailSent = true;
-      }
-    } catch (err) {
-      console.error("Error sending email via Resend:", err);
     }
-  } else {
-    console.warn("RESEND_API_KEY not set. Chauffeur requests will not send email yet.");
-  }
 
-  // ✅ Always respond 200 so the frontend shows success
-  res.statusCode = 200;
-  res.json({ ok: true, emailSent });
+    const notifyTo = process.env.NOTIFY_TO || to || "reserve@rentwithasani.com";
+
+    const serviceLabels = {
+      "sprinter": "Sprinter",
+      "black-suv": "Black truck / black SUV",
+      "elite-luxury": "Elite luxury sedan",
+      "armed-chauffeur": "Armed chauffeur (licensed protection)",
+    };
+
+    // Email to you
+    await resend.emails.send({
+      from: "Asani Rentals <notifications@rentwithasani.com>",
+      to: notifyTo,
+      subject: "New chauffeur request – Asani Rentals",
+      text: `
+New chauffeur request from Asani Rentals website
+
+Client:
+- Name: ${name}
+- Email: ${email}
+- Phone: ${phone}
+
+Service details:
+- Service type: ${serviceLabels[serviceType] || serviceType}
+- Date: ${date}
+- Time: ${time}
+- Estimated hours: ${hours || "Not specified"}
+- Passengers: ${passengers || "Not specified"}
+
+Itinerary:
+- Pick-up: ${pickup}
+- Drop-off / itinerary: ${dropoff || "Not specified"}
+
+Notes:
+${notes || "None provided"}
+      `.trim(),
+    });
+
+    // Confirmation email to customer
+    if (email) {
+      await resend.emails.send({
+        from: "Asani Rentals <notifications@rentwithasani.com>",
+        to: email,
+        subject: "We’ve received your chauffeur request – Asani Rentals",
+        text: `
+Hi ${name || ""},
+
+Thank you for your chauffeur request with Asani Rentals.
+Our team will review availability and respond with pricing and confirmation.
+
+Summary:
+- Service: ${serviceLabels[serviceType] || serviceType}
+- Date: ${date}, Time: ${time}
+- Pickup: ${pickup}
+- Passengers: ${passengers || "Not specified"}
+
+If you need to update anything, reply to this email or contact us at 732-470-8233.
+
+— Asani Rentals
+      `.trim(),
+      });
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error("Chauffeur API error:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to submit request. Please try again later." });
+  }
 }
