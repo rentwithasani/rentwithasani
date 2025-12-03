@@ -1470,20 +1470,25 @@ function ChauffeurRequest() {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        alert(
-          "Request submitted. We will contact you by email to confirm availability and pricing."
-        );
-        e.target.reset();
-      } else {
-        console.error("Chauffeur API error", await res.text());
-        alert(
-          "We had a problem submitting your request. Please try again or contact us directly at " +
-            COMPANY.email
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        // if backend didn't send JSON, ignore & fall back to status
+      }
+
+      if (!res.ok || data?.ok === false) {
+        throw new Error(
+          data?.error || `Request failed with status ${res.status}`
         );
       }
-    } catch (err) {
-      console.error("Chauffeur network error", err);
+
+      alert(
+        "Request submitted. We’ll contact you to confirm availability and pricing."
+      );
+      e.target.reset();
+    } catch (error) {
+      console.error("Chauffeur form error:", error);
       alert(
         "We had a problem submitting your request. Please try again or contact us directly at " +
           COMPANY.email
@@ -1515,7 +1520,6 @@ function ChauffeurRequest() {
             placeholder="John Doe"
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
           Email
           <input
@@ -1526,7 +1530,6 @@ function ChauffeurRequest() {
             placeholder="you@domain.com"
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
           Phone
           <input
@@ -1536,7 +1539,6 @@ function ChauffeurRequest() {
             placeholder="(555) 555-5555"
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
           Service type
           <select
@@ -1552,7 +1554,6 @@ function ChauffeurRequest() {
             </option>
           </select>
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700">
           Date
           <input
@@ -1562,7 +1563,6 @@ function ChauffeurRequest() {
             required
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700">
           Time
           <input
@@ -1572,7 +1572,6 @@ function ChauffeurRequest() {
             required
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700">
           Number of passengers
           <input
@@ -1583,7 +1582,6 @@ function ChauffeurRequest() {
             placeholder="2"
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700">
           Estimated hours
           <input
@@ -1594,7 +1592,6 @@ function ChauffeurRequest() {
             placeholder="4"
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
           Pick-up location
           <input
@@ -1604,7 +1601,6 @@ function ChauffeurRequest() {
             placeholder="Hotel / address / airport"
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
           Drop-off or itinerary
           <input
@@ -1614,7 +1610,6 @@ function ChauffeurRequest() {
             placeholder="Destination or brief itinerary"
           />
         </label>
-
         <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
           Notes
           <textarea
@@ -1624,12 +1619,11 @@ function ChauffeurRequest() {
             placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
           />
         </label>
-
         <div className="md:col-span-2 flex justify-end">
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold disabled:opacity-60"
+            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? "Submitting..." : "Submit request"}
           </button>
@@ -1660,18 +1654,23 @@ function Contact() {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        alert("Message sent. We'll be in touch shortly.");
-        e.target.reset();
-      } else {
-        console.error("Contact API error", await res.text());
-        alert(
-          "We had a problem submitting your message. Please try again or email us directly at " +
-            COMPANY.email
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        // ignore JSON parse errors, fall back to status
+      }
+
+      if (!res.ok || data?.ok === false) {
+        throw new Error(
+          data?.error || `Request failed with status ${res.status}`
         );
       }
-    } catch (err) {
-      console.error("Contact network error", err);
+
+      alert("Message sent. We'll be in touch shortly.");
+      e.target.reset();
+    } catch (error) {
+      console.error("Contact form error:", error);
       alert(
         "We had a problem submitting your message. Please try again or email us directly at " +
           COMPANY.email
@@ -1694,10 +1693,17 @@ function Contact() {
           <p className="mt-1 text-sm text-zinc-700">{COMPANY.phone}</p>
           <p className="mt-1 text-sm text-zinc-700">{COMPANY.email}</p>
         </div>
-        <form className="p-6 border rounded-2xl bg-white" onSubmit={handleSubmit}>
+        <form
+          className="p-6 border rounded-2xl bg-white"
+          onSubmit={handleSubmit}
+        >
           <label className="flex flex-col text-sm text-zinc-700">
             Name
-            <input name="name" className="mt-2 p-2 border rounded" required />
+            <input
+              name="name"
+              className="mt-2 p-2 border rounded"
+              required
+            />
           </label>
           <label className="flex flex-col mt-3 text-sm text-zinc-700">
             Email
@@ -1721,7 +1727,7 @@ function Contact() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-2xl bg-black text-white text-sm disabled:opacity-60"
+              className="px-4 py-2 rounded-2xl bg-black text-white text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting ? "Sending..." : "Send message"}
             </button>
