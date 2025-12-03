@@ -1461,19 +1461,19 @@ function ChauffeurRequest() {
 
     try {
       const res = await fetch("/api/chauffeur", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+});
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        console.error("Chauffeur API error:", res.status, data);
-        alert(
-          "We had a problem submitting your request. Please try again or contact us directly at reserve@rentwithasani.com."
-        );
-        return;
-      }
+if (!res.ok) {
+  // show the "We had a problem submitting..." alert
+  ...
+  return;
+}
+
+alert("Request submitted. Our team will contact you...");
+
 
       alert(
         "Request submitted. Our team will contact you to confirm availability and pricing."
