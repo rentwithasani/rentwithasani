@@ -547,6 +547,11 @@ async function handlePay() {
     return;
   }
 
+  if (!customer.email) {
+    alert("Please enter your email so we can send your confirmation.");
+    return;
+  }
+
   if (insurance === "none" && !riskAccepted) {
     alert(
       "Please confirm that you understand and accept the risk of driving without the optional protection plan."
@@ -556,12 +561,14 @@ async function handlePay() {
 
   const booking = {
     vehicleId: vehicle.id,
+    vehicleName: vehicle.name,
     startDate,
     endDate,
     days: billableDays,
     subtotal,
-    total,
     deposit,
+    total,
+    customer,
     extras: {
       insurance,
       insuranceDailyRate,
@@ -579,6 +586,80 @@ async function handlePay() {
     },
   };
 
+  try {
+    // 1. Save to Supabase
+    const { error } = await supabase.from("bookings").insert({
+      user_email: customer.email,
+      vehicle_id: booking.vehicleId,
+      vehicle_name: booking.vehicleName,
+      start_date: booking.startDate,
+      end_date: booking.endDate,
+      days: booking.days,
+      subtotal: booking.subtotal,
+      deposit: booking.deposit,
+      total: booking.total,
+      extras: booking.extras,
+    });
+
+    if (error) {
+      console.error("Supabase booking insert error", error);
+      alert(
+        "We had a problem saving your booking. Please contact us directly at " +
+          COMPANY.email
+      );
+      return;
+    }
+
+    // 2. Create Stripe Checkout session
+    const stripe = await stripePromise;
+    const res = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: customer.email,
+        vehicleName: vehicle.name,
+        depositAmount: deposit,
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("Stripe checkout session error", await res.text());
+      alert(
+        "We had a problem starting the payment. Please contact us directly at " +
+          COMPANY.email
+      );
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.url) {
+      // Redirect user to Stripe-hosted checkout page
+      window.location.href = data.url;
+      return;
+    }
+
+    // Fallback: use stripe.redirectToCheckout if id only
+    if (data.id) {
+      const result = await stripe.redirectToCheckout({
+        sessionId: data.id,
+      });
+      if (result.error) {
+        console.error(result.error);
+        alert(
+          "Payment could not be started. Please contact us directly at " +
+            COMPANY.email
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Booking + payment error", err);
+    alert(
+      "We had a problem submitting your booking. Please contact us directly at " +
+        COMPANY.email
+    );
+  }
+}
   // Text summary that goes in the email
   const summary = `
 Vehicle: ${vehicle.name}
