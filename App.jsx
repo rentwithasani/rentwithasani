@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "./lib/supabaseClient"; // 🔹 make sure this file exists
 
 // Asani Rentals - Single-file React app
 // Tailwind CSS assumed.
