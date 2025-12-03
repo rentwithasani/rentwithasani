@@ -1471,23 +1471,165 @@ Copy code
 }
 
 function ChauffeurRequest() {
-async function handleSubmit(e) {
-e.preventDefault();
-const formData = new FormData(e.target);
-const payload = {
-name: formData.get("name"),
-email: formData.get("email"),
-phone: formData.get("phone"),
-serviceType: formData.get("serviceType"),
-date: formData.get("date"),
-time: formData.get("time"),
-passengers: formData.get("passengers"),
-hours: formData.get("hours"),
-pickup: formData.get("pickup"),
-dropoff: formData.get("dropoff"),
-notes: formData.get("notes"),
-to: COMPANY.email,
-};
+  // Replace this with the Chauffeur form endpoint from Formspree
+  const CHAUFFEUR_FORM_URL = "https://formspree.io/f/manrjvdp"; //
+
+  return (
+    <section className="max-w-4xl mx-auto px-6 py-12">
+      <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
+      <p className="mt-2 text-sm text-zinc-600">
+        Request a professional chauffeur for a Sprinter, black SUV, elite luxury
+        sedan, or our{" "}
+        <span className="font-semibold">armed chauffeur</span> option for
+        elevated security.
+      </p>
+
+      {/* REAL email form via Formspree */}
+      <form
+        className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 border rounded-2xl bg-white"
+        action={CHAUFFEUR_FORM_URL}
+        method="POST"
+      >
+        {/* Help identify this form in your inbox */}
+        <input type="hidden" name="formName" value="chauffeur" />
+        <input
+          type="hidden"
+          name="_subject"
+          value="New chauffeur request from Asani Rentals"
+        />
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Full name
+          <input
+            name="name"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="John Doe"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Email
+          <input
+            name="email"
+            type="email"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="you@domain.com"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Phone
+          <input
+            name="phone"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="(555) 555-5555"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
+          Service type
+          <select
+            name="serviceType"
+            className="mt-2 p-2 border rounded"
+            defaultValue="sprinter"
+          >
+            <option value="sprinter">Sprinter</option>
+            <option value="black-suv">Black truck / black SUV</option>
+            <option value="elite-luxury">Elite luxury sedan</option>
+            <option value="armed-chauffeur">
+              Armed chauffeur (licensed protection)
+            </option>
+          </select>
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Date
+          <input
+            name="date"
+            type="date"
+            className="mt-2 p-2 border rounded"
+            required
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Time
+          <input
+            name="time"
+            type="time"
+            className="mt-2 p-2 border rounded"
+            required
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Number of passengers
+          <input
+            name="passengers"
+            type="number"
+            min="1"
+            className="mt-2 p-2 border rounded"
+            placeholder="2"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700">
+          Estimated hours
+          <input
+            name="hours"
+            type="number"
+            min="1"
+            className="mt-2 p-2 border rounded"
+            placeholder="4"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
+          Pick-up location
+          <input
+            name="pickup"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="Hotel / address / airport"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
+          Drop-off or itinerary
+          <input
+            name="dropoff"
+            className="mt-2 p-2 border rounded"
+            required
+            placeholder="Destination or brief itinerary"
+          />
+        </label>
+
+        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
+          Notes
+          <textarea
+            name="notes"
+            rows={4}
+            className="mt-2 p-2 border rounded"
+            placeholder="Flight details, occasion, security needs, or special requests."
+          />
+        </label>
+
+        <div className="md:col-span-2 flex justify-end">
+          <button
+            type="submit"
+            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold"
+          >
+            Submit request
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
 
 javascript
 Copy code
@@ -1584,15 +1726,80 @@ Submit request
 }
 
 function Contact() {
-async function handleSubmit(e) {
-e.preventDefault();
-const formData = new FormData(e.target);
-const payload = {
-name: formData.get("name"),
-email: formData.get("email"),
-message: formData.get("message"),
-to: COMPANY.email,
-};
+  // Replace this with the Contact form endpoint from Formspree
+  const CONTACT_FORM_URL = "https://formspree.io/f/xjknrleo"; // 
+
+  return (
+    <section className="max-w-4xl mx-auto px-6 py-12">
+      <h2 className="text-2xl font-bold text-zinc-900">Contact</h2>
+      <div className="mt-4 text-zinc-600 text-sm">
+        For reservations, partnerships, and corporate accounts:
+      </div>
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="p-6 border rounded-2xl bg-white">
+          <h3 className="font-semibold text-zinc-900">Asani Rentals</h3>
+          <p className="mt-2 text-sm text-zinc-700">{COMPANY.address}</p>
+          <p className="mt-1 text-sm text-zinc-700">{COMPANY.phone}</p>
+          <p className="mt-1 text-sm text-zinc-700">{COMPANY.email}</p>
+        </div>
+
+        {/* REAL email form via Formspree */}
+        <form
+          className="p-6 border rounded-2xl bg-white"
+          action={CONTACT_FORM_URL}
+          method="POST"
+        >
+          {/* Optional subject line for the email */}
+          <input
+            type="hidden"
+            name="_subject"
+            value="New contact message from Asani Rentals"
+          />
+          {/* This helps you know which form it came from if you reuse endpoint */}
+          <input type="hidden" name="formName" value="contact" />
+
+          <label className="flex flex-col text-sm text-zinc-700">
+            Name
+            <input
+              name="name"
+              className="mt-2 p-2 border rounded"
+              required
+              placeholder="Your name"
+            />
+          </label>
+
+          <label className="flex flex-col mt-3 text-sm text-zinc-700">
+            Email
+            <input
+              name="email"
+              className="mt-2 p-2 border rounded"
+              required
+              type="email"
+              placeholder="you@domain.com"
+            />
+          </label>
+
+          <label className="flex flex-col mt-3 text-sm text-zinc-700">
+            Message
+            <textarea
+              name="message"
+              className="mt-2 p-2 border rounded"
+              rows={4}
+              required
+              placeholder="Tell us how we can help."
+            />
+          </label>
+
+          <div className="mt-4">
+            <button className="px-4 py-2 rounded-2xl bg-black text-white text-sm">
+              Send message
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  );
+}
 
 javascript
 Copy code
