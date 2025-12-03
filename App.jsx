@@ -1768,35 +1768,36 @@ function Contact() {
 function NewsletterForm({ onSign }) {
   const [email, setEmail] = useState("");
 
-  function handleSubmit(e) {
+    async function handleSubmit(e) {
     e.preventDefault();
     if (!email) return;
-    onSign(email);
-    setEmail("");
-    alert("Signed up (demo). In production this will add you to our email list.");
+
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        console.error("Newsletter API error", await res.text());
+        alert(
+          "We had a problem signing you up. Please try again later or email us directly."
+        );
+        return;
+      }
+
+      onSign(email);
+      setEmail("");
+      alert("You're signed up. We'll send offers to your inbox.");
+    } catch (err) {
+      console.error("Newsletter network error", err);
+      alert(
+        "We had a problem signing you up. Please try again later or email us directly."
+      );
+    }
   }
-
-  return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      <input
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@domain.com"
-        className="w-full p-3 border rounded text-sm"
-      />
-      <div className="mt-3 flex justify-end">
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-2xl bg-black text-white text-sm"
-        >
-          Subscribe
-        </button>
-      </div>
-    </form>
-  );
-}
-
+  
 function App() {
   const [route, setRoute] = useState("home");
   const [vehicles, setVehicles] = useState(SAMPLE_VEHICLES);
