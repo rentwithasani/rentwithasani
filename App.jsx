@@ -1850,17 +1850,16 @@ function App() {
     console.log("Newsletter sign-up (demo):", email);
   }
 
-  function handleBookingComplete(booking) {
-    setBookings((b) => [...b, booking]);
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.id === booking.vehicleId ? { ...v, available: false } : v
-      )
-    );
-    alert("Reservation created (demo). A confirmation email would be sent.");
-    setSelected(null);
-    setRoute("home");
-  }
+ function handleBookingComplete(booking) {
+  setBookings((b) => [...b, booking]);
+  setVehicles((prev) =>
+    prev.map((v) =>
+      v.id === booking.vehicleId ? { ...v, available: false } : v
+    )
+  );
+  setSelected(null);
+  setRoute("home");
+}
 
   const categories = vehicles.map((v) => v.category);
   const filteredSortedVehicles = applyVehicleFilters(
