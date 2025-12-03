@@ -1014,7 +1014,7 @@ function ProfilePage({
     }
   }
 
-  function handleCreate(e) {
+    async function handleCreate(e) {
     e.preventDefault();
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
@@ -1027,8 +1027,25 @@ function ProfilePage({
     } else {
       setIsAdmin(false);
     }
+
+    // fire-and-forget welcome email
+    if (local.email) {
+      try {
+        await fetch("/api/profile-welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: local.fullName,
+            email: local.email,
+          }),
+        });
+      } catch (err) {
+        console.error("Profile welcome network error", err);
+      }
+    }
+
     alert(
-      "Profile created (demo). In production this will create a secure account."
+      "Profile created. We've sent a welcome email to your inbox."
     );
   }
 
