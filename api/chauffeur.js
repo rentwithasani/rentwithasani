@@ -3,11 +3,10 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// TEMP: while Resend is in test mode, ALL requests go to your Gmail.
-// Once your domain is verified, change this to reserve@rentwithasani.com
+// While your Resend account is in test mode,
+// ALL emails must go to THIS address:
 const TO_EMAIL = "rentwithasani@gmail.com";
 
-// Vercel Node serverless function
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -49,12 +48,14 @@ export default async function handler(req, res) {
       <p>${(notes || "").replace(/\n/g, "<br />")}</p>
     `;
 
+    // FROM must use a domain Resend allows in sandbox.
+    // onboarding@resend.dev is OK for testing.
     const from =
       process.env.RESEND_FROM_EMAIL || "Asani Rentals <onboarding@resend.dev>";
 
     const result = await resend.emails.send({
       from,
-      to: TO_EMAIL,
+      to: TO_EMAIL, // 🔒 ALWAYS your Gmail in test mode
       subject,
       html,
     });
@@ -64,6 +65,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   } catch (error) {
     console.error("Chauffeur API error:", error);
+    // Send error details back so you can see what's wrong in the browser console
     return res.status(500).json({
       ok: false,
       error: error?.message || "Unknown error",
