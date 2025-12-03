@@ -10,7 +10,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
 };
 
-// Fleet data
+// Fleet data (with stable image URLs)
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
@@ -126,7 +126,7 @@ const SAMPLE_VEHICLES = [
     image:
       "https://vehicle-images.dealerinspire.com/stock-images/chrome/d5bcd7597123f034ff8aca12872d03e6.png",
     description:
-      "Flagship Mercedes sedan with first-class comfort, ambient lighting, and a true chauffeured-experience rear seat.",
+      "Flagship Mercedes sedan with first-class comfort, ambient lighting, and a true chauffeured rear seat.",
     available: true,
   },
   {
@@ -200,7 +200,7 @@ function formatCurrency(n) {
   return `$${n.toFixed(2)}`;
 }
 
-// Filter & sort helper
+// Filtering + sorting helper
 function applyVehicleFilters(vehicles, filterCategory, sortOrder) {
   let result = [...vehicles];
   if (filterCategory && filterCategory !== "all") {
@@ -258,16 +258,16 @@ function FleetFilters({
 function Header({ onNav }) {
   return (
     <header className="w-full bg-black text-white border-b border-zinc-800">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight uppercase">
+          <h1 className="text-xl md:text-2xl font-extrabold tracking-tight uppercase">
             {COMPANY.name}
           </h1>
-          <div className="text-xs text-zinc-400">
+          <div className="text-[11px] md:text-xs text-zinc-400">
             {COMPANY.address} • {COMPANY.phone}
           </div>
         </div>
-        <nav className="space-x-4 text-sm">
+        <nav className="space-x-3 md:space-x-4 text-xs md:text-sm hidden sm:block">
           <button onClick={() => onNav("home")} className="hover:text-zinc-200">
             Home
           </button>
@@ -308,73 +308,74 @@ function Hero({ onNav }) {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 4000);
+    const id = setInterval(
+      () => setCurrent((prev) => (prev + 1) % HERO_SLIDES.length),
+      4000
+    );
     return () => clearInterval(id);
   }, []);
 
   return (
     <section className="bg-black text-white py-16 md:py-24 border-b border-zinc-900">
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6">
-          <p className="text-xs tracking-[0.25em] uppercase text-zinc-400">
+          <p className="text-[11px] md:text-xs tracking-[0.25em] uppercase text-zinc-400">
             Premium Economy • Luxury Rentals
           </p>
-          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
+          <h2 className="text-3xl md:text-5xl font-extrabold leading-tight">
             Premium economy to luxury rentals
-            <span className="block text-zinc-300 font-normal">
+            <span className="block text-zinc-300 font-normal text-2xl md:text-3xl mt-1">
               for business, events & private travel.
             </span>
           </h2>
           <p className="text-sm md:text-base text-zinc-400 max-w-md">
-            A curated range from premium economy to flagship luxury, seamless
+            A curated range from premium economy to flagship exotics, seamless
             reservations, and white–glove service. Hold your vehicle instantly
             with a secure deposit and arrive in style, every time.
           </p>
           <div className="flex flex-wrap gap-4 pt-2">
             <button
               onClick={() => onNav("book")}
-              className="px-7 py-3 rounded-2xl bg-white text-black font-semibold text-sm tracking-wide uppercase"
+              className="px-6 md:px-7 py-3 rounded-2xl bg-white text-black font-semibold text-xs md:text-sm tracking-wide uppercase"
             >
               Reserve now
             </button>
             <button
               onClick={() => onNav("vehicles")}
-              className="px-7 py-3 rounded-2xl border border-zinc-600 text-sm font-medium text-zinc-200"
+              className="px-6 md:px-7 py-3 rounded-2xl border border-zinc-600 text-xs md:text-sm font-medium text-zinc-200"
             >
               View fleet
             </button>
           </div>
         </div>
-        <div className="relative">
+        <div className="relative mt-8 md:mt-0">
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-zinc-900 to-zinc-700 blur-xl opacity-60" />
-          <div className="relative rounded-3xl overflow-hidden border border-zinc-700 shadow-2xl h-80">
+          <div className="relative rounded-3xl overflow-hidden border border-zinc-700 shadow-2xl h-64 md:h-80">
             <div
               className="flex h-full w-full transition-transform duration-700 ease-out"
               style={{ transform: `translateX(-${current * 100}%)` }}
             >
               {HERO_SLIDES.map((slide) => (
-                <div key={slide.id} className="min-w-full h-80 relative">
+                <div key={slide.id} className="min-w-full h-64 md:h-80 relative">
                   <img
                     src={slide.image}
                     alt={slide.title}
-                    className="w-full h-80 object-cover"
+                    className="w-full h-full object-cover"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-center justify-between text-xs text-zinc-200">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-center justify-between text-[11px] md:text-xs text-zinc-200">
                     <div>
                       <div className="font-semibold text-sm md:text-base">
                         {slide.title}
                       </div>
-                      <div className="text-zinc-400 text-[11px] md:text-xs">
+                      <div className="text-zinc-400 text-[10px] md:text-xs">
                         {slide.subtitle}
                       </div>
                     </div>
                     <div className="text-right hidden sm:block">
-                      <div className="font-semibold text-sm">
+                      <div className="font-semibold text-xs md:text-sm">
                         Chauffeur & self-drive options
                       </div>
-                      <div className="text-emerald-400 text-[11px]">
+                      <div className="text-emerald-400 text-[10px] md:text-[11px]">
                         Armed & unarmed chauffeur available
                       </div>
                     </div>
@@ -391,25 +392,29 @@ function Hero({ onNav }) {
 
 function VehicleCard({ v, onSelect, canReserve = true }) {
   return (
-    <div className="border border-zinc-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-zinc-800 transition-all duration-200 bg-white">
-      <img src={v.image} alt={v.name} className="w-full h-44 object-cover" />
-      <div className="p-5">
+    <div className="border border-zinc-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-zinc-800 transition-all duration-200 bg-white flex flex-col">
+      <img
+        src={v.image}
+        alt={v.name}
+        className="w-full h-40 md:h-44 object-contain bg-zinc-50"
+      />
+      <div className="p-4 md:p-5 flex flex-col flex-1">
         <div className="flex justify-between items-start gap-3">
           <div>
-            <h3 className="font-semibold text-zinc-900 tracking-tight">
+            <h3 className="font-semibold text-zinc-900 tracking-tight text-sm md:text-base">
               {v.name}
             </h3>
-            <div className="text-xs text-zinc-500 mt-1">
+            <div className="text-[11px] md:text-xs text-zinc-500 mt-1">
               {v.category} • {v.seats} seats
               {v.color ? " • " + v.color : ""}
             </div>
           </div>
           <div className="text-right">
-            <div className="font-bold text-zinc-900">
+            <div className="font-bold text-zinc-900 text-sm md:text-base">
               {formatCurrency(v.pricePerDay)}/day
             </div>
             <div
-              className={`text-xs mt-1 ${
+              className={`text-[11px] mt-1 ${
                 v.available ? "text-emerald-600" : "text-red-500"
               }`}
             >
@@ -417,15 +422,15 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
             </div>
           </div>
         </div>
-        <p className="mt-4 text-sm text-zinc-600 leading-relaxed line-clamp-3">
+        <p className="mt-3 md:mt-4 text-xs md:text-sm text-zinc-600 leading-relaxed line-clamp-3">
           {v.description}
         </p>
-        <div className="mt-5 flex gap-3">
+        <div className="mt-4 md:mt-5 flex gap-3">
           {canReserve && (
             <button
               disabled={!v.available}
               onClick={() => onSelect && onSelect(v)}
-              className={`px-4 py-2 rounded-2xl text-sm font-medium border transition ${
+              className={`px-4 py-2 rounded-2xl text-xs md:text-sm font-medium border transition ${
                 v.available
                   ? "bg-black text-white border-black hover:bg-zinc-900"
                   : "bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed"
@@ -436,7 +441,7 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
           )}
           <button
             onClick={() => alert("Saved to wishlist (demo)")}
-            className="px-4 py-2 rounded-2xl text-sm font-medium border border-zinc-200 text-zinc-700 hover:border-zinc-800 hover:text-zinc-900 transition"
+            className="px-4 py-2 rounded-2xl text-xs md:text-sm font-medium border border-zinc-200 text-zinc-700 hover:border-zinc-800 hover:text-zinc-900 transition"
           >
             Save
           </button>
@@ -448,10 +453,11 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
 
 function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-12">
-      <h2 className="text-3xl font-bold text-zinc-900">Fleet</h2>
-      <p className="text-zinc-600 mt-2">
-        Hand-picked premium economy and luxury vehicles for every occasion.
+    <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
+      <h2 className="text-2xl md:text-3xl font-bold text-zinc-900">Fleet</h2>
+      <p className="text-zinc-600 mt-2 text-sm md:text-base">
+        Hand-picked premium economy, luxury, and exotic vehicles for every
+        occasion.
       </p>
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         {vehicles.map((v) => (
@@ -527,7 +533,11 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
-    async function handlePay() {
+  function toggleAmenity(key) {
+    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
@@ -540,14 +550,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       return;
     }
 
-    if (!customer.email) {
-      alert("Please enter an email so we can send your confirmation.");
-      return;
-    }
-
     const booking = {
       vehicleId: vehicle.id,
-      vehicleName: vehicle.name,
       startDate,
       endDate,
       days: billableDays,
@@ -570,47 +574,25 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
         amenitiesCost,
         riskAccepted,
       },
-      extrasTotal,
     };
 
-    try {
-      const res = await fetch("/api/booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ booking }),
-      });
-
-      if (!res.ok) {
-        console.error("Booking API error", await res.text());
-        alert(
-          "We had a problem submitting your booking. Please try again or contact us directly at reserve@rentwithasani.com."
-        );
-        return;
-      }
-
-      onComplete(booking);
-    } catch (err) {
-      console.error("Booking network error", err);
-      alert(
-        "We had a problem submitting your booking. Please try again or contact us directly at reserve@rentwithasani.com."
-      );
-    }
-  }
-
-  function toggleAmenity(key) {
-    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
+    alert("Demo mode: deposit not actually charged. Booking saved locally.");
+    onComplete(booking);
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
-        <button onClick={onBack} className="text-sm text-zinc-500 mb-4">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-4 md:p-6 max-h-[90vh] overflow-y-auto">
+        <button
+          onClick={onBack}
+          className="text-sm text-zinc-500 mb-4 hover:text-zinc-700"
+        >
           ← Back
         </button>
-        <h3 className="text-2xl font-bold text-zinc-900">
+        <h3 className="text-xl md:text-2xl font-bold text-zinc-900">
           Reserve — {vehicle.name}
         </h3>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-[11px] md:text-xs text-zinc-500">
           A $350 security deposit is collected now to hold your reservation.
           Rental charges and any extras are settled at vehicle pickup.
         </p>
@@ -622,7 +604,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
             />
           </label>
           <label className="flex flex-col text-sm text-zinc-700">
@@ -631,7 +613,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
             />
           </label>
           <label className="flex flex-col text-sm text-zinc-700">
@@ -641,7 +623,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
               onChange={(e) =>
                 setCustomer({ ...customer, fullName: e.target.value })
               }
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
               placeholder="John Doe"
             />
           </label>
@@ -652,7 +634,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
               onChange={(e) =>
                 setCustomer({ ...customer, email: e.target.value })
               }
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
               placeholder="you@domain.com"
             />
           </label>
@@ -663,7 +645,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
               onChange={(e) =>
                 setCustomer({ ...customer, phone: e.target.value })
               }
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
               placeholder="(555) 555-5555"
             />
           </label>
@@ -748,7 +730,9 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                       <input
                         type="checkbox"
                         checked={riskAccepted}
-                        onChange={(e) => setRiskAccepted(e.target.checked)}
+                        onChange={(e) =>
+                          setRiskAccepted(e.target.checked)
+                        }
                       />
                       <span>
                         I have reviewed this disclaimer and choose to accept all
@@ -837,7 +821,9 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setShowAmenitiesDetails((v) => !v)}
+                  onClick={() =>
+                    setShowAmenitiesDetails((v) => !v)
+                  }
                   className="mt-2 text-[11px] text-zinc-600 flex items-center gap-1"
                 >
                   <span className="inline-block text-xs font-semibold">
@@ -889,7 +875,9 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                 <span>
                   Rental ({billableDays} day{billableDays > 1 ? "s" : ""})
                 </span>
-                <span className="font-medium">{formatCurrency(subtotal)}</span>
+                <span className="font-medium">
+                  {formatCurrency(subtotal)}
+                </span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600">
                 <span>Protection & extras (est.)</span>
@@ -935,7 +923,9 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
               </p>
 
               <div className="border-t pt-2 mt-2 flex justify-between items-center">
-                <span className="text-xs text-zinc-600">Deposit due now</span>
+                <span className="text-xs text-zinc-600">
+                  Deposit due now
+                </span>
                 <span className="font-semibold text-base text-zinc-900">
                   {formatCurrency(deposit)}
                 </span>
@@ -999,22 +989,17 @@ function ProfilePage({
 
   async function handleLogin(e) {
     e.preventDefault();
-    try {
-      // Demo: no real auth
-      alert("Logged in (demo). No real authentication configured yet.");
-      setIsLoggedIn(true);
-      if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
-        setIsAdmin(true);
-      } else {
-        setIsAdmin(false);
-      }
-    } catch (err) {
-      console.error("Login error", err);
-      alert("Login failed (demo).");
+    // Demo login only
+    alert("Logged in (demo). No real authentication configured yet.");
+    setIsLoggedIn(true);
+    if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
     }
   }
 
-    async function handleCreate(e) {
+  function handleCreate(e) {
     e.preventDefault();
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
@@ -1027,25 +1012,8 @@ function ProfilePage({
     } else {
       setIsAdmin(false);
     }
-
-    // fire-and-forget welcome email
-    if (local.email) {
-      try {
-        await fetch("/api/profile-welcome", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fullName: local.fullName,
-            email: local.email,
-          }),
-        });
-      } catch (err) {
-        console.error("Profile welcome network error", err);
-      }
-    }
-
     alert(
-      "Profile created. We've sent a welcome email to your inbox."
+      "Profile created (demo). In production this will create a secure account."
     );
   }
 
@@ -1110,7 +1078,7 @@ function ProfilePage({
 
   if (!isLoggedIn) {
     return (
-      <section className="max-w-3xl mx-auto px-6 py-12">
+      <section className="max-w-3xl mx-auto px-4 md:px-6 py-10 md:py-12">
         <h2 className="text-2xl font-bold text-zinc-900">Your profile</h2>
         <p className="text-zinc-600 mt-2 text-sm">
           Sign in to your existing profile or create a new one to save your
@@ -1151,17 +1119,21 @@ function ProfilePage({
               type="email"
               required
               value={auth.email}
-              onChange={(e) => setAuth({ ...auth, email: e.target.value })}
+              onChange={(e) =>
+                setAuth({ ...auth, email: e.target.value })
+              }
               placeholder="Email"
-              className="p-3 border rounded"
+              className="p-3 border rounded text-sm"
             />
             <input
               type="password"
               required
               value={auth.password}
-              onChange={(e) => setAuth({ ...auth, password: e.target.value })}
+              onChange={(e) =>
+                setAuth({ ...auth, password: e.target.value })
+              }
               placeholder="Password"
-              className="p-3 border rounded"
+              className="p-3 border rounded text-sm"
             />
             <button
               type="submit"
@@ -1170,9 +1142,8 @@ function ProfilePage({
               Sign in
             </button>
             <p className="text-xs text-zinc-500">
-              In production, connect this form to your real auth API (JWT /
-              session based) to allow customers to log in and manage their
-              rentals securely.
+              In production, connect this form to your real auth API to allow
+              customers to log in and manage their rentals securely.
             </p>
           </form>
         ) : (
@@ -1186,7 +1157,7 @@ function ProfilePage({
                 setLocal({ ...local, fullName: e.target.value })
               }
               placeholder="Full name"
-              className="p-3 border rounded"
+              className="p-3 border rounded text-sm"
               required
             />
             <input
@@ -1196,7 +1167,7 @@ function ProfilePage({
                 setLocal({ ...local, email: e.target.value })
               }
               placeholder="Email"
-              className="p-3 border rounded"
+              className="p-3 border rounded text-sm"
               required
             />
             <input
@@ -1205,7 +1176,7 @@ function ProfilePage({
                 setLocal({ ...local, phone: e.target.value })
               }
               placeholder="Phone"
-              className="p-3 border rounded"
+              className="p-3 border rounded text-sm"
             />
             <input
               value={local.driversLicense}
@@ -1213,12 +1184,12 @@ function ProfilePage({
                 setLocal({ ...local, driversLicense: e.target.value })
               }
               placeholder="Driver's license #"
-              className="p-3 border rounded"
+              className="p-3 border rounded text-sm"
             />
             <input
               type="password"
               placeholder="Create a password"
-              className="p-3 border rounded"
+              className="p-3 border rounded text-sm"
               required
             />
             <button
@@ -1238,7 +1209,7 @@ function ProfilePage({
   }
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-12">
+    <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
       <h2 className="text-2xl font-bold text-zinc-900">Your profile</h2>
       <p className="text-zinc-600 mt-2 text-sm">
         Save your details for faster reservations and tailored offers.
@@ -1246,21 +1217,27 @@ function ProfilePage({
       <div className="mt-6 grid grid-cols-1 gap-4 max-w-xl">
         <input
           value={local.fullName}
-          onChange={(e) => setLocal({ ...local, fullName: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, fullName: e.target.value })
+          }
           placeholder="Full name"
-          className="p-3 border rounded"
+          className="p-3 border rounded text-sm"
         />
         <input
           value={local.email}
-          onChange={(e) => setLocal({ ...local, email: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, email: e.target.value })
+          }
           placeholder="Email"
-          className="p-3 border rounded"
+          className="p-3 border rounded text-sm"
         />
         <input
           value={local.phone}
-          onChange={(e) => setLocal({ ...local, phone: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, phone: e.target.value })
+          }
           placeholder="Phone"
-          className="p-3 border rounded"
+          className="p-3 border rounded text-sm"
         />
         <input
           value={local.driversLicense}
@@ -1268,7 +1245,7 @@ function ProfilePage({
             setLocal({ ...local, driversLicense: e.target.value })
           }
           placeholder="Driver's license #"
-          className="p-3 border rounded"
+          className="p-3 border rounded text-sm"
         />
         <div className="flex gap-3">
           <button
@@ -1359,7 +1336,11 @@ function ProfilePage({
                         type="checkbox"
                         checked={v.available !== false}
                         onChange={(e) =>
-                          updateVehicleField(v.id, "available", e.target.checked)
+                          updateVehicleField(
+                            v.id,
+                            "available",
+                            e.target.checked
+                          )
                         }
                       />
                     </div>
@@ -1486,12 +1467,8 @@ function ProfilePage({
 }
 
 function ChauffeurRequest() {
-  const [submitting, setSubmitting] = useState(false);
-
   async function handleSubmit(e) {
     e.preventDefault();
-    setSubmitting(true);
-
     const formData = new FormData(e.target);
     const payload = {
       name: formData.get("name"),
@@ -1505,6 +1482,7 @@ function ChauffeurRequest() {
       pickup: formData.get("pickup"),
       dropoff: formData.get("dropoff"),
       notes: formData.get("notes"),
+      to: COMPANY.email,
     };
 
     try {
@@ -1514,36 +1492,22 @@ function ChauffeurRequest() {
         body: JSON.stringify(payload),
       });
 
-      let data = null;
-      try {
-        data = await res.json();
-      } catch {
-        // if backend didn't send JSON, ignore & fall back to status
-      }
-
-      if (!res.ok || data?.ok === false) {
-        throw new Error(
-          data?.error || `Request failed with status ${res.status}`
-        );
-      }
-
+      if (!res.ok) throw new Error("Request failed");
       alert(
-        "Request submitted. We’ll contact you to confirm availability and pricing."
+        "Request submitted. Our team will contact you to confirm availability and pricing."
       );
       e.target.reset();
-    } catch (error) {
-      console.error("Chauffeur form error:", error);
+    } catch (err) {
+      console.error("Chauffeur request error", err);
       alert(
         "We had a problem submitting your request. Please try again or contact us directly at " +
           COMPANY.email
       );
-    } finally {
-      setSubmitting(false);
     }
   }
 
   return (
-    <section className="max-w-4xl mx-auto px-6 py-12">
+    <section className="max-w-4xl mx-auto px-4 md:px-6 py-10 md:py-12">
       <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
       <p className="mt-2 text-sm text-zinc-600">
         Request a professional chauffeur for a Sprinter, black SUV, elite luxury
@@ -1552,14 +1516,14 @@ function ChauffeurRequest() {
         elevated security.
       </p>
       <form
-        className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 border rounded-2xl bg-white"
+        className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 border rounded-2xl bg-white"
         onSubmit={handleSubmit}
       >
         <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
           Full name
           <input
             name="name"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             required
             placeholder="John Doe"
           />
@@ -1569,7 +1533,7 @@ function ChauffeurRequest() {
           <input
             name="email"
             type="email"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             required
             placeholder="you@domain.com"
           />
@@ -1578,7 +1542,7 @@ function ChauffeurRequest() {
           Phone
           <input
             name="phone"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             required
             placeholder="(555) 555-5555"
           />
@@ -1587,7 +1551,7 @@ function ChauffeurRequest() {
           Service type
           <select
             name="serviceType"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             defaultValue="sprinter"
           >
             <option value="sprinter">Sprinter</option>
@@ -1603,7 +1567,7 @@ function ChauffeurRequest() {
           <input
             name="date"
             type="date"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             required
           />
         </label>
@@ -1612,7 +1576,7 @@ function ChauffeurRequest() {
           <input
             name="time"
             type="time"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             required
           />
         </label>
@@ -1622,7 +1586,7 @@ function ChauffeurRequest() {
             name="passengers"
             type="number"
             min="1"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             placeholder="2"
           />
         </label>
@@ -1632,7 +1596,7 @@ function ChauffeurRequest() {
             name="hours"
             type="number"
             min="1"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             placeholder="4"
           />
         </label>
@@ -1640,7 +1604,7 @@ function ChauffeurRequest() {
           Pick-up location
           <input
             name="pickup"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             required
             placeholder="Hotel / address / airport"
           />
@@ -1649,7 +1613,7 @@ function ChauffeurRequest() {
           Drop-off or itinerary
           <input
             name="dropoff"
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             required
             placeholder="Destination or brief itinerary"
           />
@@ -1659,17 +1623,16 @@ function ChauffeurRequest() {
           <textarea
             name="notes"
             rows={4}
-            className="mt-2 p-2 border rounded"
+            className="mt-2 p-2 border rounded text-sm"
             placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
           />
         </label>
         <div className="md:col-span-2 flex justify-end">
           <button
             type="submit"
-            disabled={submitting}
-            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold"
           >
-            {submitting ? "Submitting..." : "Submit request"}
+            Submit request
           </button>
         </div>
       </form>
@@ -1678,17 +1641,14 @@ function ChauffeurRequest() {
 }
 
 function Contact() {
-  const [submitting, setSubmitting] = useState(false);
-
   async function handleSubmit(e) {
     e.preventDefault();
-    setSubmitting(true);
-
     const formData = new FormData(e.target);
     const payload = {
       name: formData.get("name"),
       email: formData.get("email"),
       message: formData.get("message"),
+      to: COMPANY.email,
     };
 
     try {
@@ -1698,54 +1658,40 @@ function Contact() {
         body: JSON.stringify(payload),
       });
 
-      let data = null;
-      try {
-        data = await res.json();
-      } catch {
-        // ignore JSON parse errors, fall back to status
-      }
-
-      if (!res.ok || data?.ok === false) {
-        throw new Error(
-          data?.error || `Request failed with status ${res.status}`
-        );
-      }
-
+      if (!res.ok) throw new Error("Request failed");
       alert("Message sent. We'll be in touch shortly.");
       e.target.reset();
-    } catch (error) {
-      console.error("Contact form error:", error);
+    } catch (err) {
+      console.error("Contact error", err);
       alert(
         "We had a problem submitting your message. Please try again or email us directly at " +
           COMPANY.email
       );
-    } finally {
-      setSubmitting(false);
     }
   }
 
   return (
-    <section className="max-w-4xl mx-auto px-6 py-12">
+    <section className="max-w-4xl mx-auto px-4 md:px-6 py-10 md:py-12">
       <h2 className="text-2xl font-bold text-zinc-900">Contact</h2>
       <div className="mt-4 text-zinc-600 text-sm">
         For reservations, partnerships, and corporate accounts:
       </div>
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="p-6 border rounded-2xl bg-white">
+        <div className="p-6 border rounded-2xl bg-white text-sm">
           <h3 className="font-semibold text-zinc-900">Asani Rentals</h3>
-          <p className="mt-2 text-sm text-zinc-700">{COMPANY.address}</p>
-          <p className="mt-1 text-sm text-zinc-700">{COMPANY.phone}</p>
-          <p className="mt-1 text-sm text-zinc-700">{COMPANY.email}</p>
+          <p className="mt-2 text-zinc-700">{COMPANY.address}</p>
+          <p className="mt-1 text-zinc-700">{COMPANY.phone}</p>
+          <p className="mt-1 text-zinc-700">{COMPANY.email}</p>
         </div>
         <form
-          className="p-6 border rounded-2xl bg-white"
+          className="p-6 border rounded-2xl bg-white text-sm"
           onSubmit={handleSubmit}
         >
           <label className="flex flex-col text-sm text-zinc-700">
             Name
             <input
               name="name"
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
               required
             />
           </label>
@@ -1753,7 +1699,7 @@ function Contact() {
             Email
             <input
               name="email"
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
               required
               type="email"
             />
@@ -1762,18 +1708,14 @@ function Contact() {
             Message
             <textarea
               name="message"
-              className="mt-2 p-2 border rounded"
+              className="mt-2 p-2 border rounded text-sm"
               rows={4}
               required
             />
           </label>
           <div className="mt-4">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 rounded-2xl bg-black text-white text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {submitting ? "Sending..." : "Send message"}
+            <button className="px-4 py-2 rounded-2xl bg-black text-white text-sm">
+              Send message
             </button>
           </div>
         </form>
@@ -1785,36 +1727,35 @@ function Contact() {
 function NewsletterForm({ onSign }) {
   const [email, setEmail] = useState("");
 
-    async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     if (!email) return;
-
-    try {
-      const res = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!res.ok) {
-        console.error("Newsletter API error", await res.text());
-        alert(
-          "We had a problem signing you up. Please try again later or email us directly."
-        );
-        return;
-      }
-
-      onSign(email);
-      setEmail("");
-      alert("You're signed up. We'll send offers to your inbox.");
-    } catch (err) {
-      console.error("Newsletter network error", err);
-      alert(
-        "We had a problem signing you up. Please try again later or email us directly."
-      );
-    }
+    onSign(email);
+    setEmail("");
+    alert("Signed up (demo). In production this will add you to our email list.");
   }
-  
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4">
+      <input
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="you@domain.com"
+        className="w-full p-3 border rounded text-sm"
+      />
+      <div className="mt-3 flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-2xl bg-black text-white text-sm"
+        >
+          Subscribe
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function App() {
   const [route, setRoute] = useState("home");
   const [vehicles, setVehicles] = useState(SAMPLE_VEHICLES);
@@ -1831,31 +1772,17 @@ function App() {
     console.log("Newsletter sign-up (demo):", email);
   }
 
-async function handleBookingComplete(booking) {
-  setBookings((b) => [...b, booking]);
-
-  // Mark the vehicle as unavailable once booked
-  setVehicles((prev) =>
-    prev.map((v) =>
-      v.id === booking.vehicleId ? { ...v, available: false } : v
-    )
-  );
-
-  // Notify backend to send email
-  try {
-    await fetch("/api/booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(booking),
-    });
-  } catch (err) {
-    console.error("Booking email error", err);
+  function handleBookingComplete(booking) {
+    setBookings((b) => [...b, booking]);
+    setVehicles((prev) =>
+      prev.map((v) =>
+        v.id === booking.vehicleId ? { ...v, available: false } : v
+      )
+    );
+    alert("Reservation created (demo). A confirmation email would be sent.");
+    setSelected(null);
+    setRoute("home");
   }
-
-  alert("Reservation created. You’ll receive a confirmation email shortly.");
-  setSelected(null);
-  setRoute("home");
-}
 
   const categories = vehicles.map((v) => v.category);
   const filteredSortedVehicles = applyVehicleFilters(
@@ -1876,7 +1803,7 @@ async function handleBookingComplete(booking) {
       {route === "home" && (
         <>
           <Hero onNav={(r) => setRoute(r)} />
-          <section className="max-w-6xl mx-auto px-6 py-12">
+          <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
             <FleetFilters
               categories={categories}
               filterCategory={filterCategory}
@@ -1893,7 +1820,7 @@ async function handleBookingComplete(booking) {
               canReserve={true}
             />
           </section>
-          <section className="max-w-6xl mx-auto px-6 pb-12 flex flex-col md:flex-row gap-6">
+          <section className="max-w-6xl mx-auto px-4 md:px-6 pb-12 flex flex-col md:flex-row gap-6">
             <div className="flex-1 p-6 border rounded-2xl shadow-sm bg-white">
               <h3 className="font-bold text-xl text-zinc-900">Why Asani</h3>
               <p className="mt-3 text-sm text-zinc-600">
@@ -1916,9 +1843,11 @@ async function handleBookingComplete(booking) {
       )}
 
       {route === "vehicles" && (
-        <section className="max-w-6xl mx-auto px-6 py-12">
-          <h2 className="text-3xl font-bold text-zinc-900">Fleet</h2>
-          <p className="text-zinc-600 mt-2">
+        <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-zinc-900">
+            Fleet
+          </h2>
+          <p className="text-zinc-600 mt-2 text-sm md:text-base">
             Explore our full range of premium economy, luxury, and exotic
             rentals.
           </p>
@@ -1934,7 +1863,7 @@ async function handleBookingComplete(booking) {
       )}
 
       {route === "book" && (
-        <section className="max-w-6xl mx-auto px-6 py-12">
+        <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
           <h2 className="text-2xl font-bold text-zinc-900">Reserve</h2>
           <p className="text-zinc-600 mt-2 text-sm">
             Filter by vehicle type, sort by price, then select a vehicle to
@@ -1983,15 +1912,17 @@ async function handleBookingComplete(booking) {
       {route === "contact" && <Contact />}
 
       <footer className="border-t border-zinc-800 mt-12 bg-black">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between text-sm text-zinc-400">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 flex flex-col sm:flex-row items-center justify-between text-sm text-zinc-400">
           <div className="space-y-1 text-center sm:text-left">
-            <div>© {new Date().getFullYear()} {COMPANY.name}</div>
+            <div>
+              © {new Date().getFullYear()} {COMPANY.name}
+            </div>
             <div className="text-xs text-zinc-500">
               Premium economy to luxury rentals • Business • Events • Private
               travel
             </div>
           </div>
-          <div className="mt-4 sm:mt-0 text-center sm:text-right space-y-1">
+          <div className="mt-4 sm:mt-0 text-center sm:text-right space-y-1 text-xs md:text-sm">
             <div>{COMPANY.address}</div>
             <div>
               Phone: {COMPANY.phone} • Email: {COMPANY.email}
