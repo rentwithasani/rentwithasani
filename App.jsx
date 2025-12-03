@@ -551,62 +551,67 @@ async function handlePay() {
     return;
   }
 
-  const booking = {
-    vehicleId: vehicle.id,
-    vehicleName: vehicle.name,
-    startDate,
-    endDate,
-    days: billableDays,
-    subtotal,
-    deposit,
-    total,
+  const bookingPayload = {
+    vehicle,
     customer,
-    extras: {
-      insurance,
-      insuranceDailyRate,
-      insuranceCost,
-      ezPass,
-      ezPassDailyRate,
-      ezPassCost,
-      prepayFuel,
-      fuelPrepayCost,
-      amenities,
-      amenityDailyRate,
-      amenityCount,
-      amenitiesCost,
-      riskAccepted,
+    booking: {
+      startDate,
+      endDate,
+      days: billableDays,
+      subtotal,
+      total,
+      deposit,
+      extrasTotal: extrasTotal,
+      extras: {
+        insurance,
+        insuranceDailyRate,
+        insuranceCost,
+        ezPass,
+        ezPassDailyRate,
+        ezPassCost,
+        prepayFuel,
+        fuelPrepayCost,
+        amenities,
+        amenityDailyRate,
+        amenityCount,
+        amenitiesCost,
+        riskAccepted,
+      },
     },
   };
 
-  // Call backend to log booking + send email
   try {
-    const res = await fetch("/api/booking", {
+    const response = await fetch("/api/booking", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ booking }),
+      body: JSON.stringify(bookingPayload),
     });
 
-    if (!res.ok) {
-      console.error("Booking API responded with error", await res.text());
+    if (!response.ok) {
+      console.error("Booking API error:", await response.text());
       alert(
-        "We had a problem submitting your booking, but we saved it locally. Please contact us directly at " +
-          COMPANY.email
+        "We had a problem submitting your booking, but we saved it locally. Please contact us directly at reserve@rentwithasani.com."
       );
-    } else {
-      alert(
-        "Your reservation request has been submitted. We'll review and confirm by email."
-      );
+      // still let the UI mark it as booked locally
+      onComplete(bookingPayload.booking);
+      return;
     }
-  } catch (err) {
-    console.error("Booking API network error:", err);
-    alert(
-      "We had a problem submitting your booking, but we saved it locally. Please contact us directly at " +
-        COMPANY.email
-    );
-  }
 
-  // Always keep local behavior too (updates UI and marks car unavailable)
-  onComplete(booking);
+    const data = await response.json();
+    console.log("Booking API success:", data);
+
+    // mark it as booked in the front-end + show proper success message
+    onComplete(bookingPayload.booking);
+    alert(
+      `Reservation created. A confirmation email has been sent to ${customer.email}.`
+    );
+  } catch (err) {
+    console.error("Booking network error:", err);
+    alert(
+      "We had a problem submitting your booking, but we saved it locally. Please contact us directly at reserve@rentwithasani.com."
+    );
+    onComplete(bookingPayload.booking);
+  }
 }
   
   return (
