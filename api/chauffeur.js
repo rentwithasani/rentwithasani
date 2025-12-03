@@ -1,17 +1,22 @@
+// api/chauffeur.js
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-/**
- * Vercel serverless function for POST /api/chauffeur
- */
+// TEMP: while Resend is in test mode, ALL requests go to your Gmail.
+// Once your domain is verified, change this to reserve@rentwithasani.com
+const TO_EMAIL = "rentwithasani@gmail.com";
+
+// Vercel Node serverless function
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
-    return res.status(405).json({ error: "Method not allowed" });
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   try {
+    const body = req.body || {};
+
     const {
       name,
       email,
@@ -24,41 +29,44 @@ export default async function handler(req, res) {
       pickup,
       dropoff,
       notes,
-    } = req.body || {};
+    } = body;
 
-    if (!name || !email || !phone || !serviceType || !date || !time || !pickup || !dropoff) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+    const subject = `New chauffeur request from ${name || "Unknown guest"}`;
 
-    const subject = `New chauffeur request from ${name}`;
     const html = `
       <h2>New Chauffeur Request</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${phone}</p>
-      <p><strong>Service type:</strong> ${serviceType}</p>
-      <p><strong>Date:</strong> ${date}</p>
-      <p><strong>Time:</strong> ${time}</p>
-      <p><strong>Passengers:</strong> ${passengers || "-"} </p>
-      <p><strong>Estimated hours:</strong> ${hours || "-"} </p>
-      <p><strong>Pickup:</strong> ${pickup}</p>
-      <p><strong>Dropoff / itinerary:</strong> ${dropoff}</p>
-      <p><strong>Notes:</strong><br/>${notes || "(none)"}</p>
+      <p><strong>Name:</strong> ${name || ""}</p>
+      <p><strong>Email:</strong> ${email || ""}</p>
+      <p><strong>Phone:</strong> ${phone || ""}</p>
+      <p><strong>Service type:</strong> ${serviceType || ""}</p>
+      <p><strong>Date:</strong> ${date || ""}</p>
+      <p><strong>Time:</strong> ${time || ""}</p>
+      <p><strong>Passengers:</strong> ${passengers || ""}</p>
+      <p><strong>Estimated hours:</strong> ${hours || ""}</p>
+      <p><strong>Pickup:</strong> ${pickup || ""}</p>
+      <p><strong>Drop-off / itinerary:</strong> ${dropoff || ""}</p>
+      <p><strong>Notes:</strong></p>
+      <p>${(notes || "").replace(/\n/g, "<br />")}</p>
     `;
 
-    const from = process.env.RESEND_FROM_EMAIL || "no-reply@example.com";
-    const to = "reserve@rentwithasani.com";
+    const from =
+      process.env.RESEND_FROM_EMAIL || "Asani Rentals <onboarding@resend.dev>";
 
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from,
-      to,
+      to: TO_EMAIL,
       subject,
       html,
     });
 
+    console.log("Chauffeur email sent:", result);
+
     return res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error("Chauffeur API error", err);
-    return res.status(500).json({ error: "Failed to send email" });
+  } catch (error) {
+    console.error("Chauffeur API error:", error);
+    return res.status(500).json({
+      ok: false,
+      error: error?.message || "Unknown error",
+    });
   }
 }
