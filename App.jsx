@@ -551,66 +551,95 @@ async function handlePay() {
     return;
   }
 
-  const bookingPayload = {
-    vehicle,
-    customer,
-    booking: {
-      startDate,
-      endDate,
-      days: billableDays,
-      subtotal,
-      total,
-      deposit,
-      extrasTotal: extrasTotal,
-      extras: {
-        insurance,
-        insuranceDailyRate,
-        insuranceCost,
-        ezPass,
-        ezPassDailyRate,
-        ezPassCost,
-        prepayFuel,
-        fuelPrepayCost,
-        amenities,
-        amenityDailyRate,
-        amenityCount,
-        amenitiesCost,
-        riskAccepted,
-      },
+  const booking = {
+    vehicleId: vehicle.id,
+    startDate,
+    endDate,
+    days: billableDays,
+    subtotal,
+    total,
+    deposit,
+    extras: {
+      insurance,
+      insuranceDailyRate,
+      insuranceCost,
+      ezPass,
+      ezPassDailyRate,
+      ezPassCost,
+      prepayFuel,
+      fuelPrepayCost,
+      amenities,
+      amenityDailyRate,
+      amenityCount,
+      amenitiesCost,
+      riskAccepted,
     },
   };
 
+  // Text summary that goes in the email
+  const summary = `
+Vehicle: ${vehicle.name}
+Rate: $${vehicle.pricePerDay}/day
+Color: ${vehicle.color || "N/A"}
+
+Customer:
+- Name: ${customer.fullName || "N/A"}
+- Email: ${customer.email || "N/A"}
+- Phone: ${customer.phone || "N/A"}
+
+Trip:
+- Start date: ${startDate}
+- End date: ${endDate}
+- Days: ${billableDays}
+- Estimated rental subtotal: $${subtotal.toFixed(2)}
+
+Extras (estimate):
+- Protection: ${insurance === "asani" ? "$" + insuranceCost.toFixed(2) : "declined"}
+- EZ-Pass / toll device: ${ezPass ? "$" + ezPassCost.toFixed(2) : "not added"}
+- Prepaid fuel: ${prepayFuel ? "$" + fuelPrepayCost.toFixed(2) : "not added"}
+- Child seat / amenities: ${
+    amenitiesCost > 0 ? "$" + amenitiesCost.toFixed(2) : "none selected"
+  }
+
+Estimated total (excluding final taxes/fees): $${total.toFixed(2)}
+Deposit due now: $${deposit.toFixed(2)}
+`.trim();
+
+  const payload = {
+    type: "booking",
+    subject: `Booking request — ${vehicle.name}`,
+    name: customer.fullName,
+    email: customer.email,
+    phone: customer.phone,
+    message: summary,
+  };
+
   try {
-    const response = await fetch("/api/booking", {
+    const response = await fetch("/api/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bookingPayload),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      console.error("Booking API error:", await response.text());
+      console.error("Booking email API error:", await response.text());
       alert(
-        "We had a problem submitting your booking, but we saved it locally. Please contact us directly at reserve@rentwithasani.com."
+        "We had a problem sending the booking email, but your reservation details are saved on this device. Please contact us directly at reserve@rentwithasani.com."
       );
-      // still let the UI mark it as booked locally
-      onComplete(bookingPayload.booking);
+      onComplete(booking);
       return;
     }
 
-    const data = await response.json();
-    console.log("Booking API success:", data);
-
-    // mark it as booked in the front-end + show proper success message
-    onComplete(bookingPayload.booking);
+    onComplete(booking);
     alert(
-      `Reservation created. A confirmation email has been sent to ${customer.email}.`
+      `Reservation created. A confirmation email has been sent to ${customer.email || "your email"}.`
     );
   } catch (err) {
-    console.error("Booking network error:", err);
+    console.error("Booking email network error:", err);
     alert(
-      "We had a problem submitting your booking, but we saved it locally. Please contact us directly at reserve@rentwithasani.com."
+      "We had a problem sending the booking email, but your reservation details are saved on this device. Please contact us directly at reserve@rentwithasani.com."
     );
-    onComplete(bookingPayload.booking);
+    onComplete(booking);
   }
 }
   
