@@ -9,7 +9,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const COMPANY = {
   name: "Asani Rentals",
-  address: "1001 S Main #8227, Kalispell, MT 59901",
+  address: "1001 S Main Suite:#8227, Kalispell, MT 59901",
   phone: "732-470-8233",
   email: "reserve@rentwithasani.com",
 };
