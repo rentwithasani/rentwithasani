@@ -587,7 +587,9 @@ async function handlePay() {
   };
 
   try {
-    // 1. Save to Supabase
+    // ---------------------------
+    // 1. SAVE BOOKING TO SUPABASE
+    // ---------------------------
     const { error } = await supabase.from("bookings").insert({
       user_email: customer.email,
       vehicle_id: booking.vehicleId,
@@ -604,14 +606,16 @@ async function handlePay() {
     if (error) {
       console.error("Supabase booking insert error", error);
       alert(
-        "We had a problem saving your booking. Please contact us directly at " +
-          COMPANY.email
+        "We had a problem saving your booking. Please contact us directly at reserve@rentwithasani.com."
       );
       return;
     }
 
-    // 2. Create Stripe Checkout session
+    // ---------------------------
+    // 2. STRIPE CHECKOUT SESSION
+    // ---------------------------
     const stripe = await stripePromise;
+
     const res = await fetch("/api/create-checkout-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -623,10 +627,9 @@ async function handlePay() {
     });
 
     if (!res.ok) {
-      console.error("Stripe checkout session error", await res.text());
+      console.error("Stripe checkout session error:", await res.text());
       alert(
-        "We had a problem starting the payment. Please contact us directly at " +
-          COMPANY.email
+        "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
       );
       return;
     }
@@ -634,29 +637,26 @@ async function handlePay() {
     const data = await res.json();
 
     if (data.url) {
-      // Redirect user to Stripe-hosted checkout page
       window.location.href = data.url;
       return;
     }
 
-    // Fallback: use stripe.redirectToCheckout if id only
     if (data.id) {
       const result = await stripe.redirectToCheckout({
         sessionId: data.id,
       });
+
       if (result.error) {
         console.error(result.error);
         alert(
-          "Payment could not be started. Please contact us directly at " +
-            COMPANY.email
+          "Payment could not be started. Please contact us directly at reserve@rentwithasani.com."
         );
       }
     }
   } catch (err) {
     console.error("Booking + payment error", err);
     alert(
-      "We had a problem submitting your booking. Please contact us directly at " +
-        COMPANY.email
+      "We had a problem submitting your booking. Please contact us directly at reserve@rentwithasani.com."
     );
   }
 }
