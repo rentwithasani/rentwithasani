@@ -486,7 +486,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     email: "",
     phone: "",
   });
-  const [insurance, setInsurance] = useState("none"); // "none" | "asani"
+  const [insurance, setInsurance] = useState("none"); // "none" | "asani" (third-party protection)
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
   const [prepayFuel, setPrepayFuel] = useState(false);
@@ -537,209 +537,147 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
+  // ⬇⬇⬇  IMPORTANT: async function, so await is allowed ⬇⬇⬇
+  async function handlePay() {
+    if (!startDate || !endDate) {
+      alert("Please select your start and end dates.");
+      return;
+    }
+
+    if (!customer.email) {
+      alert("Please enter your email so we can send your confirmation.");
+      return;
+    }
+
+    if (insurance === "none" && !riskAccepted) {
+      alert(
+        "Please confirm that you understand and accept the risk of driving without the optional protection plan."
+      );
+      return;
+    }
+
+    const booking = {
+      vehicleId: vehicle.id,
+      vehicleName: vehicle.name,
+      startDate,
+      endDate,
+      days: billableDays,
+      subtotal,
+      deposit,
+      total,
+      customer,
+      extras: {
+        insurance,
+        insuranceDailyRate,
+        insuranceCost,
+        ezPass,
+        ezPassDailyRate,
+        ezPassCost,
+        prepayFuel,
+        fuelPrepayCost,
+        amenities,
+        amenityDailyRate,
+        amenityCount,
+        amenitiesCost,
+        riskAccepted,
+      },
+    };
+
+    try {
+      // 1) Save booking in Supabase (if configured)
+      if (typeof supabase !== "undefined") {
+        const { error } = await supabase.from("bookings").insert({
+          user_email: customer.email,
+          vehicle_id: booking.vehicleId,
+          vehicle_name: booking.vehicleName,
+          start_date: booking.startDate,
+          end_date: booking.endDate,
+          days: booking.days,
+          subtotal: booking.subtotal,
+          deposit: booking.deposit,
+          total: booking.total,
+          extras: booking.extras,
+        });
+
+        if (error) {
+          console.error("Supabase booking insert error", error);
+          alert(
+            "We had a problem saving your booking. Please contact us directly at reserve@rentwithasani.com."
+          );
+          return;
+        }
+      }
+
+      // 2) Create Stripe Checkout Session (if stripePromise is set up)
+      if (typeof stripePromise !== "undefined") {
+        const stripe = await stripePromise;
+
+        const res = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: customer.email,
+            vehicleName: vehicle.name,
+            depositAmount: deposit,
+          }),
+        });
+
+        if (!res.ok) {
+          console.error("Stripe checkout session error:", await res.text());
+          alert(
+            "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
+          );
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.url) {
+          // If your API returns a URL, just redirect to it
+          window.location.href = data.url;
+          return;
+        }
+
+        if (data.id) {
+          // Or use redirectToCheckout if you return a sessionId
+          const result = await stripe.redirectToCheckout({
+            sessionId: data.id,
+          });
+
+          if (result.error) {
+            console.error(result.error);
+            alert(
+              "Payment could not be started. Please contact us directly at reserve@rentwithasani.com."
+            );
+            return;
+          }
+        }
+      }
+
+      // 3) Let parent know booking is created (local state)
+      onComplete(booking);
+    } catch (err) {
+      console.error("Booking + payment error", err);
+      alert(
+        "We had a problem submitting your booking. Please contact us directly at reserve@rentwithasani.com."
+      );
+    }
+  }
+
   function toggleAmenity(key) {
     setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-async function handlePay() {
-  if (!startDate || !endDate) {
-    alert("Please select your start and end dates.");
-    return;
-  }
-
-  if (!customer.email) {
-    alert("Please enter your email so we can send your confirmation.");
-    return;
-  }
-
-  if (insurance === "none" && !riskAccepted) {
-    alert(
-      "Please confirm that you understand and accept the risk of driving without the optional protection plan."
-    );
-    return;
-  }
-
-  const booking = {
-    vehicleId: vehicle.id,
-    vehicleName: vehicle.name,
-    startDate,
-    endDate,
-    days: billableDays,
-    subtotal,
-    deposit,
-    total,
-    customer,
-    extras: {
-      insurance,
-      insuranceDailyRate,
-      insuranceCost,
-      ezPass,
-      ezPassDailyRate,
-      ezPassCost,
-      prepayFuel,
-      fuelPrepayCost,
-      amenities,
-      amenityDailyRate,
-      amenityCount,
-      amenitiesCost,
-      riskAccepted,
-    },
-  };
-
-  try {
-    // ---------------------------
-    // 1. SAVE BOOKING TO SUPABASE
-    // ---------------------------
-    const { error } = await supabase.from("bookings").insert({
-      user_email: customer.email,
-      vehicle_id: booking.vehicleId,
-      vehicle_name: booking.vehicleName,
-      start_date: booking.startDate,
-      end_date: booking.endDate,
-      days: booking.days,
-      subtotal: booking.subtotal,
-      deposit: booking.deposit,
-      total: booking.total,
-      extras: booking.extras,
-    });
-
-    if (error) {
-      console.error("Supabase booking insert error", error);
-      alert(
-        "We had a problem saving your booking. Please contact us directly at reserve@rentwithasani.com."
-      );
-      return;
-    }
-
-    // ---------------------------
-    // 2. STRIPE CHECKOUT SESSION
-    // ---------------------------
-    const stripe = await stripePromise;
-
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: customer.email,
-        vehicleName: vehicle.name,
-        depositAmount: deposit,
-      }),
-    });
-
-    if (!res.ok) {
-      console.error("Stripe checkout session error:", await res.text());
-      alert(
-        "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
-      );
-      return;
-    }
-
-    const data = await res.json();
-
-    if (data.url) {
-      window.location.href = data.url;
-      return;
-    }
-
-    if (data.id) {
-      const result = await stripe.redirectToCheckout({
-        sessionId: data.id,
-      });
-
-      if (result.error) {
-        console.error(result.error);
-        alert(
-          "Payment could not be started. Please contact us directly at reserve@rentwithasani.com."
-        );
-      }
-    }
-  } catch (err) {
-    console.error("Booking + payment error", err);
-    alert(
-      "We had a problem submitting your booking. Please contact us directly at reserve@rentwithasani.com."
-    );
-  }
-}
-  // Text summary that goes in the email
-  const summary = `
-Vehicle: ${vehicle.name}
-Rate: $${vehicle.pricePerDay}/day
-Color: ${vehicle.color || "N/A"}
-
-Customer:
-- Name: ${customer.fullName || "N/A"}
-- Email: ${customer.email || "N/A"}
-- Phone: ${customer.phone || "N/A"}
-
-Trip:
-- Start date: ${startDate}
-- End date: ${endDate}
-- Days: ${billableDays}
-- Estimated rental subtotal: $${subtotal.toFixed(2)}
-
-Extras (estimate):
-- Protection: ${insurance === "asani" ? "$" + insuranceCost.toFixed(2) : "declined"}
-- EZ-Pass / toll device: ${ezPass ? "$" + ezPassCost.toFixed(2) : "not added"}
-- Prepaid fuel: ${prepayFuel ? "$" + fuelPrepayCost.toFixed(2) : "not added"}
-- Child seat / amenities: ${
-    amenitiesCost > 0 ? "$" + amenitiesCost.toFixed(2) : "none selected"
-  }
-
-Estimated total (excluding final taxes/fees): $${total.toFixed(2)}
-Deposit due now: $${deposit.toFixed(2)}
-`.trim();
-
-  const payload = {
-    type: "booking",
-    subject: `Booking request — ${vehicle.name}`,
-    name: customer.fullName,
-    email: customer.email,
-    phone: customer.phone,
-    message: summary,
-  };
-
-  try {
-    const response = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      console.error("Booking email API error:", await response.text());
-      alert(
-        "We had a problem sending the booking email, but your reservation details are saved on this device. Please contact us directly at reserve@rentwithasani.com."
-      );
-      onComplete(booking);
-      return;
-    }
-
-    onComplete(booking);
-    alert(
-      `Reservation created. A confirmation email has been sent to ${customer.email || "your email"}.`
-    );
-  } catch (err) {
-    console.error("Booking email network error:", err);
-    alert(
-      "We had a problem sending the booking email, but your reservation details are saved on this device. Please contact us directly at reserve@rentwithasani.com."
-    );
-    onComplete(booking);
-  }
-}
-  
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-4 md:p-6 max-h-[90vh] overflow-y-auto">
-        <button
-          onClick={onBack}
-          className="text-sm text-zinc-500 mb-4 hover:text-zinc-700"
-        >
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+        <button onClick={onBack} className="text-sm text-zinc-500 mb-4">
           ← Back
         </button>
-        <h3 className="text-xl md:text-2xl font-bold text-zinc-900">
+        <h3 className="text-2xl font-bold text-zinc-900">
           Reserve — {vehicle.name}
         </h3>
-        <p className="mt-1 text-[11px] md:text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-zinc-500">
           A $350 security deposit is collected now to hold your reservation.
           Rental charges and any extras are settled at vehicle pickup.
         </p>
@@ -751,7 +689,7 @@ Deposit due now: $${deposit.toFixed(2)}
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-2 p-2 border rounded text-sm"
+              className="mt-2 p-2 border rounded"
             />
           </label>
           <label className="flex flex-col text-sm text-zinc-700">
@@ -760,7 +698,7 @@ Deposit due now: $${deposit.toFixed(2)}
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-2 p-2 border rounded text-sm"
+              className="mt-2 p-2 border rounded"
             />
           </label>
           <label className="flex flex-col text-sm text-zinc-700">
@@ -770,7 +708,7 @@ Deposit due now: $${deposit.toFixed(2)}
               onChange={(e) =>
                 setCustomer({ ...customer, fullName: e.target.value })
               }
-              className="mt-2 p-2 border rounded text-sm"
+              className="mt-2 p-2 border rounded"
               placeholder="John Doe"
             />
           </label>
@@ -781,7 +719,7 @@ Deposit due now: $${deposit.toFixed(2)}
               onChange={(e) =>
                 setCustomer({ ...customer, email: e.target.value })
               }
-              className="mt-2 p-2 border rounded text-sm"
+              className="mt-2 p-2 border rounded"
               placeholder="you@domain.com"
             />
           </label>
@@ -792,7 +730,7 @@ Deposit due now: $${deposit.toFixed(2)}
               onChange={(e) =>
                 setCustomer({ ...customer, phone: e.target.value })
               }
-              className="mt-2 p-2 border rounded text-sm"
+              className="mt-2 p-2 border rounded"
               placeholder="(555) 555-5555"
             />
           </label>
@@ -877,9 +815,7 @@ Deposit due now: $${deposit.toFixed(2)}
                       <input
                         type="checkbox"
                         checked={riskAccepted}
-                        onChange={(e) =>
-                          setRiskAccepted(e.target.checked)
-                        }
+                        onChange={(e) => setRiskAccepted(e.target.checked)}
                       />
                       <span>
                         I have reviewed this disclaimer and choose to accept all
@@ -968,9 +904,7 @@ Deposit due now: $${deposit.toFixed(2)}
                 </p>
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowAmenitiesDetails((v) => !v)
-                  }
+                  onClick={() => setShowAmenitiesDetails((v) => !v)}
                   className="mt-2 text-[11px] text-zinc-600 flex items-center gap-1"
                 >
                   <span className="inline-block text-xs font-semibold">
@@ -1022,9 +956,7 @@ Deposit due now: $${deposit.toFixed(2)}
                 <span>
                   Rental ({billableDays} day{billableDays > 1 ? "s" : ""})
                 </span>
-                <span className="font-medium">
-                  {formatCurrency(subtotal)}
-                </span>
+                <span className="font-medium">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between text-xs text-zinc-600">
                 <span>Protection & extras (est.)</span>
@@ -1070,9 +1002,7 @@ Deposit due now: $${deposit.toFixed(2)}
               </p>
 
               <div className="border-t pt-2 mt-2 flex justify-between items-center">
-                <span className="text-xs text-zinc-600">
-                  Deposit due now
-                </span>
+                <span className="text-xs text-zinc-600">Deposit due now</span>
                 <span className="font-semibold text-base text-zinc-900">
                   {formatCurrency(deposit)}
                 </span>
