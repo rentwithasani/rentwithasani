@@ -1,24 +1,25 @@
 // api/create-checkout-session.js
-const Stripe = require("stripe");
+import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
-    res.status(405).json({ error: "Method Not Allowed" });
-    return;
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   try {
-    const { email, vehicleName, depositAmount } = req.body;
+    const { email, vehicleName, depositAmount } = req.body || {};
 
     if (!email || !vehicleName || !depositAmount) {
-      res.status(400).json({ error: "Missing required fields" });
-      return;
+      return res.status(400).json({ error: "Missing required fields." });
     }
 
-    // Convert dollars to cents for Stripe
-    const amountInCents = Math.round(Number(depositAmount) * 100);
+    const origin =
+      req.headers.origin ||
+      process.env.FRONTEND_URL ||
+      "https://rentwithasani.com";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -31,23 +32,25 @@ module.exports = async (req, res) => {
             product_data: {
               name: `Reservation deposit — ${vehicleName}`,
             },
-            unit_amount: amountInCents,
+            unit_amount: Math.round(Number(depositAmount) * 100),
           },
           quantity: 1,
         },
       ],
-      // Where Stripe sends customer after payment or cancel
-      success_url: `${req.headers.origin}/?status=success`,
-      cancel_url: `${req.headers.origin}/?status=cancelled`,
+      success_url: `${origin}/?booking=success`,
+      cancel_url: `${origin}/?booking=cancelled`,
       metadata: {
         vehicleName,
+        email,
+        purpose: "reservation_deposit",
       },
     });
 
-    // We're using the session's hosted URL
-    res.status(200).json({ url: session.url });
+    return res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error("Stripe checkout error", err);
-    res.status(500).json({ error: "Stripe error" });
+    console.error("Stripe Checkout session error:", err);
+    return res.status(500).json({
+      error: "Unable to create checkout session.",
+    });
   }
-};
+}
