@@ -1,8 +1,10 @@
-// App.jsx
 import React, { useState, useEffect } from "react";
-import { supabase } from "./lib/supabaseClient";
+import { supabase } from "./lib/supabaseClient.js";
+import { loadStripe } from "@stripe/stripe-js";
 
-// --- Company info ---
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+// Company info
 const COMPANY = {
   name: "Asani Rentals",
   address: "1001 S Main #8227, Kalispell, MT 59901",
@@ -10,7 +12,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
 };
 
-// --- Fleet data ---
+// Fleet data
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
@@ -19,8 +21,8 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 120,
     color: "Estoril Blue Metallic",
-    deposit: 350,
-    image: "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
+    image:
+      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
     description:
       "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
@@ -32,7 +34,6 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Urban Gray Pearl",
-    deposit: 350,
     image:
       "https://vehicle-images.dealerinspire.com/3dc5-110004598/thumbnails/large/7FARS6H54SE100583/c7206170b726e1316bdc1efa8374f7ae.png",
     description:
@@ -46,7 +47,6 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 90,
     color: "Silver",
-    deposit: 350,
     image:
       "https://cdn.jdpower.com/ChromeImageGallery/Expanded/Transparent/640/2023NIC10_640/2023NIC100001_640_01.png",
     description:
@@ -60,7 +60,6 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 75,
     color: "Grey",
-    deposit: 350,
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_500/v1/svp/dep/21kiafortelxssd3t/kia_21fortelxssd3t_angularfront_gravitygray",
     description:
@@ -74,7 +73,6 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 1500,
     color: "Yellow",
-    deposit: 2500,
     image:
       "https://www.lamborghinilongisland.com/imagetag/2333/main/l/New-2019-Lamborghini-Urus-1540414873.jpg",
     description:
@@ -88,7 +86,6 @@ const SAMPLE_VEHICLES = [
     seats: 4,
     pricePerDay: 1800,
     color: "Black",
-    deposit: 3000,
     image:
       "https://www.motortrend.com/uploads/2021/12/2022-Rolls-Royce-Ghost.png",
     description:
@@ -102,7 +99,6 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Metallic Grey",
-    deposit: 500,
     image:
       "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/DDcY5uJ1Hoc2PfKiaPzOoTor54RCDSxmNSMjhIMjMcSABjV1Plsg4az8WgGOqVD42Px_fBnRGfbq6YMoQr9Bwgwa4vs3hsjk7OZwcAD2au-Xj2_jOK1rejFnAEpjN8liQtu0_zWdBrt_zZ94kYd0yB-LZ9J239IX_tK5l7rorkk7c-qGpYTQuQ/cc_2025BMC222011556_01_640_668.png",
     description:
@@ -116,7 +112,6 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 220,
     color: "Jet Black",
-    deposit: 600,
     image:
       "https://carimage.d2cmedia.ca/newcars/cb69187e12c4b7b/2025/BMW/5%20Series/MjkxNDg1Xk1lZGlhIEdhbGxlcnk/JlYkWPtHQFHv5iyaE-0ElTJMKcsUkrV6zIwqpULTTzGVYff8AQdRoGb1LNE0kkF9LvxKak38yajBbDVqH2GXAoRwzfyli_8oNZdafozz4_Dvo0JFYpvJ_UML5RdQUqO_jzWxRcM0gc3Bc81o31C4CvRZFRAQKi_vDV1JkK3TadD8KjHDqD6yhOUe0oYKZe3bJaoUf8IXQeI/cc_2025BMC071956866_01_1280_A90.png",
     description:
@@ -130,7 +125,6 @@ const SAMPLE_VEHICLES = [
     seats: 4,
     pricePerDay: 350,
     color: "Obsidian Black",
-    deposit: 800,
     image:
       "https://vehicle-images.dealerinspire.com/stock-images/chrome/d5bcd7597123f034ff8aca12872d03e6.png",
     description:
@@ -144,7 +138,6 @@ const SAMPLE_VEHICLES = [
     seats: 7,
     pricePerDay: 350,
     color: "Black",
-    deposit: 900,
     image:
       "https://d2ivfcfbdvj3sm.cloudfront.net/8nQjctTo7dtJ6WW6/54121/stills_0640_png/MY2024/54121/54121_st0640_116.webp?c=172&p=164&m=1&o=png&s=wuewtb27_XAtqo0e5m3jQS",
     description:
@@ -158,7 +151,6 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 950,
     color: "Matte Black",
-    deposit: 2000,
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_600/v1/svp/dep/25mercedesbenzgclassamgg63suv/mercedesbenz_25gclassamgg63suv_angularfront_black",
     description:
@@ -167,6 +159,22 @@ const SAMPLE_VEHICLES = [
   },
 ];
 
+// Deposit amounts per vehicle (as you requested)
+const DEPOSITS = {
+  "Lamborghini Urus": 1500,
+  "Rolls Royce Ghost": 2000,
+  "Cadillac Escalade": 750,
+  "Mercedes S Class": 750,
+  "Mercedes G-Wagon G63 AMG": 1000,
+  "Kia Forte": 350,
+  "Honda CR-V Hybrid Sport": 350,
+  "Nissan Versa": 350,
+  "BMW X1 M Package": 350,
+  "BMW 3 Series": 500,
+  "BMW 5 Series": 500,
+};
+
+// Hero slides
 const HERO_SLIDES = [
   {
     id: "s1",
@@ -206,10 +214,10 @@ const HERO_SLIDES = [
 ];
 
 function formatCurrency(n) {
-  return `$${Number(n).toFixed(2)}`;
+  return `$${n.toFixed(2)}`;
 }
 
-// --- Filters helper ---
+// Filtering + sorting helper
 function applyVehicleFilters(vehicles, filterCategory, sortOrder) {
   let result = [...vehicles];
   if (filterCategory && filterCategory !== "all") {
@@ -222,8 +230,6 @@ function applyVehicleFilters(vehicles, filterCategory, sortOrder) {
   }
   return result;
 }
-
-// --- UI Components ---
 
 function FleetFilters({
   categories,
@@ -451,7 +457,7 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
             </button>
           )}
           <button
-            onClick={() => alert("Saved to wishlist.")}
+            onClick={() => alert("Saved to wishlist (demo)")}
             className="px-4 py-2 rounded-2xl text-xs md:text-sm font-medium border border-zinc-200 text-zinc-700 hover:border-zinc-800 hover:text-zinc-900 transition"
           >
             Save
@@ -484,41 +490,17 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
   );
 }
 
-function BookingPanel({ vehicle, profile, onBack, onComplete }) {
+function BookingPanel({ vehicle, onBack, onComplete, profile }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
-  // 🔹 use vehicle.deposit, default to 350 if missing
   const [deposit, setDeposit] = useState(
-    vehicle?.deposit != null ? vehicle.deposit : 350
+    vehicle?.name ? DEPOSITS[vehicle.name] || 350 : 350
   );
-
-  const [customer, setCustomer] = useState(() => ({
-    fullName: profile?.fullName || "",
-    email: profile?.email || "",
-    phone: profile?.phone || "",
-  }));
-
-  useEffect(() => {
-    if (vehicle) {
-      setDeposit(
-        vehicle.deposit != null ? vehicle.deposit : 350
-      );
-    }
-  }, [vehicle]);
-
-  useEffect(() => {
-    if (profile) {
-      setCustomer((prev) => ({
-        ...prev,
-        fullName: profile.fullName || prev.fullName,
-        email: profile.email || prev.email,
-        phone: profile.phone || prev.phone,
-      }));
-    }
-  }, [profile]);
-
-  // ...rest of BookingPanel stays the same
+  const [customer, setCustomer] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+  });
 
   const [insurance, setInsurance] = useState("none");
   const [riskAccepted, setRiskAccepted] = useState(false);
@@ -529,15 +511,32 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
     childSeat: false,
     boosterSeat: false,
   });
+
   const [showProtectionDetails, setShowProtectionDetails] = useState(false);
   const [showEzPassDetails, setShowEzPassDetails] = useState(false);
   const [showAmenitiesDetails, setShowAmenitiesDetails] = useState(false);
 
+  // Promo code (simple hook – you can expand this later)
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0); // 0–1 (e.g. 0.1 = 10% off)
+  const [promoMessage, setPromoMessage] = useState("");
+
   useEffect(() => {
-    if (vehicle) {
-      setDeposit(350);
+    if (vehicle?.name) {
+      setDeposit(DEPOSITS[vehicle.name] || 350);
     }
   }, [vehicle]);
+
+  // Prefill from profile if available
+  useEffect(() => {
+    if (profile && profile.email && !customer.email) {
+      setCustomer({
+        fullName: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+      });
+    }
+  }, [profile, customer.email]);
 
   if (!vehicle) return null;
 
@@ -550,7 +549,12 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
 
   const days = startDate && endDate ? daysBetween(startDate, endDate) : 0;
   const billableDays = days || 1;
-  const subtotal = vehicle.pricePerDay * billableDays;
+
+  const baseDailyRate = vehicle.pricePerDay;
+  const effectiveDailyRate =
+    promoDiscount > 0 ? baseDailyRate * (1 - promoDiscount) : baseDailyRate;
+
+  const subtotal = effectiveDailyRate * billableDays;
 
   const insuranceDailyRate = 25;
   const insuranceCost =
@@ -570,6 +574,31 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
   const extrasTotal =
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
+
+  function toggleAmenity(key) {
+    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function applyPromo() {
+    const code = promoCode.trim().toUpperCase();
+    if (!code) {
+      setPromoDiscount(0);
+      setPromoMessage("");
+      return;
+    }
+
+    // Example codes; change to your real logic later
+    if (code === "ASANI10") {
+      setPromoDiscount(0.1);
+      setPromoMessage("10% off daily rate applied.");
+    } else if (code === "ASANI20") {
+      setPromoDiscount(0.2);
+      setPromoMessage("20% off daily rate applied.");
+    } else {
+      setPromoDiscount(0);
+      setPromoMessage("Promo code not recognized.");
+    }
+  }
 
   async function handlePay() {
     if (!startDate || !endDate) {
@@ -613,93 +642,85 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
         amenityCount,
         amenitiesCost,
         riskAccepted,
+        promoCode: promoCode.trim() || null,
+        promoDiscount,
+        baseDailyRate,
+        effectiveDailyRate,
       },
     };
 
-    // 1) Save booking in Supabase
     try {
-      const { error } = await supabase.from("bookings").insert({
-        email: booking.customer.email,
-        vehicle_id: booking.vehicleId,
-        vehicle_name: booking.vehicleName,
-        start_date: booking.startDate,
-        end_date: booking.endDate,
-        days: booking.days,
-        subtotal: booking.subtotal,
-        deposit: booking.deposit,
-        total: booking.total,
-        extras: booking.extras,
-      });
-
-      if (error) {
-        console.error("Supabase booking insert error", error);
-        alert(
-          "We couldn't save your booking in our system. Please contact us at " +
-            COMPANY.email
-        );
-        return;
+      // 1) Save booking in Supabase (soft failure – we don't block Stripe on error)
+      try {
+        const { error } = await supabase.from("bookings").insert({
+          vehicle_id: booking.vehicleId,
+          vehicle_name: booking.vehicleName,
+          start_date: booking.startDate,
+          end_date: booking.endDate,
+          days: booking.days,
+          subtotal: booking.subtotal,
+          deposit: booking.deposit,
+          total: booking.total,
+          extras: booking.extras,
+        });
+        if (error) {
+          console.error("Supabase booking insert error", error);
+        }
+      } catch (dbErr) {
+        console.error("Supabase booking error", dbErr);
       }
-    } catch (err) {
-      console.error("Supabase booking insert error", err);
-      alert(
-        "We couldn't save your booking in our system. Please contact us at " +
-          COMPANY.email
-      );
-      return;
-    }
 
-    // 2) Create Stripe checkout session
-    let checkoutUrl = null;
-    try {
+      // 2) Create Stripe Checkout Session
+      const stripe = await stripePromise;
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: booking.customer.email,
-          vehicleName: booking.vehicleName,
-          depositAmount: booking.deposit,
+          email: customer.email,
+          vehicleName: vehicle.name,
+          depositAmount: deposit,
         }),
       });
 
       if (!res.ok) {
-        console.error(
-          "Stripe checkout session error:",
-          await res.text().catch(() => "no body")
+        console.error("Stripe checkout session error:", await res.text());
+        alert(
+          "We had a problem starting the payment. Please contact us directly at " +
+            COMPANY.email
         );
-      } else {
-        const data = await res.json();
-        if (data && data.url) {
-          checkoutUrl = data.url;
+        return;
+      }
+
+      const data = await res.json();
+
+      // Update local state before redirect
+      onComplete(booking);
+
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      if (data.id) {
+        const result = await stripe.redirectToCheckout({
+          sessionId: data.id,
+        });
+
+        if (result.error) {
+          console.error(result.error);
+          alert(
+            "Payment could not be started. Please contact us directly at " +
+              COMPANY.email
+          );
         }
       }
     } catch (err) {
-      console.error("Stripe checkout error", err);
-      // continue – booking is saved, you can handle payment manually
-    }
-
-    // 3) Fire-and-forget email notifications
-    fetch("/api/booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(booking),
-    }).catch((err) => {
-      console.error("Booking email API error", err);
-    });
-
-    // 4) Update state & redirect if we have a Stripe URL
-    onComplete(booking);
-
-    if (checkoutUrl) {
-      window.location.href = checkoutUrl;
-    } else {
+      console.error("Booking + payment error", err);
       alert(
-        "Your booking has been saved. Our team will contact you to finalize payment if it wasn't completed online."
+        "We had a problem submitting your booking. Please contact us directly at " +
+          COMPANY.email
       );
     }
-  }
-
-  function toggleAmenity(key) {
-    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   return (
@@ -711,12 +732,11 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
         <h3 className="text-2xl font-bold text-zinc-900">
           Reserve — {vehicle.name}
         </h3>
-       <p className="mt-1 text-xs text-zinc-500">
-  A security deposit is collected now based on the vehicle you select.
-  Rental charges and any extras are settled at vehicle pickup.
-</p>
-        
-        {/* Dates & customer info */}
+        <p className="mt-1 text-xs text-zinc-500">
+          A deposit is collected now to hold your reservation. Rental charges
+          and any extras are settled at vehicle pickup.
+        </p>
+
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="flex flex-col text-sm text-zinc-700">
             Start date
@@ -771,9 +791,7 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
           </label>
         </div>
 
-        {/* Extras + summary */}
         <div className="mt-6 border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left: extras */}
           <div>
             <h4 className="text-sm font-semibold text-zinc-900">
               Optional protection & extras
@@ -805,10 +823,17 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                 </button>
                 {showProtectionDetails && (
                   <p className="mt-1 text-[11px] text-zinc-500">
-                    This optional protection is provided by a third-party
-                    provider and may reduce your financial responsibility for
-                    covered collision damage, theft, and certain fees, subject
-                    to policy terms and exclusions.
+                    This optional protection is provided by{" "}
+                    <strong>Rental Car Cover</strong>, a third-party protection
+                    provider. Their policies typically help reduce your
+                    financial responsibility for covered collision damage,
+                    theft, vandalism, and eligible towing or loss-of-use
+                    charges, up to the limits and subject to the exclusions
+                    stated in their policy wording. Exact coverage, deductibles,
+                    territories, and exclusions are defined by Rental Car Cover
+                    in the documentation you receive from them — always review
+                    their policy and your rental agreement carefully before
+                    deciding to add or decline this protection.
                   </p>
                 )}
                 <div className="mt-2 space-y-1 text-xs">
@@ -834,9 +859,10 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                       onChange={() => setInsurance("none")}
                     />
                     <span>
-                      No, I decline the protection plan. I understand I may be
-                      fully responsible for loss or damage not covered by my
-                      own policy or card.
+                      No, I decline the protection plan. I understand my
+                      personal auto insurance or credit card may{" "}
+                      <strong>not</strong> cover rental vehicles, and I may be
+                      fully responsible for any loss or damage.
                     </span>
                   </label>
                   {insurance === "none" && (
@@ -847,15 +873,16 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                         onChange={(e) => setRiskAccepted(e.target.checked)}
                       />
                       <span>
-                        I understand and accept all financial risk for damage,
-                        loss, and liability not covered by my own policy.
+                        I have reviewed this disclaimer and choose to accept all
+                        financial risk for damage, loss, or liability not
+                        covered by my own policy.
                       </span>
                     </label>
                   )}
                 </div>
               </div>
 
-              {/* EZ-Pass */}
+              {/* EZ-Pass / toll device */}
               <div className="border rounded-2xl p-3 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">EZ-Pass / toll device</span>
@@ -879,9 +906,11 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                 </button>
                 {showEzPassDetails && (
                   <p className="mt-1 text-[11px] text-zinc-500">
-                    All tolls incurred on the device will be charged to the card
-                    on file, plus any administration fees described in your
-                    rental agreement.
+                    When you opt in to the toll device, all eligible tolls
+                    incurred during your rental will be charged to the card on
+                    file, plus any service or processing fees described in your
+                    rental agreement. Unpaid tolls and violations may result in
+                    additional charges.
                   </p>
                 )}
                 <label className="mt-2 flex items-center gap-2 text-xs">
@@ -894,7 +923,7 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                 </label>
               </div>
 
-              {/* Prepay fuel */}
+              {/* Prepaid fuel */}
               <div className="border rounded-2xl p-3 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Prepay fuel</span>
@@ -916,7 +945,7 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                 </label>
               </div>
 
-              {/* Amenities */}
+              {/* Amenities & child seats */}
               <div className="border rounded-2xl p-3 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Amenities & child seats</span>
@@ -926,7 +955,7 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                 </div>
                 <p className="mt-1 text-xs text-zinc-500">
                   Pricing applies per seat, per day. Final totals will be
-                  confirmed by our team.
+                  confirmed in your rental agreement or by our team.
                 </p>
                 <button
                   type="button"
@@ -941,8 +970,9 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                 {showAmenitiesDetails && (
                   <p className="mt-1 text-[11px] text-zinc-500">
                     Choose from infant, child, or booster seats to match your
-                    passenger&apos;s needs. Availability may vary by vehicle and
-                    location.
+                    passenger&apos;s age and size. Availability may vary by
+                    vehicle and local regulations. Our team can help confirm fit
+                    and installation guidelines at pickup.
                   </p>
                 )}
                 <div className="mt-2 grid grid-cols-1 gap-1 text-xs">
@@ -975,9 +1005,36 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
             </div>
           </div>
 
-          {/* Right: summary */}
+          {/* Summary & promo */}
           <div className="border rounded-2xl p-4 bg-zinc-50 flex flex-col justify-between">
             <div className="space-y-2 text-sm text-zinc-700">
+              {/* Promo code */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-zinc-600">Promo / discount</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Enter promo code"
+                    className="flex-1 p-2 border rounded text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyPromo}
+                    className="px-3 py-2 rounded-2xl bg-black text-white text-xs font-semibold"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {promoMessage && (
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    {promoMessage}
+                  </p>
+                )}
+              </div>
+
               <div className="flex justify-between">
                 <span>
                   Rental ({billableDays} day{billableDays > 1 ? "s" : ""})
@@ -988,6 +1045,7 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
                 <span>Protection & extras (est.)</span>
                 <span>{formatCurrency(extrasTotal)}</span>
               </div>
+
               {insuranceCost > 0 && (
                 <div className="flex justify-between text-[11px] text-zinc-500">
                   <span>Protection plan</span>
@@ -1023,7 +1081,8 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
               </div>
               <p className="text-[11px] text-zinc-500">
                 *Estimate only. Taxes, fees, tolls, violations, and additional
-                charges (if any) are finalized in your rental agreement.
+                charges (if any) are calculated by the backend and final rental
+                agreement.
               </p>
 
               <div className="border-t pt-2 mt-2 flex justify-between items-center">
@@ -1055,7 +1114,6 @@ function BookingPanel({ vehicle, profile, onBack, onComplete }) {
   );
 }
 
-// --- Profile / Admin ---
 function ProfilePage({
   profile,
   setProfile,
@@ -1072,9 +1130,12 @@ function ProfilePage({
     }
   );
   const [auth, setAuth] = useState({ email: "", password: "" });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!profile);
   const [mode, setMode] = useState("login");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(
+    profile?.email &&
+      profile.email.toLowerCase() === COMPANY.email.toLowerCase()
+  );
   const [drafts, setDrafts] = useState(vehicles || []);
   const [newVehicle, setNewVehicle] = useState({
     name: "",
@@ -1090,23 +1151,34 @@ function ProfilePage({
     setDrafts(vehicles || []);
   }, [vehicles]);
 
+  function checkAdmin(email) {
+    return email && email.toLowerCase() === COMPANY.email.toLowerCase();
+  }
+
   async function handleLogin(e) {
     e.preventDefault();
-    // You can replace this with real auth later
+    // Demo only
+    alert("Logged in (demo). No real authentication configured yet.");
     setIsLoggedIn(true);
-    if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
+    setIsAdmin(checkAdmin(auth.email));
   }
 
   async function handleCreate(e) {
     e.preventDefault();
     setProfile(local);
-    if (local.email) newsletterSignUp(local.email);
+    if (local.email) {
+      newsletterSignUp(local.email);
+      localStorage.setItem(
+        "asani_profile",
+        JSON.stringify({
+          fullName: local.fullName,
+          email: local.email,
+          phone: local.phone,
+          driversLicense: local.driversLicense,
+        })
+      );
+    }
 
-    // Save profile in Supabase
     try {
       const { error } = await supabase.from("users").upsert({
         email: local.email,
@@ -1114,30 +1186,35 @@ function ProfilePage({
         phone: local.phone,
         drivers_license: local.driversLicense,
       });
-
       if (error) {
         console.error("Supabase user upsert error", error);
       }
     } catch (err) {
-      console.error("Supabase user upsert error", err);
+      console.error("Supabase user error", err);
     }
 
     setIsLoggedIn(true);
-    if (
-      local.email &&
-      local.email.toLowerCase() === COMPANY.email.toLowerCase()
-    ) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
-    alert("Profile created. Your details are saved for faster reservations.");
+    setIsAdmin(checkAdmin(local.email));
+    alert(
+      "Profile created (demo). In production this will create a secure account."
+    );
   }
 
   function save() {
     setProfile(local);
-    if (local.email) newsletterSignUp(local.email);
-    alert("Profile saved.");
+    if (local.email) {
+      newsletterSignUp(local.email);
+      localStorage.setItem(
+        "asani_profile",
+        JSON.stringify({
+          fullName: local.fullName,
+          email: local.email,
+          phone: local.phone,
+          driversLicense: local.driversLicense,
+        })
+      );
+    }
+    alert("Profile saved (demo)");
   }
 
   function updateVehicleField(id, field, value) {
@@ -1160,7 +1237,9 @@ function ProfilePage({
 
   function saveFleetChanges() {
     setVehicles(drafts);
-    alert("Fleet updated. These changes are now visible on the site.");
+    alert(
+      "Fleet updated (demo). In production these changes would be saved to your database."
+    );
   }
 
   function handleAddVehicle(e) {
@@ -1188,7 +1267,7 @@ function ProfilePage({
       image: "",
       description: "",
     });
-    alert("Vehicle added.");
+    alert("Vehicle added (demo).");
   }
 
   if (!isLoggedIn) {
@@ -1196,7 +1275,7 @@ function ProfilePage({
       <section className="max-w-3xl mx-auto px-4 md:px-6 py-10 md:py-12">
         <h2 className="text-2xl font-bold text-zinc-900">Your profile</h2>
         <p className="text-zinc-600 mt-2 text-sm">
-          Sign in to an existing profile or create a new one to save your
+          Sign in to your existing profile or create a new one to save your
           details for faster reservations.
         </p>
 
@@ -1226,7 +1305,10 @@ function ProfilePage({
         </div>
 
         {mode === "login" ? (
-          <form className="mt-6 grid grid-cols-1 gap-4" onSubmit={handleLogin}>
+          <form
+            className="mt-6 grid grid-cols-1 gap-4"
+            onSubmit={handleLogin}
+          >
             <input
               type="email"
               required
@@ -1250,12 +1332,15 @@ function ProfilePage({
               Sign in
             </button>
             <p className="text-xs text-zinc-500">
-              Connect this login to a real authentication system when you&apos;re
-              ready (Supabase Auth, Auth0, etc.).
+              In production, connect this form to your real auth API to allow
+              customers to log in and manage their rentals securely.
             </p>
           </form>
         ) : (
-          <form className="mt-6 grid grid-cols-1 gap-4" onSubmit={handleCreate}>
+          <form
+            className="mt-6 grid grid-cols-1 gap-4"
+            onSubmit={handleCreate}
+          >
             <input
               value={local.fullName}
               onChange={(e) =>
@@ -1268,18 +1353,14 @@ function ProfilePage({
             <input
               type="email"
               value={local.email}
-              onChange={(e) =>
-                setLocal({ ...local, email: e.target.value })
-              }
+              onChange={(e) => setLocal({ ...local, email: e.target.value })}
               placeholder="Email"
               className="p-3 border rounded text-sm"
               required
             />
             <input
               value={local.phone}
-              onChange={(e) =>
-                setLocal({ ...local, phone: e.target.value })
-              }
+              onChange={(e) => setLocal({ ...local, phone: e.target.value })}
               placeholder="Phone"
               className="p-3 border rounded text-sm"
             />
@@ -1303,6 +1384,10 @@ function ProfilePage({
             >
               Create profile
             </button>
+            <p className="text-xs text-zinc-500">
+              In production, this form should create a secure customer account
+              in your backend and authentication system.
+            </p>
           </form>
         )}
       </section>
@@ -1318,19 +1403,25 @@ function ProfilePage({
       <div className="mt-6 grid grid-cols-1 gap-4 max-w-xl">
         <input
           value={local.fullName}
-          onChange={(e) => setLocal({ ...local, fullName: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, fullName: e.target.value })
+          }
           placeholder="Full name"
           className="p-3 border rounded text-sm"
         />
         <input
           value={local.email}
-          onChange={(e) => setLocal({ ...local, email: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, email: e.target.value })
+          }
           placeholder="Email"
           className="p-3 border rounded text-sm"
         />
         <input
           value={local.phone}
-          onChange={(e) => setLocal({ ...local, phone: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, phone: e.target.value })
+          }
           placeholder="Phone"
           className="p-3 border rounded text-sm"
         />
@@ -1357,6 +1448,7 @@ function ProfilePage({
                 phone: "",
                 driversLicense: "",
               });
+              localStorage.removeItem("asani_profile");
             }}
             className="px-5 py-3 rounded-2xl border text-sm"
           >
@@ -1371,7 +1463,8 @@ function ProfilePage({
             Admin — Fleet management
           </h3>
           <p className="text-zinc-600 mt-2 text-sm">
-            Update pricing, availability, and add new vehicles.
+            Update pricing, availability, and add new vehicles. Changes apply
+            immediately in this demo.
           </p>
 
           <div className="mt-6 space-y-6">
@@ -1485,7 +1578,10 @@ function ProfilePage({
                 <input
                   value={newVehicle.category}
                   onChange={(e) =>
-                    setNewVehicle({ ...newVehicle, category: e.target.value })
+                    setNewVehicle({
+                      ...newVehicle,
+                      category: e.target.value,
+                    })
                   }
                   placeholder="Category (e.g. Premium SUV)"
                   className="p-2 border rounded"
@@ -1557,7 +1653,6 @@ function ProfilePage({
   );
 }
 
-// --- Chauffeur request ---
 function ChauffeurRequest() {
   async function handleSubmit(e) {
     e.preventDefault();
@@ -1716,7 +1811,7 @@ function ChauffeurRequest() {
             name="notes"
             rows={4}
             className="mt-2 p-2 border rounded text-sm"
-            placeholder="Flight details, occasion, security needs, or special requests."
+            placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
           />
         </label>
         <div className="md:col-span-2 flex justify-end">
@@ -1732,7 +1827,6 @@ function ChauffeurRequest() {
   );
 }
 
-// --- Contact ---
 function Contact() {
   async function handleSubmit(e) {
     e.preventDefault();
@@ -1825,7 +1919,7 @@ function NewsletterForm({ onSign }) {
     if (!email) return;
     onSign(email);
     setEmail("");
-    alert("Signed up. You’ll receive updates and offers from Asani Rentals.");
+    alert("Signed up (demo). In production this will add you to our email list.");
   }
 
   return (
@@ -1849,7 +1943,6 @@ function NewsletterForm({ onSign }) {
   );
 }
 
-// --- Root App ---
 function App() {
   const [route, setRoute] = useState("home");
   const [vehicles, setVehicles] = useState(SAMPLE_VEHICLES);
@@ -1860,10 +1953,23 @@ function App() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortOrder, setSortOrder] = useState("price-asc");
 
+  // Load profile from localStorage on first load
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("asani_profile");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setProfile(parsed);
+      }
+    } catch (err) {
+      console.error("Error loading stored profile", err);
+    }
+  }, []);
+
   function newsletterSignUp(email) {
     if (!email) return;
     setNewsletter((s) => (s.includes(email) ? s : [...s, email]));
-    console.log("Newsletter sign-up:", email);
+    console.log("Newsletter sign-up (demo):", email);
   }
 
   function handleBookingComplete(booking) {
@@ -1960,8 +2066,7 @@ function App() {
           <h2 className="text-2xl font-bold text-zinc-900">Reserve</h2>
           <p className="text-zinc-600 mt-2 text-sm">
             Filter by vehicle type, sort by price, then select a vehicle to
-            begin. A security deposit is collected at booking to hold your
-            reservation.
+            begin. A deposit is collected at booking to hold your reservation.
           </p>
           <FleetFilters
             categories={categories}
@@ -1980,14 +2085,14 @@ function App() {
               />
             ))}
           </div>
-         {selected && (
-  <BookingPanel
-    vehicle={selected}
-    profile={profile}
-    onBack={() => setSelected(null)}
-    onComplete={handleBookingComplete}
-  />
-)}
+          {selected && (
+            <BookingPanel
+              vehicle={selected}
+              onBack={() => setSelected(null)}
+              onComplete={handleBookingComplete}
+              profile={profile}
+            />
+          )}
         </section>
       )}
 
