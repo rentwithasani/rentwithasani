@@ -581,6 +581,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     };
 
     // 1) Save booking in Supabase
+        // 1) Save booking in Supabase (minimal columns only)
     try {
       if (typeof supabase !== "undefined") {
         const { error } = await supabase.from("bookings").insert({
@@ -593,7 +594,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
           subtotal: booking.subtotal,
           deposit: booking.deposit,
           total: booking.total,
-          extras: booking.extras,
+          // NOTE: we are NOT sending `extras` anymore to avoid column mismatches
         });
 
         if (error) {
