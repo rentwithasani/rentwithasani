@@ -586,18 +586,18 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     try {
       // 1) Save booking in Supabase (if configured)
       if (typeof supabase !== "undefined") {
-        const { error } = await supabase.from("bookings").insert({
-          user_email: customer.email,
-          vehicle_id: booking.vehicleId,
-          vehicle_name: booking.vehicleName,
-          start_date: booking.startDate,
-          end_date: booking.endDate,
-          days: booking.days,
-          subtotal: booking.subtotal,
-          deposit: booking.deposit,
-          total: booking.total,
-          extras: booking.extras,
-        });
+const { error } = await supabase.from("bookings").insert({
+  email: customer.email,          // 👈 changed from user_email
+  vehicle_id: booking.vehicleId,
+  vehicle_name: booking.vehicleName,
+  start_date: booking.startDate,
+  end_date: booking.endDate,
+  days: booking.days,
+  subtotal: booking.subtotal,
+  deposit: booking.deposit,
+  total: booking.total,
+  extras: booking.extras,
+});
 
         if (error) {
           console.error("Supabase booking insert error", error);
