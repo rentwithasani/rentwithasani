@@ -8,12 +8,12 @@
     "preview": "vite preview"
   },
 "dependencies": {
-  "react": "...",
-  "react-dom": "...",
-  "@supabase/supabase-js": "^2.48.0",
+  "@supabase/supabase-js": "^2.39.7",
+  "@stripe/stripe-js": "^2.4.0",
   "stripe": "^16.0.0",
-  "resend": "^4.0.0"
+  "resend": "^3.0.0"
 }
+
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.19",
