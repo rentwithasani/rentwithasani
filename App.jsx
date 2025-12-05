@@ -541,7 +541,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
   }
 
   // ✅ NEW handlePay (Supabase hard-fail, email + Stripe soft-fail)
-  async function handlePay() {
+    async function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
@@ -586,11 +586,11 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       },
     };
 
-    // 1) SAVE BOOKING IN SUPABASE (hard failure)
     try {
+      // 1) Save booking in Supabase (server-side record)
       if (typeof supabase !== "undefined") {
         const { error } = await supabase.from("bookings").insert({
-          email: customer.email,
+          user_email: customer.email,
           vehicle_id: booking.vehicleId,
           vehicle_name: booking.vehicleName,
           start_date: booking.startDate,
@@ -605,26 +605,76 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
         if (error) {
           console.error("Supabase booking insert error", error);
           alert(
-            "We had a problem saving your booking. Please contact us directly at " +
-              COMPANY.email
+            "We had a problem saving your booking. Please contact us directly at reserve@rentwithasani.com."
           );
           return;
         }
       }
-    } catch (err) {
-      console.error("Supabase booking error", err);
-      alert(
-        "We had a problem saving your booking. Please contact us directly at " +
-          COMPANY.email
-      );
-      return;
-    }
 
-    // 2) UPDATE UI → Booking is confirmed
-    onComplete(booking);
-    alert(
-      "Reservation created. Your booking has been saved. A confirmation email will be sent shortly."
-    );
+      // 2) Create Stripe Checkout Session
+      const stripe = await stripePromise;
+      if (!stripe) {
+        console.error("Stripe failed to initialize (check publishable key).");
+        alert(
+          "Payment could not be started. Please contact us directly at reserve@rentwithasani.com."
+        );
+        return;
+      }
+
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: customer.email,
+          vehicleName: vehicle.name,
+          depositAmount: deposit,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Stripe checkout session error:", text);
+        alert(
+          "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
+        );
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Stripe session response:", data);
+
+      if (data.url) {
+        // Redirect directly to Stripe-hosted checkout page
+        window.location.href = data.url;
+        return;
+      }
+
+      if (data.id) {
+        const result = await stripe.redirectToCheckout({
+          sessionId: data.id,
+        });
+
+        if (result.error) {
+          console.error(result.error);
+          alert(
+            "Payment could not be started. Please contact us directly at reserve@rentwithasani.com."
+          );
+          return;
+        }
+        return;
+      }
+
+      console.error("No url or id returned from Stripe:", data);
+      alert(
+        "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
+      );
+    } catch (err) {
+      console.error("Booking + payment error", err);
+      alert(
+        "We had a problem submitting your booking. Please contact us directly at reserve@rentwithasani.com."
+      );
+    }
+  }
 
     // 3) Send emails (soft failure)
     try {
