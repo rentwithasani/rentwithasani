@@ -484,36 +484,41 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
   );
 }
 
-// --- BookingPanel with Supabase + Stripe ---
-function BookingPanel({ vehicle, onBack, onComplete }) {
+function BookingPanel({ vehicle, profile, onBack, onComplete }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [deposit, setDeposit] = useState(vehicle?.deposit || 350);
 
-useEffect(() => {
-  if (vehicle && vehicle.deposit) {
-    setDeposit(vehicle.deposit);
-  } else {
-    setDeposit(350); // default if no deposit set
-  }
-}, [vehicle]);
+  // 🔹 use vehicle.deposit, default to 350 if missing
+  const [deposit, setDeposit] = useState(
+    vehicle?.deposit != null ? vehicle.deposit : 350
+  );
 
-  const [customer, setCustomer] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-  });
-  
+  const [customer, setCustomer] = useState(() => ({
+    fullName: profile?.fullName || "",
+    email: profile?.email || "",
+    phone: profile?.phone || "",
+  }));
+
   useEffect(() => {
-  if (profile) {
-    setCustomer((prev) => ({
-      ...prev,
-      fullName: profile.fullName || prev.fullName,
-      email: profile.email || prev.email,
-      phone: profile.phone || prev.phone,
-    }));
-  }
-}, [profile]);
+    if (vehicle) {
+      setDeposit(
+        vehicle.deposit != null ? vehicle.deposit : 350
+      );
+    }
+  }, [vehicle]);
+
+  useEffect(() => {
+    if (profile) {
+      setCustomer((prev) => ({
+        ...prev,
+        fullName: profile.fullName || prev.fullName,
+        email: profile.email || prev.email,
+        phone: profile.phone || prev.phone,
+      }));
+    }
+  }, [profile]);
+
+  // ...rest of BookingPanel stays the same
 
   const [insurance, setInsurance] = useState("none");
   const [riskAccepted, setRiskAccepted] = useState(false);
