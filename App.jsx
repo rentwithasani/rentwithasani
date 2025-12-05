@@ -1176,18 +1176,18 @@ function ProfilePage({
   }, [isAdmin]);
 
   async function handleLogin(e) {
-    e.preventDefault();
-    // Demo login only
-    alert(
-      "Logged in (demo). In production, connect this to real authentication."
-    );
-    setIsLoggedIn(true);
-    if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
+  e.preventDefault();
+
+  // For now we just mark the user as logged in.
+  // In production, connect this to your real auth (Supabase auth or similar).
+  setIsLoggedIn(true);
+
+  if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
+    setIsAdmin(true);
+  } else {
+    setIsAdmin(false);
   }
+}
 
   async function handleCreate(e) {
     e.preventDefault();
