@@ -488,7 +488,16 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
 function BookingPanel({ vehicle, onBack, onComplete }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [deposit, setDeposit] = useState(350);
+  const [deposit, setDeposit] = useState(vehicle?.deposit || 350);
+
+useEffect(() => {
+  if (vehicle && vehicle.deposit) {
+    setDeposit(vehicle.deposit);
+  } else {
+    setDeposit(350); // default if no deposit set
+  }
+}, [vehicle]);
+
   const [customer, setCustomer] = useState({
     fullName: "",
     email: "",
