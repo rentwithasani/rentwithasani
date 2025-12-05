@@ -4,8 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-// Asani Rentals - Single-file React app
-
+// Company details
 const COMPANY = {
   name: "Asani Rentals",
   address: "1001 S Main #8227, Kalispell, MT 59901",
@@ -485,7 +484,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     email: "",
     phone: "",
   });
-  const [insurance, setInsurance] = useState("none"); // "none" | "asani"
+  const [insurance, setInsurance] = useState("none");
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
   const [prepayFuel, setPrepayFuel] = useState(false);
@@ -536,12 +535,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
-  function toggleAmenity(key) {
-    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
-
-  // ✅ NEW handlePay (Supabase hard-fail, email + Stripe soft-fail)
-    async function handlePay() {
+  async function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
@@ -586,8 +580,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       },
     };
 
+    // 1) Save booking in Supabase
     try {
-      // 1) Save booking in Supabase (server-side record)
       if (typeof supabase !== "undefined") {
         const { error } = await supabase.from("bookings").insert({
           user_email: customer.email,
@@ -610,16 +604,17 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
           return;
         }
       }
+    } catch (err) {
+      console.error("Supabase booking insert exception", err);
+      alert(
+        "We had a problem saving your booking. Please contact us directly at reserve@rentwithasani.com."
+      );
+      return;
+    }
 
-      // 2) Create Stripe Checkout Session
+    // 2) Create Stripe Checkout Session
+    try {
       const stripe = await stripePromise;
-      if (!stripe) {
-        console.error("Stripe failed to initialize (check publishable key).");
-        alert(
-          "Payment could not be started. Please contact us directly at reserve@rentwithasani.com."
-        );
-        return;
-      }
 
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -632,8 +627,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        console.error("Stripe checkout session error:", text);
+        console.error("Stripe checkout session error:", await res.text());
         alert(
           "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
         );
@@ -641,15 +635,13 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       }
 
       const data = await res.json();
-      console.log("Stripe session response:", data);
 
       if (data.url) {
-        // Redirect directly to Stripe-hosted checkout page
         window.location.href = data.url;
         return;
       }
 
-      if (data.id) {
+      if (data.id && stripe) {
         const result = await stripe.redirectToCheckout({
           sessionId: data.id,
         });
@@ -661,84 +653,34 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
           );
           return;
         }
+
         return;
       }
-
-      console.error("No url or id returned from Stripe:", data);
+    } catch (err) {
+      console.error("Stripe error", err);
       alert(
         "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
       );
-    } catch (err) {
-      console.error("Booking + payment error", err);
-      alert(
-        "We had a problem submitting your booking. Please contact us directly at reserve@rentwithasani.com."
-      );
+      return;
     }
-  }
 
     // 3) Send emails (soft failure)
     try {
       await fetch("/api/booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerEmail: customer.email,
-          customerName: customer.fullName,
-          phone: customer.phone,
-          vehicleName: vehicle.name,
-          startDate,
-          endDate,
-          total,
-          deposit,
-        }),
+        body: JSON.stringify({ booking }),
       });
     } catch (err) {
       console.error("Booking email error", err);
     }
 
-    // 4) Stripe Checkout (soft failure)
-    try {
-      if (typeof stripePromise !== "undefined") {
-        const stripe = await stripePromise;
-        if (!stripe) {
-          console.error("Stripe failed to initialize");
-          return;
-        }
+    // 4) Local state update
+    onComplete(booking);
+  }
 
-        const res = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: customer.email,
-            vehicleName: vehicle.name,
-            depositAmount: deposit,
-          }),
-        });
-
-        if (!res.ok) {
-          console.error(
-            "Stripe checkout session error:",
-            await res.text()
-          );
-          return;
-        }
-
-        const data = await res.json();
-
-        if (data.url) {
-          window.location.href = data.url;
-        } else if (data.id) {
-          const result = await stripe.redirectToCheckout({
-            sessionId: data.id,
-          });
-          if (result.error) {
-            console.error("Stripe redirect error", result.error);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Stripe error", err);
-    }
+  function toggleAmenity(key) {
+    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   return (
@@ -847,11 +789,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                     financial responsibility for covered collision damage,
                     theft, vandalism, and eligible towing or loss-of-use
                     charges, up to the limits and subject to the exclusions
-                    stated in their policy wording. Exact coverage, deductibles,
-                    territories, and exclusions are defined by Rental Car Cover
-                    in the documentation you receive from them — always review
-                    their policy and your rental agreement carefully before
-                    deciding to add or decline this protection.
+                    stated in their policy wording.
                   </p>
                 )}
                 <div className="mt-2 space-y-1 text-xs">
@@ -927,8 +865,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                     When you opt in to the toll device, all eligible tolls
                     incurred during your rental will be charged to the card on
                     file, plus any service or processing fees described in your
-                    rental agreement. Unpaid tolls and violations may result in
-                    additional charges.
+                    rental agreement.
                   </p>
                 )}
                 <label className="mt-2 flex items-center gap-2 text-xs">
@@ -989,8 +926,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                   <p className="mt-1 text-[11px] text-zinc-500">
                     Choose from infant, child, or booster seats to match your
                     passenger&apos;s age and size. Availability may vary by
-                    vehicle and local regulations. Our team can help confirm fit
-                    and installation guidelines at pickup.
+                    vehicle and local regulations.
                   </p>
                 )}
                 <div className="mt-2 grid grid-cols-1 gap-1 text-xs">
@@ -1120,7 +1056,7 @@ function ProfilePage({
   );
   const [auth, setAuth] = useState({ email: "", password: "" });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [mode, setMode] = useState("login"); // "login" or "create"
+  const [mode, setMode] = useState("login");
   const [isAdmin, setIsAdmin] = useState(false);
   const [drafts, setDrafts] = useState(vehicles || []);
   const [newVehicle, setNewVehicle] = useState({
@@ -1139,7 +1075,6 @@ function ProfilePage({
 
   async function handleLogin(e) {
     e.preventDefault();
-    // demo login only
     alert("Logged in (demo). No real authentication configured yet.");
     setIsLoggedIn(true);
     if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
@@ -1154,7 +1089,6 @@ function ProfilePage({
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
 
-    // save in Supabase
     try {
       const { error } = await supabase.from("users").upsert({
         email: local.email,
@@ -1167,7 +1101,7 @@ function ProfilePage({
         console.error("Supabase user upsert error", error);
       }
     } catch (err) {
-      console.error("Supabase user error", err);
+      console.error("Supabase user upsert exception", err);
     }
 
     setIsLoggedIn(true);
@@ -1179,6 +1113,7 @@ function ProfilePage({
     } else {
       setIsAdmin(false);
     }
+
     alert(
       "Profile created (demo). In production this will create a secure account."
     );
@@ -1678,9 +1613,8 @@ function ChauffeurRequest() {
       <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
       <p className="mt-2 text-sm text-zinc-600">
         Request a professional chauffeur for a Sprinter, black SUV, elite luxury
-        sedan, or our{" "}
-        <span className="font-semibold">armed chauffeur</span> option for
-        elevated security.
+        sedan, or our <span className="font-semibold">armed chauffeur</span>{" "}
+        option for elevated security.
       </p>
       <form
         className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 border rounded-2xl bg-white"
