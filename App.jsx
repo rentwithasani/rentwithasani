@@ -5,7 +5,6 @@ import { loadStripe } from "@stripe/stripe-js";
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // Asani Rentals - Single-file React app
-// Tailwind CSS assumed.
 
 const COMPANY = {
   name: "Asani Rentals",
@@ -14,7 +13,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
 };
 
-// Fleet data (with stable image URLs)
+// Fleet data
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
@@ -486,7 +485,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     email: "",
     phone: "",
   });
-  const [insurance, setInsurance] = useState("none"); // "none" | "asani" (third-party protection)
+  const [insurance, setInsurance] = useState("none"); // "none" | "asani"
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
   const [prepayFuel, setPrepayFuel] = useState(false);
@@ -537,8 +536,12 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
-  // ⬇⬇⬇  IMPORTANT: async function, so await is allowed ⬇⬇⬇
-    async function handlePay() {
+  function toggleAmenity(key) {
+    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  // ✅ NEW handlePay (Supabase hard-fail, email + Stripe soft-fail)
+  async function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
@@ -583,7 +586,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       },
     };
 
-    // 1) SAVE BOOKING IN SUPABASE (this is the only hard failure)
+    // 1) SAVE BOOKING IN SUPABASE (hard failure)
     try {
       if (typeof supabase !== "undefined") {
         const { error } = await supabase.from("bookings").insert({
@@ -617,13 +620,13 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       return;
     }
 
-    // 2) UPDATE UI IMMEDIATELY (booking is confirmed in your DB)
+    // 2) UPDATE UI → Booking is confirmed
     onComplete(booking);
     alert(
       "Reservation created. Your booking has been saved. A confirmation email will be sent shortly."
     );
 
-    // 3) FIRE-AND-FORGET EMAIL NOTIFICATION (does NOT block the booking)
+    // 3) Send emails (soft failure)
     try {
       await fetch("/api/booking", {
         method: "POST",
@@ -641,10 +644,9 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       });
     } catch (err) {
       console.error("Booking email error", err);
-      // We do NOT show an alert here so the user doesn't think booking failed
     }
 
-    // 4) OPTIONAL: START STRIPE CHECKOUT (also does NOT block the booking)
+    // 4) Stripe Checkout (soft failure)
     try {
       if (typeof stripePromise !== "undefined") {
         const stripe = await stripePromise;
@@ -674,10 +676,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
         const data = await res.json();
 
         if (data.url) {
-          // redirect to Checkout URL
           window.location.href = data.url;
         } else if (data.id) {
-          // or sessionId
           const result = await stripe.redirectToCheckout({
             sessionId: data.id,
           });
@@ -688,9 +688,370 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       }
     } catch (err) {
       console.error("Stripe error", err);
-      // again, don't block the booking
     }
   }
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+        <button onClick={onBack} className="text-sm text-zinc-500 mb-4">
+          ← Back
+        </button>
+        <h3 className="text-2xl font-bold text-zinc-900">
+          Reserve — {vehicle.name}
+        </h3>
+        <p className="mt-1 text-xs text-zinc-500">
+          A $350 security deposit is collected now to hold your reservation.
+          Rental charges and any extras are settled at vehicle pickup.
+        </p>
+
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="flex flex-col text-sm text-zinc-700">
+            Start date
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mt-2 p-2 border rounded"
+            />
+          </label>
+          <label className="flex flex-col text-sm text-zinc-700">
+            End date
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mt-2 p-2 border rounded"
+            />
+          </label>
+          <label className="flex flex-col text-sm text-zinc-700">
+            Full name
+            <input
+              value={customer.fullName}
+              onChange={(e) =>
+                setCustomer({ ...customer, fullName: e.target.value })
+              }
+              className="mt-2 p-2 border rounded"
+              placeholder="John Doe"
+            />
+          </label>
+          <label className="flex flex-col text-sm text-zinc-700">
+            Email
+            <input
+              value={customer.email}
+              onChange={(e) =>
+                setCustomer({ ...customer, email: e.target.value })
+              }
+              className="mt-2 p-2 border rounded"
+              placeholder="you@domain.com"
+            />
+          </label>
+          <label className="flex flex-col text-sm text-zinc-700 col-span-1 sm:col-span-2">
+            Phone
+            <input
+              value={customer.phone}
+              onChange={(e) =>
+                setCustomer({ ...customer, phone: e.target.value })
+              }
+              className="mt-2 p-2 border rounded"
+              placeholder="(555) 555-5555"
+            />
+          </label>
+        </div>
+
+        <div className="mt-6 border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-sm font-semibold text-zinc-900">
+              Optional protection & extras
+            </h4>
+
+            <div className="mt-3 space-y-3 text-sm text-zinc-700">
+              {/* Protection plan */}
+              <div className="border rounded-2xl p-3 bg-zinc-50">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Optional protection plan</span>
+                  <span className="text-xs text-zinc-500">
+                    +{formatCurrency(insuranceDailyRate)} / day
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Third-party protection product that may reduce your financial
+                  responsibility for covered damage or theft, subject to the
+                  terms of your rental agreement.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowProtectionDetails((v) => !v)}
+                  className="mt-2 text-[11px] text-zinc-600 flex items-center gap-1"
+                >
+                  <span className="inline-block text-xs font-semibold">
+                    {showProtectionDetails ? "−" : "+"}
+                  </span>
+                  <span>More details</span>
+                </button>
+                {showProtectionDetails && (
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    This optional protection is provided by{" "}
+                    <strong>Rental Car Cover</strong>, a third-party protection
+                    provider. Their policies typically help reduce your
+                    financial responsibility for covered collision damage,
+                    theft, vandalism, and eligible towing or loss-of-use
+                    charges, up to the limits and subject to the exclusions
+                    stated in their policy wording. Exact coverage, deductibles,
+                    territories, and exclusions are defined by Rental Car Cover
+                    in the documentation you receive from them — always review
+                    their policy and your rental agreement carefully before
+                    deciding to add or decline this protection.
+                  </p>
+                )}
+                <div className="mt-2 space-y-1 text-xs">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="insurance"
+                      value="asani"
+                      checked={insurance === "asani"}
+                      onChange={() => {
+                        setInsurance("asani");
+                        setRiskAccepted(false);
+                      }}
+                    />
+                    <span>Yes, add the optional protection plan</span>
+                  </label>
+                  <label className="flex items-start gap-2">
+                    <input
+                      type="radio"
+                      name="insurance"
+                      value="none"
+                      checked={insurance === "none"}
+                      onChange={() => setInsurance("none")}
+                    />
+                    <span>
+                      No, I decline the protection plan. I understand my
+                      personal auto insurance or credit card may{" "}
+                      <strong>not</strong> cover rental vehicles, and I may be
+                      fully responsible for any loss or damage.
+                    </span>
+                  </label>
+                  {insurance === "none" && (
+                    <label className="flex items-start gap-2 mt-2 text-[11px] text-red-600">
+                      <input
+                        type="checkbox"
+                        checked={riskAccepted}
+                        onChange={(e) => setRiskAccepted(e.target.checked)}
+                      />
+                      <span>
+                        I have reviewed this disclaimer and choose to accept all
+                        financial risk for damage, loss, or liability not
+                        covered by my own policy.
+                      </span>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* EZ-Pass / toll device */}
+              <div className="border rounded-2xl p-3 bg-zinc-50">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">EZ-Pass / toll device</span>
+                  <span className="text-xs text-zinc-500">
+                    +{formatCurrency(ezPassDailyRate)} / day
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Toll usage will be billed after your rental with any
+                  applicable service fees as outlined in your rental agreement.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowEzPassDetails((v) => !v)}
+                  className="mt-2 text-[11px] text-zinc-600 flex items-center gap-1"
+                >
+                  <span className="inline-block text-xs font-semibold">
+                    {showEzPassDetails ? "−" : "+"}
+                  </span>
+                  <span>More details</span>
+                </button>
+                {showEzPassDetails && (
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    When you opt in to the toll device, all eligible tolls
+                    incurred during your rental will be charged to the card on
+                    file, plus any service or processing fees described in your
+                    rental agreement. Unpaid tolls and violations may result in
+                    additional charges.
+                  </p>
+                )}
+                <label className="mt-2 flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={ezPass}
+                    onChange={(e) => setEzPass(e.target.checked)}
+                  />
+                  <span>Yes, add an EZ-Pass/toll device to my rental</span>
+                </label>
+              </div>
+
+              {/* Prepaid fuel */}
+              <div className="border rounded-2xl p-3 bg-zinc-50">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Prepay fuel</span>
+                  <span className="text-xs text-zinc-500">
+                    +{formatCurrency(65)} one-time
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Return the vehicle with any fuel level. We handle the refuel
+                  for a flat prepay amount.
+                </p>
+                <label className="mt-2 flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={prepayFuel}
+                    onChange={(e) => setPrepayFuel(e.target.checked)}
+                  />
+                  <span>Yes, add prepaid fuel for my rental</span>
+                </label>
+              </div>
+
+              {/* Amenities & child seats */}
+              <div className="border rounded-2xl p-3 bg-zinc-50">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Amenities & child seats</span>
+                  <span className="text-xs text-zinc-500">
+                    +{formatCurrency(amenityDailyRate)} / day each
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Pricing applies per seat, per day. Final totals will be
+                  confirmed in your rental agreement or by our team.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowAmenitiesDetails((v) => !v)}
+                  className="mt-2 text-[11px] text-zinc-600 flex items-center gap-1"
+                >
+                  <span className="inline-block text-xs font-semibold">
+                    {showAmenitiesDetails ? "−" : "+"}
+                  </span>
+                  <span>More details</span>
+                </button>
+                {showAmenitiesDetails && (
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    Choose from infant, child, or booster seats to match your
+                    passenger&apos;s age and size. Availability may vary by
+                    vehicle and local regulations. Our team can help confirm fit
+                    and installation guidelines at pickup.
+                  </p>
+                )}
+                <div className="mt-2 grid grid-cols-1 gap-1 text-xs">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={amenities.infantSeat}
+                      onChange={() => toggleAmenity("infantSeat")}
+                    />
+                    <span>Infant seat</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={amenities.childSeat}
+                      onChange={() => toggleAmenity("childSeat")}
+                    />
+                    <span>Child seat</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={amenities.boosterSeat}
+                      onChange={() => toggleAmenity("boosterSeat")}
+                    />
+                    <span>Booster seat</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border rounded-2xl p-4 bg-zinc-50 flex flex-col justify-between">
+            <div className="space-y-2 text-sm text-zinc-700">
+              <div className="flex justify-between">
+                <span>
+                  Rental ({billableDays} day{billableDays > 1 ? "s" : ""})
+                </span>
+                <span className="font-medium">{formatCurrency(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-zinc-600">
+                <span>Protection & extras (est.)</span>
+                <span>{formatCurrency(extrasTotal)}</span>
+              </div>
+              {insuranceCost > 0 && (
+                <div className="flex justify-between text-[11px] text-zinc-500">
+                  <span>Protection plan</span>
+                  <span>{formatCurrency(insuranceCost)}</span>
+                </div>
+              )}
+              {ezPassCost > 0 && (
+                <div className="flex justify-between text-[11px] text-zinc-500">
+                  <span>EZ-Pass / toll device</span>
+                  <span>{formatCurrency(ezPassCost)}</span>
+                </div>
+              )}
+              {fuelPrepayCost > 0 && (
+                <div className="flex justify-between text-[11px] text-zinc-500">
+                  <span>Prepaid fuel</span>
+                  <span>{formatCurrency(fuelPrepayCost)}</span>
+                </div>
+              )}
+              {amenitiesCost > 0 && (
+                <div className="flex justify-between text-[11px] text-zinc-500">
+                  <span>Child seat amenities</span>
+                  <span>{formatCurrency(amenitiesCost)}</span>
+                </div>
+              )}
+
+              <div className="border-t pt-2 mt-2 flex justify-between items-center">
+                <span className="text-xs text-zinc-600">
+                  Estimated trip total*
+                </span>
+                <span className="font-semibold text-base text-zinc-900">
+                  {formatCurrency(total)}
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500">
+                *Estimate only. Taxes, fees, tolls, violations, and additional
+                charges (if any) are calculated by the backend and final rental
+                agreement.
+              </p>
+
+              <div className="border-t pt-2 mt-2 flex justify-between items-center">
+                <span className="text-xs text-zinc-600">Deposit due now</span>
+                <span className="font-semibold text-base text-zinc-900">
+                  {formatCurrency(deposit)}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                onClick={onBack}
+                className="px-4 py-2 rounded-lg text-sm text-zinc-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePay}
+                className="px-6 py-3 rounded-2xl bg-black text-white font-semibold text-sm"
+              >
+                Pay deposit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ProfilePage({
   profile,
@@ -728,7 +1089,7 @@ function ProfilePage({
 
   async function handleLogin(e) {
     e.preventDefault();
-    // Demo login only
+    // demo login only
     alert("Logged in (demo). No real authentication configured yet.");
     setIsLoggedIn(true);
     if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
@@ -739,38 +1100,40 @@ function ProfilePage({
   }
 
   async function handleCreate(e) {
-  e.preventDefault();
-  setProfile(local);
-  if (local.email) newsletterSignUp(local.email);
+    e.preventDefault();
+    setProfile(local);
+    if (local.email) newsletterSignUp(local.email);
 
-  // Save/Upsert in Supabase
-  const { error } = await supabase
-    .from("users")
-    .upsert({
-      email: local.email,
-      full_name: local.fullName,
-      phone: local.phone,
-      drivers_license: local.driversLicense,
-    });
+    // save in Supabase
+    try {
+      const { error } = await supabase.from("users").upsert({
+        email: local.email,
+        full_name: local.fullName,
+        phone: local.phone,
+        drivers_license: local.driversLicense,
+      });
 
-  if (error) {
-    console.error("Supabase user upsert error", error);
+      if (error) {
+        console.error("Supabase user upsert error", error);
+      }
+    } catch (err) {
+      console.error("Supabase user error", err);
+    }
+
+    setIsLoggedIn(true);
+    if (
+      local.email &&
+      local.email.toLowerCase() === COMPANY.email.toLowerCase()
+    ) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+    alert(
+      "Profile created (demo). In production this will create a secure account."
+    );
   }
 
-  setIsLoggedIn(true);
-  if (
-    local.email &&
-    local.email.toLowerCase() === COMPANY.email.toLowerCase()
-  ) {
-    setIsAdmin(true);
-  } else {
-    setIsAdmin(false);
-  }
-  alert(
-    "Profile created (demo). In production this will create a secure account."
-  );
-}
-  
   function save() {
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
@@ -1526,16 +1889,16 @@ function App() {
     console.log("Newsletter sign-up (demo):", email);
   }
 
- function handleBookingComplete(booking) {
-  setBookings((b) => [...b, booking]);
-  setVehicles((prev) =>
-    prev.map((v) =>
-      v.id === booking.vehicleId ? { ...v, available: false } : v
-    )
-  );
-  setSelected(null);
-  setRoute("home");
-}
+  function handleBookingComplete(booking) {
+    setBookings((b) => [...b, booking]);
+    setVehicles((prev) =>
+      prev.map((v) =>
+        v.id === booking.vehicleId ? { ...v, available: false } : v
+      )
+    );
+    setSelected(null);
+    setRoute("home");
+  }
 
   const categories = vehicles.map((v) => v.category);
   const filteredSortedVehicles = applyVehicleFilters(
