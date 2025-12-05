@@ -503,6 +503,18 @@ useEffect(() => {
     email: "",
     phone: "",
   });
+  
+  useEffect(() => {
+  if (profile) {
+    setCustomer((prev) => ({
+      ...prev,
+      fullName: profile.fullName || prev.fullName,
+      email: profile.email || prev.email,
+      phone: profile.phone || prev.phone,
+    }));
+  }
+}, [profile]);
+
   const [insurance, setInsurance] = useState("none");
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
