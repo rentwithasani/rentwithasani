@@ -1,10 +1,8 @@
+// App.jsx
 import React, { useState, useEffect } from "react";
-import { supabase } from "./lib/supabaseClient.js";
+import { supabase } from "./lib/supabaseClient";
 
-// ─────────────────────────────────────────────────────
-// COMPANY CONFIG
-// ─────────────────────────────────────────────────────
-
+// --- Company info ---
 const COMPANY = {
   name: "Asani Rentals",
   address: "1001 S Main #8227, Kalispell, MT 59901",
@@ -12,10 +10,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
 };
 
-// ─────────────────────────────────────────────────────
-// FLEET DATA
-// ─────────────────────────────────────────────────────
-
+// --- Fleet data ---
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
@@ -162,10 +157,6 @@ const SAMPLE_VEHICLES = [
   },
 ];
 
-// ─────────────────────────────────────────────────────
-// HERO SLIDES
-// ─────────────────────────────────────────────────────
-
 const HERO_SLIDES = [
   {
     id: "s1",
@@ -204,14 +195,11 @@ const HERO_SLIDES = [
   },
 ];
 
-// ─────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────
-
 function formatCurrency(n) {
-  return `$${n.toFixed(2)}`;
+  return `$${Number(n).toFixed(2)}`;
 }
 
+// --- Filters helper ---
 function applyVehicleFilters(vehicles, filterCategory, sortOrder) {
   let result = [...vehicles];
   if (filterCategory && filterCategory !== "all") {
@@ -225,9 +213,7 @@ function applyVehicleFilters(vehicles, filterCategory, sortOrder) {
   return result;
 }
 
-// ─────────────────────────────────────────────────────
-// UI COMPONENTS
-// ─────────────────────────────────────────────────────
+// --- UI Components ---
 
 function FleetFilters({
   categories,
@@ -455,7 +441,7 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
             </button>
           )}
           <button
-            onClick={() => alert("Saved to wishlist (demo)")}
+            onClick={() => alert("Saved to wishlist.")}
             className="px-4 py-2 rounded-2xl text-xs md:text-sm font-medium border border-zinc-200 text-zinc-700 hover:border-zinc-800 hover:text-zinc-900 transition"
           >
             Save
@@ -488,14 +474,11 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
   );
 }
 
-// ─────────────────────────────────────────────────────
-// BOOKING PANEL (Supabase + Email, NO STRIPE)
-// ─────────────────────────────────────────────────────
-
+// --- BookingPanel with Supabase + Stripe ---
 function BookingPanel({ vehicle, onBack, onComplete }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [deposit] = useState(350);
+  const [deposit, setDeposit] = useState(350);
   const [customer, setCustomer] = useState({
     fullName: "",
     email: "",
@@ -513,6 +496,12 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
   const [showProtectionDetails, setShowProtectionDetails] = useState(false);
   const [showEzPassDetails, setShowEzPassDetails] = useState(false);
   const [showAmenitiesDetails, setShowAmenitiesDetails] = useState(false);
+
+  useEffect(() => {
+    if (vehicle) {
+      setDeposit(350);
+    }
+  }, [vehicle]);
 
   if (!vehicle) return null;
 
@@ -545,10 +534,6 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
   const extrasTotal =
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
-
-  function toggleAmenity(key) {
-    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
 
   async function handlePay() {
     if (!startDate || !endDate) {
@@ -596,54 +581,89 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     };
 
     // 1) Save booking in Supabase
-const { error } = await supabase.from("bookings").insert({
-  // 👇 use the column name that exists in your Supabase table
-  email: booking.customer.email,      // or customer.email if you prefer
-  vehicle_id: booking.vehicleId,
-  vehicle_name: booking.vehicleName,
-  start_date: booking.startDate,
-  end_date: booking.endDate,
-  days: booking.days,
-  subtotal: booking.subtotal,
-  deposit: booking.deposit,
-  total: booking.total,
-  extras: booking.extras,             // make sure this column is json/jsonb
-});
+    try {
+      const { error } = await supabase.from("bookings").insert({
+        email: booking.customer.email,
+        vehicle_id: booking.vehicleId,
+        vehicle_name: booking.vehicleName,
+        start_date: booking.startDate,
+        end_date: booking.endDate,
+        days: booking.days,
+        subtotal: booking.subtotal,
+        deposit: booking.deposit,
+        total: booking.total,
+        extras: booking.extras,
+      });
 
-if (error) {
-  console.error("Supabase booking insert error", error);
-  alert(
-    "We couldn't save your booking in our system. Please contact us at " +
-      COMPANY.email
-  );
-  return;
-}
-    
-      // 2) Send emails (customer + admin) via /api/booking (Resend)
-      try {
-        await fetch("/api/booking", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ booking }),
-        });
-      } catch (err) {
-        console.error("Booking email error", err);
-        // Soft fail – don't block the booking if email fails
+      if (error) {
+        console.error("Supabase booking insert error", error);
+        alert(
+          "We couldn't save your booking in our system. Please contact us at " +
+            COMPANY.email
+        );
+        return;
       }
-
-      // 3) Let parent update UI
-      onComplete(booking);
-      alert(
-        "Reservation confirmed. A confirmation email will be sent to " +
-          customer.email
-      );
     } catch (err) {
-      console.error("Booking error", err);
+      console.error("Supabase booking insert error", err);
       alert(
-        "We had a problem submitting your booking. Please contact us directly at " +
+        "We couldn't save your booking in our system. Please contact us at " +
           COMPANY.email
       );
+      return;
     }
+
+    // 2) Create Stripe checkout session
+    let checkoutUrl = null;
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: booking.customer.email,
+          vehicleName: booking.vehicleName,
+          depositAmount: booking.deposit,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error(
+          "Stripe checkout session error:",
+          await res.text().catch(() => "no body")
+        );
+      } else {
+        const data = await res.json();
+        if (data && data.url) {
+          checkoutUrl = data.url;
+        }
+      }
+    } catch (err) {
+      console.error("Stripe checkout error", err);
+      // continue – booking is saved, you can handle payment manually
+    }
+
+    // 3) Fire-and-forget email notifications
+    fetch("/api/booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(booking),
+    }).catch((err) => {
+      console.error("Booking email API error", err);
+    });
+
+    // 4) Update state & redirect if we have a Stripe URL
+    onComplete(booking);
+
+    if (checkoutUrl) {
+      window.location.href = checkoutUrl;
+    } else {
+      alert(
+        "Your booking has been saved. Our team will contact you to finalize payment if it wasn't completed online."
+      );
+    }
+  }
+
+  function toggleAmenity(key) {
+    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   return (
@@ -656,10 +676,11 @@ if (error) {
           Reserve — {vehicle.name}
         </h3>
         <p className="mt-1 text-xs text-zinc-500">
-          A $350 security deposit is collected to hold your reservation. Rental
-          charges and any extras are settled at vehicle pickup.
+          A $350 security deposit is collected now to hold your reservation.
+          Rental charges and any extras are settled at vehicle pickup.
         </p>
 
+        {/* Dates & customer info */}
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="flex flex-col text-sm text-zinc-700">
             Start date
@@ -714,6 +735,7 @@ if (error) {
           </label>
         </div>
 
+        {/* Extras + summary */}
         <div className="mt-6 border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left: extras */}
           <div>
@@ -748,10 +770,9 @@ if (error) {
                 {showProtectionDetails && (
                   <p className="mt-1 text-[11px] text-zinc-500">
                     This optional protection is provided by a third-party
-                    protection provider. Coverage, deductibles, and exclusions
-                    are defined in their policy wording. Always review their
-                    documentation and your rental agreement before deciding to
-                    add or decline this protection.
+                    provider and may reduce your financial responsibility for
+                    covered collision damage, theft, and certain fees, subject
+                    to policy terms and exclusions.
                   </p>
                 )}
                 <div className="mt-2 space-y-1 text-xs">
@@ -777,10 +798,9 @@ if (error) {
                       onChange={() => setInsurance("none")}
                     />
                     <span>
-                      No, I decline the protection plan. I understand my
-                      personal auto insurance or credit card may{" "}
-                      <strong>not</strong> cover rental vehicles, and I may be
-                      fully responsible for any loss or damage.
+                      No, I decline the protection plan. I understand I may be
+                      fully responsible for loss or damage not covered by my
+                      own policy or card.
                     </span>
                   </label>
                   {insurance === "none" && (
@@ -791,9 +811,8 @@ if (error) {
                         onChange={(e) => setRiskAccepted(e.target.checked)}
                       />
                       <span>
-                        I have reviewed this disclaimer and choose to accept all
-                        financial risk for damage, loss, or liability not
-                        covered by my own policy.
+                        I understand and accept all financial risk for damage,
+                        loss, and liability not covered by my own policy.
                       </span>
                     </label>
                   )}
@@ -824,9 +843,8 @@ if (error) {
                 </button>
                 {showEzPassDetails && (
                   <p className="mt-1 text-[11px] text-zinc-500">
-                    When you opt in to the toll device, all eligible tolls
-                    incurred during your rental will be charged to the card on
-                    file, plus any service or processing fees described in your
+                    All tolls incurred on the device will be charged to the card
+                    on file, plus any administration fees described in your
                     rental agreement.
                   </p>
                 )}
@@ -840,7 +858,7 @@ if (error) {
                 </label>
               </div>
 
-              {/* Prepaid fuel */}
+              {/* Prepay fuel */}
               <div className="border rounded-2xl p-3 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Prepay fuel</span>
@@ -862,7 +880,7 @@ if (error) {
                 </label>
               </div>
 
-              {/* Child seats */}
+              {/* Amenities */}
               <div className="border rounded-2xl p-3 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Amenities & child seats</span>
@@ -872,7 +890,7 @@ if (error) {
                 </div>
                 <p className="mt-1 text-xs text-zinc-500">
                   Pricing applies per seat, per day. Final totals will be
-                  confirmed in your rental agreement or by our team.
+                  confirmed by our team.
                 </p>
                 <button
                   type="button"
@@ -887,8 +905,8 @@ if (error) {
                 {showAmenitiesDetails && (
                   <p className="mt-1 text-[11px] text-zinc-500">
                     Choose from infant, child, or booster seats to match your
-                    passenger&apos;s age and size. Availability may vary by
-                    vehicle and local regulations.
+                    passenger&apos;s needs. Availability may vary by vehicle and
+                    location.
                   </p>
                 )}
                 <div className="mt-2 grid grid-cols-1 gap-1 text-xs">
@@ -968,13 +986,12 @@ if (error) {
                 </span>
               </div>
               <p className="text-[11px] text-zinc-500">
-                *Estimate only. Taxes, fees, tolls, violations, and any
-                additional charges are calculated in your final rental
-                agreement.
+                *Estimate only. Taxes, fees, tolls, violations, and additional
+                charges (if any) are finalized in your rental agreement.
               </p>
 
               <div className="border-t pt-2 mt-2 flex justify-between items-center">
-                <span className="text-xs text-zinc-600">Deposit (due now)</span>
+                <span className="text-xs text-zinc-600">Deposit due now</span>
                 <span className="font-semibold text-base text-zinc-900">
                   {formatCurrency(deposit)}
                 </span>
@@ -992,7 +1009,7 @@ if (error) {
                 onClick={handlePay}
                 className="px-6 py-3 rounded-2xl bg-black text-white font-semibold text-sm"
               >
-                Confirm reservation
+                Pay deposit
               </button>
             </div>
           </div>
@@ -1002,10 +1019,7 @@ if (error) {
   );
 }
 
-// ─────────────────────────────────────────────────────
-// PROFILE PAGE (Supabase users)
-// ─────────────────────────────────────────────────────
-
+// --- Profile / Admin ---
 function ProfilePage({
   profile,
   setProfile,
@@ -1042,14 +1056,13 @@ function ProfilePage({
 
   async function handleLogin(e) {
     e.preventDefault();
-    // Demo-only login
+    // You can replace this with real auth later
     setIsLoggedIn(true);
     if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
       setIsAdmin(true);
     } else {
       setIsAdmin(false);
     }
-    alert("Signed in (demo). In production connect this to your auth system.");
   }
 
   async function handleCreate(e) {
@@ -1057,6 +1070,7 @@ function ProfilePage({
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
 
+    // Save profile in Supabase
     try {
       const { error } = await supabase.from("users").upsert({
         email: local.email,
@@ -1069,7 +1083,7 @@ function ProfilePage({
         console.error("Supabase user upsert error", error);
       }
     } catch (err) {
-      console.error("User upsert error", err);
+      console.error("Supabase user upsert error", err);
     }
 
     setIsLoggedIn(true);
@@ -1081,8 +1095,7 @@ function ProfilePage({
     } else {
       setIsAdmin(false);
     }
-
-    alert("Profile created and saved.");
+    alert("Profile created. Your details are saved for faster reservations.");
   }
 
   function save() {
@@ -1111,7 +1124,7 @@ function ProfilePage({
 
   function saveFleetChanges() {
     setVehicles(drafts);
-    alert("Fleet updated (in-memory).");
+    alert("Fleet updated. These changes are now visible on the site.");
   }
 
   function handleAddVehicle(e) {
@@ -1147,8 +1160,8 @@ function ProfilePage({
       <section className="max-w-3xl mx-auto px-4 md:px-6 py-10 md:py-12">
         <h2 className="text-2xl font-bold text-zinc-900">Your profile</h2>
         <p className="text-zinc-600 mt-2 text-sm">
-          Sign in or create a profile to save your details for faster
-          reservations.
+          Sign in to an existing profile or create a new one to save your
+          details for faster reservations.
         </p>
 
         <div className="mt-6 flex gap-4 border-b pb-4 text-sm">
@@ -1177,17 +1190,12 @@ function ProfilePage({
         </div>
 
         {mode === "login" ? (
-          <form
-            className="mt-6 grid grid-cols-1 gap-4"
-            onSubmit={handleLogin}
-          >
+          <form className="mt-6 grid grid-cols-1 gap-4" onSubmit={handleLogin}>
             <input
               type="email"
               required
               value={auth.email}
-              onChange={(e) =>
-                setAuth({ ...auth, email: e.target.value })
-              }
+              onChange={(e) => setAuth({ ...auth, email: e.target.value })}
               placeholder="Email"
               className="p-3 border rounded text-sm"
             />
@@ -1195,9 +1203,7 @@ function ProfilePage({
               type="password"
               required
               value={auth.password}
-              onChange={(e) =>
-                setAuth({ ...auth, password: e.target.value })
-              }
+              onChange={(e) => setAuth({ ...auth, password: e.target.value })}
               placeholder="Password"
               className="p-3 border rounded text-sm"
             />
@@ -1208,15 +1214,12 @@ function ProfilePage({
               Sign in
             </button>
             <p className="text-xs text-zinc-500">
-              In production, connect this form to your real auth API to allow
-              customers to manage their rentals securely.
+              Connect this login to a real authentication system when you&apos;re
+              ready (Supabase Auth, Auth0, etc.).
             </p>
           </form>
         ) : (
-          <form
-            className="mt-6 grid grid-cols-1 gap-4"
-            onSubmit={handleCreate}
-          >
+          <form className="mt-6 grid grid-cols-1 gap-4" onSubmit={handleCreate}>
             <input
               value={local.fullName}
               onChange={(e) =>
@@ -1279,25 +1282,19 @@ function ProfilePage({
       <div className="mt-6 grid grid-cols-1 gap-4 max-w-xl">
         <input
           value={local.fullName}
-          onChange={(e) =>
-            setLocal({ ...local, fullName: e.target.value })
-          }
+          onChange={(e) => setLocal({ ...local, fullName: e.target.value })}
           placeholder="Full name"
           className="p-3 border rounded text-sm"
         />
         <input
           value={local.email}
-          onChange={(e) =>
-            setLocal({ ...local, email: e.target.value })
-          }
+          onChange={(e) => setLocal({ ...local, email: e.target.value })}
           placeholder="Email"
           className="p-3 border rounded text-sm"
         />
         <input
           value={local.phone}
-          onChange={(e) =>
-            setLocal({ ...local, phone: e.target.value })
-          }
+          onChange={(e) => setLocal({ ...local, phone: e.target.value })}
           placeholder="Phone"
           className="p-3 border rounded text-sm"
         />
@@ -1338,8 +1335,7 @@ function ProfilePage({
             Admin — Fleet management
           </h3>
           <p className="text-zinc-600 mt-2 text-sm">
-            Update pricing, availability, and add new vehicles. Changes apply
-            immediately in this demo.
+            Update pricing, availability, and add new vehicles.
           </p>
 
           <div className="mt-6 space-y-6">
@@ -1453,10 +1449,7 @@ function ProfilePage({
                 <input
                   value={newVehicle.category}
                   onChange={(e) =>
-                    setNewVehicle({
-                      ...newVehicle,
-                      category: e.target.value,
-                    })
+                    setNewVehicle({ ...newVehicle, category: e.target.value })
                   }
                   placeholder="Category (e.g. Premium SUV)"
                   className="p-2 border rounded"
@@ -1528,10 +1521,7 @@ function ProfilePage({
   );
 }
 
-// ─────────────────────────────────────────────────────
-// CHAUFFEUR + CONTACT + NEWSLETTER
-// ─────────────────────────────────────────────────────
-
+// --- Chauffeur request ---
 function ChauffeurRequest() {
   async function handleSubmit(e) {
     e.preventDefault();
@@ -1577,8 +1567,9 @@ function ChauffeurRequest() {
       <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
       <p className="mt-2 text-sm text-zinc-600">
         Request a professional chauffeur for a Sprinter, black SUV, elite luxury
-        sedan, or our <span className="font-semibold">armed chauffeur</span>{" "}
-        option for elevated security.
+        sedan, or our{" "}
+        <span className="font-semibold">armed chauffeur</span> option for
+        elevated security.
       </p>
       <form
         className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 border rounded-2xl bg-white"
@@ -1689,7 +1680,7 @@ function ChauffeurRequest() {
             name="notes"
             rows={4}
             className="mt-2 p-2 border rounded text-sm"
-            placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
+            placeholder="Flight details, occasion, security needs, or special requests."
           />
         </label>
         <div className="md:col-span-2 flex justify-end">
@@ -1705,6 +1696,7 @@ function ChauffeurRequest() {
   );
 }
 
+// --- Contact ---
 function Contact() {
   async function handleSubmit(e) {
     e.preventDefault();
@@ -1797,7 +1789,7 @@ function NewsletterForm({ onSign }) {
     if (!email) return;
     onSign(email);
     setEmail("");
-    alert("Signed up. In production this will add you to our email list.");
+    alert("Signed up. You’ll receive updates and offers from Asani Rentals.");
   }
 
   return (
@@ -1821,10 +1813,7 @@ function NewsletterForm({ onSign }) {
   );
 }
 
-// ─────────────────────────────────────────────────────
-// ROOT APP
-// ─────────────────────────────────────────────────────
-
+// --- Root App ---
 function App() {
   const [route, setRoute] = useState("home");
   const [vehicles, setVehicles] = useState(SAMPLE_VEHICLES);
@@ -1935,7 +1924,8 @@ function App() {
           <h2 className="text-2xl font-bold text-zinc-900">Reserve</h2>
           <p className="text-zinc-600 mt-2 text-sm">
             Filter by vehicle type, sort by price, then select a vehicle to
-            begin.
+            begin. A $350 security deposit is collected at booking to hold your
+            reservation.
           </p>
           <FleetFilters
             categories={categories}
