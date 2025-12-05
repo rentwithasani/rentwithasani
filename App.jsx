@@ -1963,13 +1963,14 @@ function App() {
               />
             ))}
           </div>
-          {selected && (
-            <BookingPanel
-              vehicle={selected}
-              onBack={() => setSelected(null)}
-              onComplete={handleBookingComplete}
-            />
-          )}
+         {selected && (
+  <BookingPanel
+    vehicle={selected}
+    profile={profile}
+    onBack={() => setSelected(null)}
+    onComplete={handleBookingComplete}
+  />
+)}
         </section>
       )}
 
