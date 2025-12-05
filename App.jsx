@@ -19,8 +19,8 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 120,
     color: "Estoril Blue Metallic",
-    image:
-      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
+    deposit: 350,
+    image: "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
     description:
       "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
@@ -32,6 +32,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Urban Gray Pearl",
+    deposit: 350,
     image:
       "https://vehicle-images.dealerinspire.com/3dc5-110004598/thumbnails/large/7FARS6H54SE100583/c7206170b726e1316bdc1efa8374f7ae.png",
     description:
@@ -45,6 +46,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 90,
     color: "Silver",
+    deposit: 350,
     image:
       "https://cdn.jdpower.com/ChromeImageGallery/Expanded/Transparent/640/2023NIC10_640/2023NIC100001_640_01.png",
     description:
@@ -58,6 +60,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 75,
     color: "Grey",
+    deposit: 350,
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_500/v1/svp/dep/21kiafortelxssd3t/kia_21fortelxssd3t_angularfront_gravitygray",
     description:
@@ -71,6 +74,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 1500,
     color: "Yellow",
+    deposit: 2500,
     image:
       "https://www.lamborghinilongisland.com/imagetag/2333/main/l/New-2019-Lamborghini-Urus-1540414873.jpg",
     description:
@@ -84,6 +88,7 @@ const SAMPLE_VEHICLES = [
     seats: 4,
     pricePerDay: 1800,
     color: "Black",
+    deposit: 3000,
     image:
       "https://www.motortrend.com/uploads/2021/12/2022-Rolls-Royce-Ghost.png",
     description:
@@ -97,6 +102,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 150,
     color: "Metallic Grey",
+    deposit: 500,
     image:
       "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/DDcY5uJ1Hoc2PfKiaPzOoTor54RCDSxmNSMjhIMjMcSABjV1Plsg4az8WgGOqVD42Px_fBnRGfbq6YMoQr9Bwgwa4vs3hsjk7OZwcAD2au-Xj2_jOK1rejFnAEpjN8liQtu0_zWdBrt_zZ94kYd0yB-LZ9J239IX_tK5l7rorkk7c-qGpYTQuQ/cc_2025BMC222011556_01_640_668.png",
     description:
@@ -110,6 +116,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 220,
     color: "Jet Black",
+    deposit: 600,
     image:
       "https://carimage.d2cmedia.ca/newcars/cb69187e12c4b7b/2025/BMW/5%20Series/MjkxNDg1Xk1lZGlhIEdhbGxlcnk/JlYkWPtHQFHv5iyaE-0ElTJMKcsUkrV6zIwqpULTTzGVYff8AQdRoGb1LNE0kkF9LvxKak38yajBbDVqH2GXAoRwzfyli_8oNZdafozz4_Dvo0JFYpvJ_UML5RdQUqO_jzWxRcM0gc3Bc81o31C4CvRZFRAQKi_vDV1JkK3TadD8KjHDqD6yhOUe0oYKZe3bJaoUf8IXQeI/cc_2025BMC071956866_01_1280_A90.png",
     description:
@@ -123,6 +130,7 @@ const SAMPLE_VEHICLES = [
     seats: 4,
     pricePerDay: 350,
     color: "Obsidian Black",
+    deposit: 800,
     image:
       "https://vehicle-images.dealerinspire.com/stock-images/chrome/d5bcd7597123f034ff8aca12872d03e6.png",
     description:
@@ -136,6 +144,7 @@ const SAMPLE_VEHICLES = [
     seats: 7,
     pricePerDay: 350,
     color: "Black",
+    deposit: 900,
     image:
       "https://d2ivfcfbdvj3sm.cloudfront.net/8nQjctTo7dtJ6WW6/54121/stills_0640_png/MY2024/54121/54121_st0640_116.webp?c=172&p=164&m=1&o=png&s=wuewtb27_XAtqo0e5m3jQS",
     description:
@@ -149,6 +158,7 @@ const SAMPLE_VEHICLES = [
     seats: 5,
     pricePerDay: 950,
     color: "Matte Black",
+    deposit: 2000,
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_600/v1/svp/dep/25mercedesbenzgclassamgg63suv/mercedesbenz_25gclassamgg63suv_angularfront_black",
     description:
