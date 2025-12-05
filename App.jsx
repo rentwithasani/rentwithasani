@@ -694,11 +694,11 @@ useEffect(() => {
         <h3 className="text-2xl font-bold text-zinc-900">
           Reserve — {vehicle.name}
         </h3>
-        <p className="mt-1 text-xs text-zinc-500">
-          A $350 security deposit is collected now to hold your reservation.
-          Rental charges and any extras are settled at vehicle pickup.
-        </p>
-
+       <p className="mt-1 text-xs text-zinc-500">
+  A security deposit is collected now based on the vehicle you select.
+  Rental charges and any extras are settled at vehicle pickup.
+</p>
+        
         {/* Dates & customer info */}
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="flex flex-col text-sm text-zinc-700">
@@ -1943,7 +1943,7 @@ function App() {
           <h2 className="text-2xl font-bold text-zinc-900">Reserve</h2>
           <p className="text-zinc-600 mt-2 text-sm">
             Filter by vehicle type, sort by price, then select a vehicle to
-            begin. A $350 security deposit is collected at booking to hold your
+            begin. A security deposit is collected at booking to hold your
             reservation.
           </p>
           <FleetFilters
