@@ -5,16 +5,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    res.status(405).json({ error: "Method Not Allowed" });
+    return;
   }
 
   try {
-    const { email, vehicleName, depositAmount } = req.body || {};
+    const { email, vehicleName, depositAmount } = req.body;
 
     if (!email || !vehicleName || !depositAmount) {
-      return res.status(400).json({ error: "Missing required fields" });
+      res.status(400).json({ error: "Missing required fields" });
+      return;
     }
 
+    // Convert dollars to cents for Stripe
     const amountInCents = Math.round(Number(depositAmount) * 100);
 
     const session = await stripe.checkout.sessions.create({
@@ -26,20 +29,25 @@ module.exports = async (req, res) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Deposit — ${vehicleName}`,
+              name: `Reservation deposit — ${vehicleName}`,
             },
             unit_amount: amountInCents,
           },
           quantity: 1,
         },
       ],
-      success_url: "https://rentwithasani.com/?status=success",
-      cancel_url: "https://rentwithasani.com/?status=cancel",
+      // Where Stripe sends customer after payment or cancel
+      success_url: `${req.headers.origin}/?status=success`,
+      cancel_url: `${req.headers.origin}/?status=cancelled`,
+      metadata: {
+        vehicleName,
+      },
     });
 
-    return res.status(200).json({ id: session.id, url: session.url });
+    // We're using the session's hosted URL
+    res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error("Stripe checkout session error", err);
-    return res.status(500).json({ error: "Stripe error" });
+    console.error("Stripe checkout error", err);
+    res.status(500).json({ error: "Stripe error" });
   }
 };
