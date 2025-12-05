@@ -595,30 +595,30 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       },
     };
 
-    try {
-      // 1) Save booking in Supabase
-      const { error } = await supabase.from("bookings").insert({
-        user_email: customer.email,
-        vehicle_id: booking.vehicleId,
-        vehicle_name: booking.vehicleName,
-        start_date: booking.startDate,
-        end_date: booking.endDate,
-        days: booking.days,
-        subtotal: booking.subtotal,
-        deposit: booking.deposit,
-        total: booking.total,
-        extras: booking.extras,
-      });
+    // 1) Save booking in Supabase
+const { error } = await supabase.from("bookings").insert({
+  // 👇 use the column name that exists in your Supabase table
+  email: booking.customer.email,      // or customer.email if you prefer
+  vehicle_id: booking.vehicleId,
+  vehicle_name: booking.vehicleName,
+  start_date: booking.startDate,
+  end_date: booking.endDate,
+  days: booking.days,
+  subtotal: booking.subtotal,
+  deposit: booking.deposit,
+  total: booking.total,
+  extras: booking.extras,             // make sure this column is json/jsonb
+});
 
-      if (error) {
-        console.error("Supabase booking insert error", error);
-        alert(
-          "We couldn't save your booking in our system. Please contact us at " +
-            COMPANY.email
-        );
-        return;
-      }
-
+if (error) {
+  console.error("Supabase booking insert error", error);
+  alert(
+    "We couldn't save your booking in our system. Please contact us at " +
+      COMPANY.email
+  );
+  return;
+}
+    
       // 2) Send emails (customer + admin) via /api/booking (Resend)
       try {
         await fetch("/api/booking", {
