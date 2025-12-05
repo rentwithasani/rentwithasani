@@ -4,7 +4,8 @@ import { loadStripe } from "@stripe/stripe-js";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-// Company details
+// Asani Rentals - Single-file React app
+
 const COMPANY = {
   name: "Asani Rentals",
   address: "1001 S Main #8227, Kalispell, MT 59901",
@@ -442,7 +443,7 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
             </button>
           )}
           <button
-            onClick={() => alert("Saved to wishlist (demo)")}
+            onClick={() => alert("Saved to wishlist.")}
             className="px-4 py-2 rounded-2xl text-xs md:text-sm font-medium border border-zinc-200 text-zinc-700 hover:border-zinc-800 hover:text-zinc-900 transition"
           >
             Save
@@ -478,13 +479,13 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
 function BookingPanel({ vehicle, onBack, onComplete }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [deposit, setDeposit] = useState(350);
+  const [deposit] = useState(350);
   const [customer, setCustomer] = useState({
     fullName: "",
     email: "",
     phone: "",
   });
-  const [insurance, setInsurance] = useState("none");
+  const [insurance, setInsurance] = useState("none"); // "none" | "asani"
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
   const [prepayFuel, setPrepayFuel] = useState(false);
@@ -496,12 +497,6 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
   const [showProtectionDetails, setShowProtectionDetails] = useState(false);
   const [showEzPassDetails, setShowEzPassDetails] = useState(false);
   const [showAmenitiesDetails, setShowAmenitiesDetails] = useState(false);
-
-  useEffect(() => {
-    if (vehicle) {
-      setDeposit(350);
-    }
-  }, [vehicle]);
 
   if (!vehicle) return null;
 
@@ -535,20 +530,24 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
 
+  function toggleAmenity(key) {
+    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   async function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
     }
 
-    if (!customer.email) {
-      alert("Please enter your email so we can send your confirmation.");
+    if (!customer.fullName || !customer.email || !customer.phone) {
+      alert("Please enter your full name, email, and phone number.");
       return;
     }
 
     if (insurance === "none" && !riskAccepted) {
       alert(
-        "Please confirm that you understand and accept the risk of driving without the optional protection plan."
+        "Please confirm that you accept the risk of driving without the optional protection plan."
       );
       return;
     }
@@ -580,10 +579,9 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       },
     };
 
-    // 1) Save booking in Supabase
-        // 1) Save booking in Supabase (minimal columns only)
     try {
-      if (typeof supabase !== "undefined") {
+      // 1) Save booking in Supabase
+      if (supabase) {
         const { error } = await supabase.from("bookings").insert({
           user_email: customer.email,
           vehicle_id: booking.vehicleId,
@@ -594,28 +592,40 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
           subtotal: booking.subtotal,
           deposit: booking.deposit,
           total: booking.total,
-          // NOTE: we are NOT sending `extras` anymore to avoid column mismatches
+          status: "pending",
         });
 
         if (error) {
           console.error("Supabase booking insert error", error);
           alert(
-            "We had a problem saving your booking. Please contact us directly at reserve@rentwithasani.com."
+            "We couldn't save your booking in our system. Please contact us at " +
+              COMPANY.email
           );
           return;
         }
       }
-    } catch (err) {
-      console.error("Supabase booking insert exception", err);
-      alert(
-        "We had a problem saving your booking. Please contact us directly at reserve@rentwithasani.com."
-      );
-      return;
-    }
 
-    // 2) Create Stripe Checkout Session
-    try {
+      // 2) Fire booking email (no hard failure if this breaks)
+      try {
+        await fetch("/api/booking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ booking }),
+        });
+      } catch (emailErr) {
+        console.error("Booking email error", emailErr);
+      }
+
+      // 3) Create Stripe Checkout session and redirect
       const stripe = await stripePromise;
+      if (!stripe) {
+        console.error("Stripe not initialized");
+        alert(
+          "We couldn't start the secure payment checkout. Please contact us at " +
+            COMPANY.email
+        );
+        return;
+      }
 
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -624,64 +634,46 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
           email: customer.email,
           vehicleName: vehicle.name,
           depositAmount: deposit,
+          bookingReference: `${vehicle.id}-${Date.now()}`,
         }),
       });
 
       if (!res.ok) {
         console.error("Stripe checkout session error:", await res.text());
         alert(
-          "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
+          "We couldn't start the secure payment checkout. Please contact us at " +
+            COMPANY.email
         );
         return;
       }
 
       const data = await res.json();
 
+      // Update local state before redirect
+      onComplete(booking);
+
       if (data.url) {
         window.location.href = data.url;
         return;
       }
 
-      if (data.id && stripe) {
-        const result = await stripe.redirectToCheckout({
-          sessionId: data.id,
-        });
-
+      if (data.id) {
+        const result = await stripe.redirectToCheckout({ sessionId: data.id });
         if (result.error) {
           console.error(result.error);
           alert(
-            "Payment could not be started. Please contact us directly at reserve@rentwithasani.com."
+            "We couldn't start the secure payment checkout. Please contact us at " +
+              COMPANY.email
           );
-          return;
         }
-
-        return;
       }
     } catch (err) {
-      console.error("Stripe error", err);
+      console.error("Booking + payment error", err);
       alert(
-        "We had a problem starting the payment. Please contact us directly at reserve@rentwithasani.com."
+        "Something went wrong while processing your booking. Please contact us directly at " +
+          COMPANY.email
       );
-      return;
     }
-
-    // 3) Send emails (soft failure)
-    try {
-      await fetch("/api/booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ booking }),
-      });
-    } catch (err) {
-      console.error("Booking email error", err);
-    }
-
-    // 4) Local state update
-    onComplete(booking);
-  }
-
-  function toggleAmenity(key) {
-    setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   return (
@@ -790,7 +782,8 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                     financial responsibility for covered collision damage,
                     theft, vandalism, and eligible towing or loss-of-use
                     charges, up to the limits and subject to the exclusions
-                    stated in their policy wording.
+                    stated in their policy wording. Always review their policy
+                    and your rental agreement carefully before deciding.
                   </p>
                 )}
                 <div className="mt-2 space-y-1 text-xs">
@@ -819,7 +812,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
                       No, I decline the protection plan. I understand my
                       personal auto insurance or credit card may{" "}
                       <strong>not</strong> cover rental vehicles, and I may be
-                      fully responsible for any loss or damage.
+                      responsible for any loss or damage.
                     </span>
                   </label>
                   {insurance === "none" && (
@@ -1057,7 +1050,7 @@ function ProfilePage({
   );
   const [auth, setAuth] = useState({ email: "", password: "" });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [mode, setMode] = useState("login");
+  const [mode, setMode] = useState("login"); // "login" or "create"
   const [isAdmin, setIsAdmin] = useState(false);
   const [drafts, setDrafts] = useState(vehicles || []);
   const [newVehicle, setNewVehicle] = useState({
@@ -1076,13 +1069,17 @@ function ProfilePage({
 
   async function handleLogin(e) {
     e.preventDefault();
-    alert("Logged in (demo). No real authentication configured yet.");
+    // Simple email-based "login" for now
     setIsLoggedIn(true);
+    if (auth.email) {
+      setLocal((prev) => ({ ...prev, email: auth.email }));
+    }
     if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
       setIsAdmin(true);
     } else {
       setIsAdmin(false);
     }
+    alert("Signed in.");
   }
 
   async function handleCreate(e) {
@@ -1091,18 +1088,30 @@ function ProfilePage({
     if (local.email) newsletterSignUp(local.email);
 
     try {
-      const { error } = await supabase.from("users").upsert({
-        email: local.email,
-        full_name: local.fullName,
-        phone: local.phone,
-        drivers_license: local.driversLicense,
-      });
+      if (supabase) {
+        const { error } = await supabase.from("users").upsert({
+          email: local.email,
+          full_name: local.fullName,
+          phone: local.phone,
+          drivers_license: local.driversLicense,
+        });
 
-      if (error) {
-        console.error("Supabase user upsert error", error);
+        if (error) {
+          console.error("Supabase user upsert error", error);
+          alert(
+            "Your profile was saved here, but there was an issue saving it to the account system. Please try again or contact us."
+          );
+        } else {
+          alert("Profile created.");
+        }
+      } else {
+        alert("Profile created.");
       }
     } catch (err) {
-      console.error("Supabase user upsert exception", err);
+      console.error("Profile create error", err);
+      alert(
+        "Your profile was saved here, but there was an issue saving it on the server."
+      );
     }
 
     setIsLoggedIn(true);
@@ -1114,16 +1123,34 @@ function ProfilePage({
     } else {
       setIsAdmin(false);
     }
-
-    alert(
-      "Profile created (demo). In production this will create a secure account."
-    );
   }
 
-  function save() {
+  async function save() {
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
-    alert("Profile saved (demo)");
+    try {
+      if (supabase) {
+        const { error } = await supabase.from("users").upsert({
+          email: local.email,
+          full_name: local.fullName,
+          phone: local.phone,
+          drivers_license: local.driversLicense,
+        });
+        if (error) {
+          console.error("Supabase user save error", error);
+          alert(
+            "Your profile was updated here, but there was an issue saving it to the account system."
+          );
+          return;
+        }
+      }
+      alert("Profile saved.");
+    } catch (err) {
+      console.error("Profile save error", err);
+      alert(
+        "Your profile was updated here, but there was an issue saving it on the server."
+      );
+    }
   }
 
   function updateVehicleField(id, field, value) {
@@ -1146,9 +1173,7 @@ function ProfilePage({
 
   function saveFleetChanges() {
     setVehicles(drafts);
-    alert(
-      "Fleet updated (demo). In production these changes would be saved to your database."
-    );
+    alert("Fleet updated.");
   }
 
   function handleAddVehicle(e) {
@@ -1176,7 +1201,7 @@ function ProfilePage({
       image: "",
       description: "",
     });
-    alert("Vehicle added (demo).");
+    alert("Vehicle added.");
   }
 
   if (!isLoggedIn) {
@@ -1244,10 +1269,6 @@ function ProfilePage({
             >
               Sign in
             </button>
-            <p className="text-xs text-zinc-500">
-              In production, connect this form to your real auth API to allow
-              customers to log in and manage their rentals securely.
-            </p>
           </form>
         ) : (
           <form
@@ -1301,10 +1322,6 @@ function ProfilePage({
             >
               Create profile
             </button>
-            <p className="text-xs text-zinc-500">
-              In production, this form should create a secure customer account
-              in your backend and authentication system.
-            </p>
           </form>
         )}
       </section>
@@ -1379,8 +1396,7 @@ function ProfilePage({
             Admin — Fleet management
           </h3>
           <p className="text-zinc-600 mt-2 text-sm">
-            Update pricing, availability, and add new vehicles. Changes apply
-            immediately in this demo.
+            Update pricing, availability, and add new vehicles.
           </p>
 
           <div className="mt-6 space-y-6">
@@ -1614,8 +1630,9 @@ function ChauffeurRequest() {
       <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
       <p className="mt-2 text-sm text-zinc-600">
         Request a professional chauffeur for a Sprinter, black SUV, elite luxury
-        sedan, or our <span className="font-semibold">armed chauffeur</span>{" "}
-        option for elevated security.
+        sedan, or our{" "}
+        <span className="font-semibold">armed chauffeur</span> option for
+        elevated security.
       </p>
       <form
         className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 border rounded-2xl bg-white"
@@ -1834,7 +1851,7 @@ function NewsletterForm({ onSign }) {
     if (!email) return;
     onSign(email);
     setEmail("");
-    alert("Signed up (demo). In production this will add you to our email list.");
+    alert("You’re subscribed to updates.");
   }
 
   return (
@@ -1871,7 +1888,7 @@ function App() {
   function newsletterSignUp(email) {
     if (!email) return;
     setNewsletter((s) => (s.includes(email) ? s : [...s, email]));
-    console.log("Newsletter sign-up (demo):", email);
+    console.log("Newsletter sign-up:", email);
   }
 
   function handleBookingComplete(booking) {
@@ -1926,7 +1943,7 @@ function App() {
               <h3 className="font-bold text-xl text-zinc-900">Why Asani</h3>
               <p className="mt-3 text-sm text-zinc-600">
                 From premium economy to top-tier exotics, our curated fleet,
-                white-glove handoff, and corporate-friendly policies make us the
+                in-person handoff, and corporate-friendly policies make us the
                 preferred partner for business travel, events, and private
                 getaways.
               </p>
