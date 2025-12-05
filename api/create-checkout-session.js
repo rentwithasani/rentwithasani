@@ -1,56 +1,60 @@
 // api/create-checkout-session.js
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 export default async function handler(req, res) {
+  // Only allow POST
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   try {
-    const { email, vehicleName, depositAmount } = req.body || {};
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const { email, vehicleName, depositAmount } = req.body;
 
     if (!email || !vehicleName || !depositAmount) {
       return res.status(400).json({ error: "Missing required fields." });
     }
 
+    // Fix domain for Vercel deployments
     const origin =
-      req.headers.origin ||
-      process.env.FRONTEND_URL ||
-      "https://rentwithasani.com";
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.VERCEL_URL ||
+      "http://localhost:5173";
 
+    const cleanOrigin = origin.startsWith("http")
+      ? origin
+      : `https://${origin}`;
+
+    // Create the Stripe Checkout session
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
       payment_method_types: ["card"],
+      mode: "payment",
       customer_email: email,
       line_items: [
         {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Reservation deposit — ${vehicleName}`,
+              name: `Deposit for ${vehicleName}`,
             },
             unit_amount: Math.round(Number(depositAmount) * 100),
           },
           quantity: 1,
         },
       ],
-      success_url: `${origin}/?booking=success`,
-      cancel_url: `${origin}/?booking=cancelled`,
-      metadata: {
-        vehicleName,
-        email,
-        purpose: "reservation_deposit",
-      },
+      success_url: `${cleanOrigin}/?payment=success`,
+      cancel_url: `${cleanOrigin}/?payment=cancel`,
     });
 
-    return res.status(200).json({ url: session.url });
-  } catch (err) {
-    console.error("Stripe Checkout session error:", err);
+    console.log("Stripe session created:", session.id);
+
+    return res.status(200).json({ id: session.id, url: session.url });
+  } catch (error) {
+    console.error("Stripe API Error:", error);
     return res.status(500).json({
-      error: "Unable to create checkout session.",
+      error: "Stripe session creation failed.",
+      details: error.message,
     });
   }
 }
