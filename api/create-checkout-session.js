@@ -1,13 +1,11 @@
 const Stripe = require("stripe");
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
-});
+// Secret key from Vercel env
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 /**
- * Vercel serverless function: POST /api/create-checkout-session
- * Expects JSON: { email, vehicleName, depositAmount }
- * Returns: { url } for Stripe Checkout
+ * POST /api/create-checkout-session
+ * Body: { email, vehicleName, depositAmount }
  */
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -18,14 +16,11 @@ module.exports = async (req, res) => {
   try {
     const { email, vehicleName, depositAmount } = req.body || {};
 
-    if (!email || !vehicleName || !depositAmount) {
+    if (!email || !vehicleName || typeof depositAmount !== "number") {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const origin =
-      process.env.PUBLIC_SITE_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-      "http://localhost:5173";
+    const amountCents = Math.round(depositAmount * 100);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -33,29 +28,30 @@ module.exports = async (req, res) => {
       customer_email: email,
       line_items: [
         {
+          quantity: 1,
           price_data: {
             currency: "usd",
+            unit_amount: amountCents,
             product_data: {
-              name: `Deposit for ${vehicleName}`,
+              name: `Reservation deposit - ${vehicleName}`,
+              description:
+                "Security deposit to hold your reservation with Asani Rentals.",
             },
-            unit_amount: Math.round(Number(depositAmount) * 100),
           },
-          quantity: 1,
         },
       ],
-      success_url: `${origin}/?status=success`,
-      cancel_url: `${origin}/?status=cancelled`,
+      success_url: `${req.headers.origin}/?payment=success`,
+      cancel_url: `${req.headers.origin}/?payment=cancel`,
       metadata: {
-        vehicleName,
         email,
+        vehicleName,
+        depositAmount: depositAmount.toString(),
       },
     });
 
-    return res.status(200).json({ url: session.url });
+    return res.status(200).json({ id: session.id, url: session.url });
   } catch (err) {
     console.error("Stripe session error", err);
-    return res
-      .status(500)
-      .json({ error: "Unable to create checkout session" });
+    return res.status(500).json({ error: "Stripe session creation failed" });
   }
 };
