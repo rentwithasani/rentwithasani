@@ -288,61 +288,122 @@ function FleetFilters({
 }
 
 function Header({ onNav, profile }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const NavButtons = ({ className = "" }) => (
+    <nav className={className}>
+      <button
+        onClick={() => {
+          onNav("home");
+          setMobileOpen(false);
+        }}
+        className="hover:text-zinc-200"
+      >
+        Home
+      </button>
+      <button
+        onClick={() => {
+          onNav("vehicles");
+          setMobileOpen(false);
+        }}
+        className="hover:text-zinc-200"
+      >
+        Vehicles
+      </button>
+      <button
+        onClick={() => {
+          onNav("book");
+          setMobileOpen(false);
+        }}
+        className="hover:text-zinc-200"
+      >
+        Reserve
+      </button>
+      <button
+        onClick={() => {
+          onNav("chauffeur");
+          setMobileOpen(false);
+        }}
+        className="hover:text-zinc-200"
+      >
+        Chauffeur
+      </button>
+      <button
+        onClick={() => {
+          onNav("profile");
+          setMobileOpen(false);
+        }}
+        className="hover:text-zinc-200"
+      >
+        Profile
+      </button>
+      <button
+        onClick={() => {
+          onNav("contact");
+          setMobileOpen(false);
+        }}
+        className="hover:text-zinc-200"
+      >
+        Contact
+      </button>
+    </nav>
+  );
+
   return (
-    <header className="w-full bg-black text-white border-b border-zinc-800">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-extrabold tracking-tight uppercase">
-            {COMPANY.name}
-          </h1>
-          <div className="text-[11px] md:text-xs text-zinc-400">
-            {COMPANY.tagline} • {COMPANY.phone}
+    <>
+      <header className="w-full bg-black text-white border-b border-zinc-800">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight uppercase">
+              {COMPANY.name}
+            </h1>
+            <div className="text-[11px] md:text-xs text-zinc-400">
+              {COMPANY.tagline} • {COMPANY.phone}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Desktop nav */}
+            <NavButtons className="hidden md:flex md:items-center md:gap-4 text-xs md:text-sm" />
+
+            {/* Signed-in name */}
+            {profile?.fullName && (
+              <div className="hidden sm:flex flex-col text-right text-[10px] md:text-xs leading-tight">
+                <span className="text-zinc-400">Signed in as</span>
+                <span className="font-semibold text-white">
+                  {profile.fullName}
+                </span>
+              </div>
+            )}
+
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden inline-flex items-center px-3 py-2 border border-zinc-600 rounded-full text-xs"
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              Menu
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <nav className="space-x-3 md:space-x-4 text-xs md:text-sm">
-            <button onClick={() => onNav("home")} className="hover:text-zinc-200">
-              Home
-            </button>
-            <button
-              onClick={() => onNav("vehicles")}
-              className="hover:text-zinc-200"
-            >
-              Vehicles
-            </button>
-            <button onClick={() => onNav("book")} className="hover:text-zinc-200">
-              Reserve
-            </button>
-            <button
-              onClick={() => onNav("chauffeur")}
-              className="hover:text-zinc-200"
-            >
-              Chauffeur
-            </button>
-            <button
-              onClick={() => onNav("profile")}
-              className="hover:text-zinc-200"
-            >
-              Profile
-            </button>
-            <button
-              onClick={() => onNav("contact")}
-              className="hover:text-zinc-200"
-            >
-              Contact
-            </button>
-          </nav>
-          {profile?.fullName && (
-            <div className="hidden sm:flex flex-col text-right text-[10px] md:text-xs leading-tight">
-              <span className="text-zinc-400">Signed in as</span>
-              <span className="font-semibold text-white">
-                {profile.fullName}
-              </span>
-            </div>
-          )}
+      </header>
+
+      {/* Mobile nav dropdown */}
+      {mobileOpen && (
+        <div className="md:hidden bg-black text-white border-b border-zinc-800">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 text-xs">
+            <NavButtons className="flex flex-wrap gap-3" />
+            {profile?.fullName && (
+              <div className="pt-2 text-[11px] text-zinc-400">
+                Signed in as{" "}
+                <span className="font-semibold text-white">
+                  {profile.fullName}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      )}
+    </>
   );
 }
 
@@ -432,12 +493,36 @@ function Hero({ onNav }) {
   );
 }
 
-function VehicleCard({ v, onSelect, canReserve = true, onSave }) {
-  function handleSaveClick() {
-    if (onSave) {
-      onSave(v);
-    } else {
-      alert("Saved to wishlist (demo)");
+function VehicleCard({ v, onSelect, canReserve = true, profile }) {
+  async function handleSave() {
+    if (!profile?.email) {
+      alert("Please sign in to your profile first to save vehicles.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("saved_vehicles").insert({
+        user_email: profile.email,
+        vehicle_id: v.id,
+        vehicle_name: v.name,
+        vehicle_category: v.category,
+        vehicle_image: v.image,
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        console.error("Supabase wishlist insert error", error);
+        alert(
+          "We couldn't save this vehicle to your wishlist. Please try again or contact us."
+        );
+      } else {
+        alert("Vehicle saved to your wishlist.");
+      }
+    } catch (err) {
+      console.error("Wishlist save error", err);
+      alert(
+        "We couldn't save this vehicle to your wishlist. Please try again or contact us."
+      );
     }
   }
 
@@ -490,7 +575,7 @@ function VehicleCard({ v, onSelect, canReserve = true, onSave }) {
             </button>
           )}
           <button
-            onClick={handleSaveClick}
+            onClick={handleSave}
             className="px-4 py-2 rounded-2xl text-xs md:text-sm font-medium border border-zinc-200 text-zinc-700 hover:border-zinc-800 hover:text-zinc-900 transition"
           >
             Save
@@ -501,7 +586,7 @@ function VehicleCard({ v, onSelect, canReserve = true, onSave }) {
   );
 }
 
-function VehiclesPage({ vehicles, onSelect, canReserve = true, onSave }) {
+function VehiclesPage({ vehicles, onSelect, canReserve = true, profile }) {
   return (
     <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
       <h2 className="text-2xl md:text-3xl font-bold text-zinc-900">Fleet</h2>
@@ -516,7 +601,7 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true, onSave }) {
             v={v}
             onSelect={onSelect}
             canReserve={canReserve}
-            onSave={onSave}
+            profile={profile}
           />
         ))}
       </div>
@@ -529,11 +614,11 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [deposit, setDeposit] = useState(350);
-  const [customer, setCustomer] = useState(() => ({
-    fullName: profile?.fullName || "",
-    email: profile?.email || "",
-    phone: profile?.phone || "",
-  }));
+  const [customer, setCustomer] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+  });
   const [insurance, setInsurance] = useState("none");
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
@@ -554,13 +639,15 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
     }
   }, [vehicle]);
 
+  // Pre-fill customer info from profile if available
   useEffect(() => {
-    if (profile) {
-      setCustomer({
-        fullName: profile.fullName || "",
-        email: profile.email || "",
-        phone: profile.phone || "",
-      });
+    if (profile?.email) {
+      setCustomer((current) => ({
+        ...current,
+        fullName: profile.fullName || current.fullName,
+        email: profile.email || current.email,
+        phone: profile.phone || current.phone,
+      }));
     }
   }, [profile]);
 
@@ -614,6 +701,11 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
       return;
     }
 
+    if (new Date(endDate) < new Date(startDate)) {
+      alert("End date cannot be before your start date.");
+      return;
+    }
+
     if (!customer.email) {
       alert("Please enter your email so we can send your confirmation.");
       return;
@@ -657,36 +749,42 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
     };
 
     try {
-      // 1) Try to save booking in Supabase, but do NOT block Stripe if it fails
-      if (supabase) {
-        const { error } = await supabase.from("bookings").insert({
-          customer_name: booking.customer.fullName || null,
-          customer_email: booking.customer.email,
-          customer_phone: booking.customer.phone || null,
-          vehicle_id: booking.vehicleId,
-          vehicle_name: booking.vehicleName,
-          start_date: booking.startDate,
-          end_date: booking.endDate,
-          days: booking.days,
-          subtotal: booking.subtotal,
-          deposit: booking.deposit,
-          total: booking.total,
-          extras: booking.extras,
-        });
+      // 1) Supabase booking save
+      const { error } = await supabase.from("bookings").insert({
+        customer_name: booking.customer.fullName || null,
+        customer_email: booking.customer.email,
+        customer_phone: booking.customer.phone || null,
+        vehicle_id: booking.vehicleId,
+        vehicle_name: booking.vehicleName,
+        start_date: booking.startDate,
+        end_date: booking.endDate,
+        days: booking.days,
+        subtotal: booking.subtotal,
+        deposit: booking.deposit,
+        total: booking.total,
+        extras: booking.extras,
+      });
 
-        if (error) {
-          console.error("Supabase booking insert error", error);
-          // don't return; still continue to Stripe
-        }
+      if (error) {
+        console.error("Supabase booking insert error", error);
+        alert(
+          "We couldn't save your booking in our system. Please contact us at " +
+            COMPANY.email
+        );
+        return;
       }
 
-      // 2) Fire booking email (soft error only)
+      // 2) Send booking email (non-blocking soft error)
       try {
-        await fetch("/api/booking", {
+        const emailRes = await fetch("/api/booking", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(booking),
         });
+
+        if (!emailRes.ok) {
+          console.error("Booking email failed:", await emailRes.text());
+        }
       } catch (emailErr) {
         console.error("Booking email error", emailErr);
       }
@@ -735,7 +833,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
         }
       }
 
-      // 4) Local state update
+      // 4) Update local state in parent
       onComplete(booking);
     } catch (err) {
       console.error("Booking error", err);
@@ -782,7 +880,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
             <input
               type="date"
               value={endDate}
-              min={startDate || undefined}
+              min={startDate || undefined} // block earlier dates visually on most devices
               onChange={(e) => setEndDate(e.target.value)}
               className="mt-2 p-2 border rounded"
             />
@@ -1209,34 +1307,33 @@ function ProfilePage({
         console.error("Supabase user fetch error", error);
       }
 
+      let loaded;
       if (data) {
-        const loaded = {
+        loaded = {
           fullName: data.full_name || "",
           email: data.email || auth.email,
           phone: data.phone || "",
           driversLicense: data.drivers_license || "",
         };
-        setLocal(loaded);
-        setProfile(loaded);
-        if (loaded.email) newsletterSignUp(loaded.email);
       } else {
-        // Fallback: at least remember email
-        const minimal = {
+        loaded = {
           fullName: "",
           email: auth.email,
           phone: "",
           driversLicense: "",
         };
-        setLocal(minimal);
-        setProfile(minimal);
       }
+
+      setLocal(loaded);
+      setProfile(loaded);
+      if (loaded.email) newsletterSignUp(loaded.email);
 
       setIsLoggedIn(true);
       setIsAdmin(
-        auth.email &&
-          auth.email.toLowerCase() === COMPANY.email.toLowerCase()
+        loaded.email &&
+          loaded.email.toLowerCase() === COMPANY.email.toLowerCase()
       );
-      alert("Logged in (demo). In production, connect this to real authentication.");
+      alert("You’re signed in.");
     } catch (err) {
       console.error("Login error", err);
       alert("We couldn't sign you in. Please try again or contact support.");
@@ -1265,15 +1362,13 @@ function ProfilePage({
       local.email &&
         local.email.toLowerCase() === COMPANY.email.toLowerCase()
     );
-    alert(
-      "Profile created (demo). In production this will create a secure account."
-    );
+    alert("Profile created and saved.");
   }
 
   function save() {
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
-    alert("Profile saved (demo)");
+    alert("Profile saved.");
   }
 
   function updateVehicleField(id, field, value) {
@@ -1369,9 +1464,7 @@ function ProfilePage({
               type="email"
               required
               value={auth.email}
-              onChange={(e) =>
-                setAuth({ ...auth, email: e.target.value })
-              }
+              onChange={(e) => setAuth({ ...auth, email: e.target.value })}
               placeholder="Email"
               className="p-3 border rounded text-sm"
             />
@@ -1379,9 +1472,7 @@ function ProfilePage({
               type="password"
               required
               value={auth.password}
-              onChange={(e) =>
-                setAuth({ ...auth, password: e.target.value })
-              }
+              onChange={(e) => setAuth({ ...auth, password: e.target.value })}
               placeholder="Password"
               className="p-3 border rounded text-sm"
             />
@@ -1392,12 +1483,15 @@ function ProfilePage({
               Sign in
             </button>
             <p className="text-xs text-zinc-500">
-              In production, connect this form to your real auth system so guests
-              can securely manage their rentals.
+              In production, connect this form to your real auth system so
+              guests can securely manage their rentals.
             </p>
           </form>
         ) : (
-          <form className="mt-6 grid grid-cols-1 gap-4" onSubmit={handleCreate}>
+          <form
+            className="mt-6 grid grid-cols-1 gap-4"
+            onSubmit={handleCreate}
+          >
             <input
               value={local.fullName}
               onChange={(e) =>
@@ -1410,18 +1504,14 @@ function ProfilePage({
             <input
               type="email"
               value={local.email}
-              onChange={(e) =>
-                setLocal({ ...local, email: e.target.value })
-              }
+              onChange={(e) => setLocal({ ...local, email: e.target.value })}
               placeholder="Email"
               className="p-3 border rounded text-sm"
               required
             />
             <input
               value={local.phone}
-              onChange={(e) =>
-                setLocal({ ...local, phone: e.target.value })
-              }
+              onChange={(e) => setLocal({ ...local, phone: e.target.value })}
               placeholder="Phone"
               className="p-3 border rounded text-sm"
             />
@@ -1466,25 +1556,19 @@ function ProfilePage({
       <div className="mt-6 grid grid-cols-1 gap-4 max-w-xl">
         <input
           value={local.fullName}
-          onChange={(e) =>
-            setLocal({ ...local, fullName: e.target.value })
-          }
+          onChange={(e) => setLocal({ ...local, fullName: e.target.value })}
           placeholder="Full name"
           className="p-3 border rounded text-sm"
         />
         <input
           value={local.email}
-          onChange={(e) =>
-            setLocal({ ...local, email: e.target.value })
-          }
+          onChange={(e) => setLocal({ ...local, email: e.target.value })}
           placeholder="Email"
           className="p-3 border rounded text-sm"
         />
         <input
           value={local.phone}
-          onChange={(e) =>
-            setLocal({ ...local, phone: e.target.value })
-          }
+          onChange={(e) => setLocal({ ...local, phone: e.target.value })}
           placeholder="Phone"
           className="p-3 border rounded text-sm"
         />
@@ -2019,31 +2103,31 @@ function App() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortOrder, setSortOrder] = useState("price-asc");
 
-  // Load profile from localStorage on first load
+  // Load profile from localStorage so user appears signed in
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("asani_profile");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object") {
+      const raw = localStorage.getItem("asani_profile");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.email) {
           setProfile(parsed);
         }
       }
     } catch (err) {
-      console.error("Error loading profile from localStorage", err);
+      console.error("Failed to load profile from storage", err);
     }
   }, []);
 
-  // Persist profile to localStorage whenever it changes
+  // Persist profile when it changes
   useEffect(() => {
     try {
-      if (profile) {
+      if (profile?.email) {
         localStorage.setItem("asani_profile", JSON.stringify(profile));
       } else {
         localStorage.removeItem("asani_profile");
       }
     } catch (err) {
-      console.error("Error saving profile to localStorage", err);
+      console.error("Failed to save profile to storage", err);
     }
   }, [profile]);
 
@@ -2062,36 +2146,6 @@ function App() {
     );
     setSelected(null);
     setRoute("home");
-  }
-
-  async function handleSaveVehicle(vehicle) {
-    if (!profile || !profile.email) {
-      alert("Create or sign in to your profile to save vehicles to your wishlist.");
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("saved_vehicles").insert({
-        user_email: profile.email,
-        vehicle_id: vehicle.id,
-        vehicle_name: vehicle.name,
-      });
-
-      if (error) {
-        console.error("Supabase wishlist insert error", error);
-        alert(
-          "We couldn't save this vehicle to your wishlist. Please try again or contact us."
-        );
-        return;
-      }
-
-      alert("Vehicle saved to your wishlist.");
-    } catch (err) {
-      console.error("Wishlist save error", err);
-      alert(
-        "We couldn't save this vehicle to your wishlist. Please try again or contact us."
-      );
-    }
   }
 
   const categories = vehicles.map((v) => v.category);
@@ -2129,7 +2183,7 @@ function App() {
                 setRoute("book");
               }}
               canReserve={true}
-              onSave={handleSaveVehicle}
+              profile={profile}
             />
           </section>
           <section className="max-w-6xl mx-auto px-4 md:px-6 pb-12 flex flex-col md:flex-row gap-6">
@@ -2173,7 +2227,7 @@ function App() {
           <VehiclesPage
             vehicles={filteredSortedVehicles}
             canReserve={false}
-            onSave={handleSaveVehicle}
+            profile={profile}
           />
         </section>
       )}
@@ -2200,7 +2254,7 @@ function App() {
                 v={v}
                 onSelect={(vv) => setSelected(vv)}
                 canReserve={true}
-                onSave={handleSaveVehicle}
+                profile={profile}
               />
             ))}
           </div>
