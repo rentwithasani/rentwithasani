@@ -12,6 +12,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
   tagline:
     "Premium economy to luxury rentals • Business • Events • Private travel",
+  slogan: "Arrive like it’s already yours.",
 };
 
 // ==== FLEET DATA ====
@@ -298,12 +299,15 @@ function Header({ onNav, profile }) {
   return (
     <header className="w-full bg-black text-white border-b border-zinc-800">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between relative">
-        <div>
+        <div className="space-y-1">
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight uppercase">
             {COMPANY.name}
           </h1>
           <div className="text-[11px] md:text-xs text-zinc-400">
             {COMPANY.address} • {COMPANY.phone}
+          </div>
+          <div className="hidden sm:block text-[11px] text-zinc-500 italic">
+            {COMPANY.slogan}
           </div>
         </div>
 
@@ -312,37 +316,37 @@ function Header({ onNav, profile }) {
           <nav className="space-x-4 text-xs md:text-sm">
             <button
               onClick={() => handleNav("home")}
-              className="hover:text-zinc-200"
+              className="hover:text-zinc-200 transition-colors"
             >
               Home
             </button>
             <button
               onClick={() => handleNav("vehicles")}
-              className="hover:text-zinc-200"
+              className="hover:text-zinc-200 transition-colors"
             >
               Vehicles
             </button>
             <button
               onClick={() => handleNav("book")}
-              className="hover:text-zinc-200"
+              className="hover:text-zinc-200 transition-colors"
             >
               Reserve
             </button>
             <button
               onClick={() => handleNav("chauffeur")}
-              className="hover:text-zinc-200"
+              className="hover:text-zinc-200 transition-colors"
             >
               Chauffeur
             </button>
             <button
               onClick={() => handleNav("profile")}
-              className="hover:text-zinc-200"
+              className="hover:text-zinc-200 transition-colors"
             >
               Profile
             </button>
             <button
               onClick={() => handleNav("contact")}
-              className="hover:text-zinc-200"
+              className="hover:text-zinc-200 transition-colors"
             >
               Contact
             </button>
@@ -393,7 +397,7 @@ function Header({ onNav, profile }) {
           </button>
 
           {menuOpen && (
-            <div className="absolute top-full right-4 left-4 mt-3 rounded-2xl bg-zinc-950/95 border border-zinc-800 shadow-xl z-50">
+            <div className="absolute top-full right-4 left-4 mt-3 rounded-2xl bg-zinc-950/95 border border-zinc-800 shadow-xl z-50 animate-fade-in">
               <nav className="flex flex-col text-sm py-2">
                 <button
                   onClick={() => handleNav("home")}
@@ -452,9 +456,9 @@ function Hero({ onNav }) {
   }, []);
 
   return (
-    <section className="bg-black text-white py-16 md:py-24 border-b border-zinc-900">
+    <section className="bg-black text-white py-16 md:py-24 border-b border-zinc-900 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-        <div className="space-y-6">
+        <div className="space-y-6 animate-[fade-in_0.6s_ease-out]">
           <p className="text-[11px] md:text-xs tracking-[0.25em] uppercase text-zinc-400">
             Premium Economy • Luxury Rentals
           </p>
@@ -472,20 +476,20 @@ function Hero({ onNav }) {
           <div className="flex flex-wrap gap-4 pt-2">
             <button
               onClick={() => onNav("book")}
-              className="px-6 md:px-7 py-3 rounded-2xl bg-white text-black font-semibold text-xs md:text-sm tracking-wide uppercase"
+              className="px-6 md:px-7 py-3 rounded-2xl bg-white text-black font-semibold text-xs md:text-sm tracking-wide uppercase transition-transform hover:-translate-y-0.5 hover:shadow-lg"
             >
               Reserve now
             </button>
             <button
               onClick={() => onNav("vehicles")}
-              className="px-6 md:px-7 py-3 rounded-2xl border border-zinc-600 text-xs md:text-sm font-medium text-zinc-200"
+              className="px-6 md:px-7 py-3 rounded-2xl border border-zinc-600 text-xs md:text-sm font-medium text-zinc-200 transition-transform hover:-translate-y-0.5 hover:shadow-lg"
             >
               View fleet
             </button>
           </div>
         </div>
         <div className="relative mt-8 md:mt-0">
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-zinc-900 to-zinc-700 blur-xl opacity-60" />
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-zinc-900 to-zinc-700 blur-xl opacity-60 animate-pulse" />
           <div className="relative rounded-3xl overflow-hidden border border-zinc-700 shadow-2xl h-64 md:h-80">
             <div
               className="flex h-full w-full transition-transform duration-700 ease-out"
@@ -732,7 +736,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     };
 
     try {
-      // 1) Supabase booking save
+      // 1) Try to save booking to Supabase, but DO NOT block payment if it fails
       const { error } = await supabase.from("bookings").insert({
         customer_name: booking.customer.fullName || null,
         customer_email: booking.customer.email,
@@ -750,11 +754,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
 
       if (error) {
         console.error("Supabase booking insert error", error);
-        alert(
-          "We couldn't save your booking in our system. Please contact us at " +
-            COMPANY.email
-        );
-        return;
+        // We log the error, but continue to Stripe so the customer can still pay the deposit.
       }
 
       // 2) Send booking email (non-blocking soft error)
@@ -825,7 +825,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto animate-[fade-in_0.3s_ease-out]">
         <button onClick={onBack} className="text-sm text-zinc-500 mb-4">
           ← Back
         </button>
@@ -1242,7 +1242,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
               </button>
               <button
                 onClick={handlePay}
-                className="px-6 py-3 rounded-2xl bg-black text-white font-semibold text-sm"
+                className="px-6 py-3 rounded-2xl bg-black text-white font-semibold text-sm hover:bg-zinc-900 transition-colors"
               >
                 Pay deposit
               </button>
@@ -2273,6 +2273,9 @@ function App() {
               © {new Date().getFullYear()} {COMPANY.name}
             </div>
             <div className="text-xs text-zinc-500">{COMPANY.tagline}</div>
+            <div className="text-[11px] text-zinc-500 italic">
+              {COMPANY.slogan}
+            </div>
           </div>
           <div className="mt-4 sm:mt-0 text-center sm:text-right space-y-1 text-xs md:text-sm">
             <div>{COMPANY.address}</div>
