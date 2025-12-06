@@ -1,14 +1,12 @@
 // /api/create-checkout-session.js
-// Serverless function for Stripe hosted Checkout (deposit only)
-
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 /**
- * Expected JSON body from frontend:
+ * Body expected from frontend:
  * {
  *   email: string,
  *   vehicleName: string,
- *   depositAmount: number  // e.g. 1500 for Urus, 350 for Kia, etc.
+ *   depositAmount: number
  * }
  */
 module.exports = async (req, res) => {
