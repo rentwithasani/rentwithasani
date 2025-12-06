@@ -600,7 +600,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     }
   }
 
-  async function handlePay() {
+    async function handlePay() {
     if (!startDate || !endDate) {
       alert("Please select your start and end dates.");
       return;
@@ -671,10 +671,26 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       }
     } catch (err) {
       console.error("Supabase booking insert error", err);
-      // Do not alert, do not block payment
+      // Do not block payment or show error to customer here
     }
 
-    // 2) Stripe Checkout session
+    // 2) Send confirmation + internal booking emails (does NOT block payment)
+    try {
+      await fetch("/api/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          booking,
+          to: COMPANY.email,          // your internal address
+          customerEmail: customer.email, // customer confirmation
+        }),
+      });
+    } catch (err) {
+      console.error("Booking email error", err);
+      // Email failure should not stop payment
+    }
+
+    // 3) Stripe Checkout session
     try {
       const stripe = await stripePromise;
       if (!stripe) {
