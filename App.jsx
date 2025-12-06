@@ -10,7 +10,8 @@ const COMPANY = {
   // address removed from UI by request
   phone: "732-470-8233",
   email: "reserve@rentwithasani.com",
-  tagline: "Premium economy to luxury rentals • Business • Events • Private travel",
+  tagline:
+    "Premium economy to luxury rentals • Business • Events • Private travel",
 };
 
 // ==== FLEET DATA ====
@@ -299,7 +300,6 @@ function Header({ onNav, profile }) {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {/* NAV ALWAYS VISIBLE NOW (MOBILE + DESKTOP) */}
           <nav className="space-x-3 md:space-x-4 text-xs md:text-sm">
             <button onClick={() => onNav("home")} className="hover:text-zinc-200">
               Home
@@ -432,7 +432,15 @@ function Hero({ onNav }) {
   );
 }
 
-function VehicleCard({ v, onSelect, canReserve = true }) {
+function VehicleCard({ v, onSelect, canReserve = true, onSave }) {
+  function handleSaveClick() {
+    if (onSave) {
+      onSave(v);
+    } else {
+      alert("Saved to wishlist (demo)");
+    }
+  }
+
   return (
     <div className="border border-zinc-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-zinc-800 transition-all duration-200 bg-white flex flex-col">
       <img
@@ -482,7 +490,7 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
             </button>
           )}
           <button
-            onClick={() => alert("Saved to wishlist (demo)")}
+            onClick={handleSaveClick}
             className="px-4 py-2 rounded-2xl text-xs md:text-sm font-medium border border-zinc-200 text-zinc-700 hover:border-zinc-800 hover:text-zinc-900 transition"
           >
             Save
@@ -493,7 +501,7 @@ function VehicleCard({ v, onSelect, canReserve = true }) {
   );
 }
 
-function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
+function VehiclesPage({ vehicles, onSelect, canReserve = true, onSave }) {
   return (
     <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
       <h2 className="text-2xl md:text-3xl font-bold text-zinc-900">Fleet</h2>
@@ -508,6 +516,7 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
             v={v}
             onSelect={onSelect}
             canReserve={canReserve}
+            onSave={onSave}
           />
         ))}
       </div>
@@ -516,15 +525,15 @@ function VehiclesPage({ vehicles, onSelect, canReserve = true }) {
 }
 
 // ========= BOOKING PANEL =========
-function BookingPanel({ vehicle, onBack, onComplete }) {
+function BookingPanel({ vehicle, onBack, onComplete, profile }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [deposit, setDeposit] = useState(350);
-  const [customer, setCustomer] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-  });
+  const [customer, setCustomer] = useState(() => ({
+    fullName: profile?.fullName || "",
+    email: profile?.email || "",
+    phone: profile?.phone || "",
+  }));
   const [insurance, setInsurance] = useState("none");
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
@@ -544,6 +553,16 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       setDeposit(getDepositForVehicle(vehicle));
     }
   }, [vehicle]);
+
+  useEffect(() => {
+    if (profile) {
+      setCustomer({
+        fullName: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+      });
+    }
+  }, [profile]);
 
   if (!vehicle) return null;
 
@@ -638,32 +657,30 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     };
 
     try {
-      // 1) Supabase booking save
-      const { error } = await supabase.from("bookings").insert({
-        customer_name: booking.customer.fullName || null,
-        customer_email: booking.customer.email,
-        customer_phone: booking.customer.phone || null,
-        vehicle_id: booking.vehicleId,
-        vehicle_name: booking.vehicleName,
-        start_date: booking.startDate,
-        end_date: booking.endDate,
-        days: booking.days,
-        subtotal: booking.subtotal,
-        deposit: booking.deposit,
-        total: booking.total,
-        extras: booking.extras,
-      });
+      // 1) Try to save booking in Supabase, but do NOT block Stripe if it fails
+      if (supabase) {
+        const { error } = await supabase.from("bookings").insert({
+          customer_name: booking.customer.fullName || null,
+          customer_email: booking.customer.email,
+          customer_phone: booking.customer.phone || null,
+          vehicle_id: booking.vehicleId,
+          vehicle_name: booking.vehicleName,
+          start_date: booking.startDate,
+          end_date: booking.endDate,
+          days: booking.days,
+          subtotal: booking.subtotal,
+          deposit: booking.deposit,
+          total: booking.total,
+          extras: booking.extras,
+        });
 
-      if (error) {
-        console.error("Supabase booking insert error", error);
-        alert(
-          "We couldn't save your booking in our system. Please contact us at " +
-            COMPANY.email
-        );
-        return;
+        if (error) {
+          console.error("Supabase booking insert error", error);
+          // don't return; still continue to Stripe
+        }
       }
 
-      // 2) Send booking email (non-blocking soft error)
+      // 2) Fire booking email (soft error only)
       try {
         await fetch("/api/booking", {
           method: "POST",
@@ -718,7 +735,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
         }
       }
 
-      // 4) Update local state in parent
+      // 4) Local state update
       onComplete(booking);
     } catch (err) {
       console.error("Booking error", err);
@@ -765,7 +782,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
             <input
               type="date"
               value={endDate}
-              min={startDate || undefined} // 🔒 cannot pick before start date
+              min={startDate || undefined}
               onChange={(e) => setEndDate(e.target.value)}
               className="mt-2 p-2 border rounded"
             />
@@ -2002,6 +2019,34 @@ function App() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortOrder, setSortOrder] = useState("price-asc");
 
+  // Load profile from localStorage on first load
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("asani_profile");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          setProfile(parsed);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading profile from localStorage", err);
+    }
+  }, []);
+
+  // Persist profile to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (profile) {
+        localStorage.setItem("asani_profile", JSON.stringify(profile));
+      } else {
+        localStorage.removeItem("asani_profile");
+      }
+    } catch (err) {
+      console.error("Error saving profile to localStorage", err);
+    }
+  }, [profile]);
+
   function newsletterSignUp(email) {
     if (!email) return;
     setNewsletter((s) => (s.includes(email) ? s : [...s, email]));
@@ -2017,6 +2062,36 @@ function App() {
     );
     setSelected(null);
     setRoute("home");
+  }
+
+  async function handleSaveVehicle(vehicle) {
+    if (!profile || !profile.email) {
+      alert("Create or sign in to your profile to save vehicles to your wishlist.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("saved_vehicles").insert({
+        user_email: profile.email,
+        vehicle_id: vehicle.id,
+        vehicle_name: vehicle.name,
+      });
+
+      if (error) {
+        console.error("Supabase wishlist insert error", error);
+        alert(
+          "We couldn't save this vehicle to your wishlist. Please try again or contact us."
+        );
+        return;
+      }
+
+      alert("Vehicle saved to your wishlist.");
+    } catch (err) {
+      console.error("Wishlist save error", err);
+      alert(
+        "We couldn't save this vehicle to your wishlist. Please try again or contact us."
+      );
+    }
   }
 
   const categories = vehicles.map((v) => v.category);
@@ -2054,6 +2129,7 @@ function App() {
                 setRoute("book");
               }}
               canReserve={true}
+              onSave={handleSaveVehicle}
             />
           </section>
           <section className="max-w-6xl mx-auto px-4 md:px-6 pb-12 flex flex-col md:flex-row gap-6">
@@ -2094,7 +2170,11 @@ function App() {
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
           />
-          <VehiclesPage vehicles={filteredSortedVehicles} canReserve={false} />
+          <VehiclesPage
+            vehicles={filteredSortedVehicles}
+            canReserve={false}
+            onSave={handleSaveVehicle}
+          />
         </section>
       )}
 
@@ -2120,6 +2200,7 @@ function App() {
                 v={v}
                 onSelect={(vv) => setSelected(vv)}
                 canReserve={true}
+                onSave={handleSaveVehicle}
               />
             ))}
           </div>
@@ -2128,6 +2209,7 @@ function App() {
               vehicle={selected}
               onBack={() => setSelected(null)}
               onComplete={handleBookingComplete}
+              profile={profile}
             />
           )}
         </section>
