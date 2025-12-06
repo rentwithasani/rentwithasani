@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./lib/supabaseClient.js";
 
-// Asani Rentals
-
 const COMPANY = {
   name: "Asani Rentals",
   address: "1001 S Main #8227, Kalispell, MT 59901",
@@ -10,7 +8,7 @@ const COMPANY = {
   email: "reserve@rentwithasani.com",
 };
 
-// Vehicle data
+// Fleet
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
@@ -177,7 +175,6 @@ function getDepositForVehicle(vehicle) {
   return DEPOSIT_BY_VEHICLE[vehicle.name] ?? 350;
 }
 
-// Hero slides
 const HERO_SLIDES = [
   {
     id: "s1",
@@ -220,7 +217,6 @@ function formatCurrency(n) {
   return `$${n.toFixed(2)}`;
 }
 
-// Filter + sort helper
 function applyVehicleFilters(vehicles, filterCategory, sortOrder) {
   let result = [...vehicles];
   if (filterCategory && filterCategory !== "all") {
@@ -524,7 +520,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
     setDeposit(getDepositForVehicle(vehicle));
   }, [vehicle]);
 
-  // Prefill from profile (if exists)
+  // Prefill from profile
   useEffect(() => {
     if (profile && !customer.email) {
       setCustomer((prev) => ({
@@ -549,9 +545,9 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
   const days = startDate && endDate ? daysBetween(startDate, endDate) : 0;
   const billableDays = days || 1;
 
-  // daily rate with optional discount
   const baseDailyRate = vehicle.pricePerDay;
   const effectiveDailyRate = baseDailyRate * (1 - promoDiscount);
+  const originalSubtotal = baseDailyRate * billableDays;
   const subtotal = effectiveDailyRate * billableDays;
 
   const insuranceDailyRate = 25;
@@ -572,6 +568,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
   const extrasTotal =
     insuranceCost + fuelPrepayCost + ezPassCost + amenitiesCost;
   const total = subtotal + extrasTotal;
+  const rentalSavings = Math.max(originalSubtotal - subtotal, 0);
 
   function toggleAmenity(key) {
     setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -586,7 +583,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
     }
     if (code === "ASANI10") {
       setPromoDiscount(0.1);
-      setPromoMessage("ASANI10 applied: 10% off the daily rate.");
+      setPromoMessage("Promo applied: 10% off the daily rate.");
     } else {
       setPromoDiscount(0);
       setPromoMessage("That promo code is not valid or has expired.");
@@ -598,12 +595,10 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
       alert("Please select your start and end dates.");
       return;
     }
-
     if (!customer.email) {
       alert("Please enter your email so we can send your confirmation.");
       return;
     }
-
     if (insurance === "none" && !riskAccepted) {
       alert(
         "Please confirm that you understand and accept the risk of driving without the optional protection plan."
@@ -658,13 +653,12 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
       });
       if (error) {
         console.error("Supabase booking insert error", error);
-        // We don't block payment here – just log the error.
       }
     } catch (err) {
       console.error("Supabase booking insert exception", err);
     }
 
-    // 2) Create Stripe Checkout session
+    // 2) Stripe Checkout session
     try {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -687,8 +681,8 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
 
       const data = await res.json();
       if (data.url) {
-        onComplete(booking); // mark vehicle unavailable and update UI
-        window.location.href = data.url; // redirect to Stripe hosted checkout
+        onComplete(booking); // mark vehicle unavailable locally
+        window.location.href = data.url;
       } else {
         alert(
           "We couldn't start the payment. Please contact us at " +
@@ -772,6 +766,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
               placeholder="(555) 555-5555"
             />
           </label>
+
           {/* Promo code */}
           <label className="flex flex-col text-sm text-zinc-700 col-span-1 sm:col-span-2">
             Promo / discount code
@@ -780,7 +775,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
                 className="p-2 border rounded flex-1"
-                placeholder="ASANI10"
+                placeholder="Promo code"
               />
               <button
                 type="button"
@@ -888,7 +883,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
                 </div>
               </div>
 
-              {/* EZ-Pass / toll device */}
+              {/* EZ-Pass */}
               <div className="border rounded-2xl p-3 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">EZ-Pass / toll device</span>
@@ -951,7 +946,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
                 </label>
               </div>
 
-              {/* Amenities & seats */}
+              {/* Amenities */}
               <div className="border rounded-2xl p-3 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Amenities & child seats</span>
@@ -1014,19 +1009,29 @@ function BookingPanel({ vehicle, onBack, onComplete, profile }) {
           {/* Right: summary */}
           <div className="border rounded-2xl p-4 bg-zinc-50 flex flex-col justify-between">
             <div className="space-y-2 text-sm text-zinc-700">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-start">
                 <span>
                   Rental ({billableDays} day{billableDays > 1 ? "s" : ""})
                 </span>
-                <span className="font-medium">
-                  {formatCurrency(subtotal)}
+                <span className="font-medium text-right">
+                  {promoDiscount > 0 ? (
+                    <>
+                      <span className="block line-through text-zinc-400 text-xs">
+                        {formatCurrency(originalSubtotal)}
+                      </span>
+                      <span>{formatCurrency(subtotal)}</span>
+                    </>
+                  ) : (
+                    formatCurrency(subtotal)
+                  )}
                 </span>
               </div>
               {promoDiscount > 0 && (
                 <div className="text-[11px] text-emerald-600">
-                  Promo applied to daily rate.
+                  You save {formatCurrency(rentalSavings)} on this rental.
                 </div>
               )}
+
               <div className="flex justify-between text-xs text-zinc-600">
                 <span>Protection & extras (est.)</span>
                 <span>{formatCurrency(extrasTotal)}</span>
@@ -1116,7 +1121,7 @@ function ProfilePage({
   );
   const [auth, setAuth] = useState({ email: "", password: "" });
   const [isLoggedIn, setIsLoggedIn] = useState(!!profile);
-  const [mode, setMode] = useState("login"); // "login" or "create"
+  const [mode, setMode] = useState("login");
   const [isAdmin, setIsAdmin] = useState(
     profile && profile.email?.toLowerCase() === COMPANY.email.toLowerCase()
   );
@@ -1135,7 +1140,6 @@ function ProfilePage({
     setDrafts(vehicles || []);
   }, [vehicles]);
 
-  // When profile changes from App/localStorage, sync into this screen
   useEffect(() => {
     setIsLoggedIn(!!profile);
     if (profile) {
@@ -1154,7 +1158,6 @@ function ProfilePage({
 
   async function handleLogin(e) {
     e.preventDefault();
-    // Demo login only
     alert("Logged in (demo). In production, connect this to real authentication.");
     setIsLoggedIn(true);
     if (auth.email && auth.email.toLowerCase() === COMPANY.email.toLowerCase()) {
@@ -1169,7 +1172,6 @@ function ProfilePage({
     setProfile(local);
     if (local.email) newsletterSignUp(local.email);
 
-    // Save/Upsert in Supabase (users table)
     try {
       const { error } = await supabase.from("users").upsert({
         email: local.email,
@@ -1385,7 +1387,7 @@ function ProfilePage({
     );
   }
 
-  // Logged-in view
+  // Logged in
   return (
     <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
       <h2 className="text-2xl font-bold text-zinc-900">Your profile</h2>
@@ -1945,7 +1947,7 @@ function App() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortOrder, setSortOrder] = useState("price-asc");
 
-  // Load profile from localStorage once
+  // Load profile from localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem("asaniProfile");
@@ -1957,7 +1959,7 @@ function App() {
     }
   }, []);
 
-  // Persist profile to localStorage
+  // Save profile to localStorage
   useEffect(() => {
     try {
       if (profile) {
