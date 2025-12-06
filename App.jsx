@@ -1,4 +1,3 @@
-// App.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "./lib/supabaseClient";
 import { loadStripe } from "@stripe/stripe-js";
@@ -8,7 +7,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 // COMPANY INFO
 const COMPANY = {
   name: "Asani Rentals",
-  // address removed from UI by request
+  address: "Kalispell MT, 59901",
   phone: "732-470-8233",
   email: "reserve@rentwithasani.com",
   tagline:
@@ -289,52 +288,60 @@ function FleetFilters({
 }
 
 function Header({ onNav, profile }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  function handleNav(route) {
+    onNav(route);
+    setMenuOpen(false);
+  }
+
   return (
     <header className="w-full bg-black text-white border-b border-zinc-800">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between relative">
         <div>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight uppercase">
             {COMPANY.name}
           </h1>
           <div className="text-[11px] md:text-xs text-zinc-400">
-            {COMPANY.tagline} • {COMPANY.phone}
+            {COMPANY.address} • {COMPANY.phone}
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          {/* NAV: more readable on mobile */}
-          <nav className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm justify-end">
+
+        {/* Desktop nav */}
+        <div className="hidden sm:flex items-center gap-6">
+          <nav className="space-x-4 text-xs md:text-sm">
             <button
-              onClick={() => onNav("home")}
+              onClick={() => handleNav("home")}
               className="hover:text-zinc-200"
             >
               Home
             </button>
             <button
-              onClick={() => onNav("vehicles")}
+              onClick={() => handleNav("vehicles")}
               className="hover:text-zinc-200"
             >
               Vehicles
             </button>
             <button
-              onClick={() => onNav("book")}
+              onClick={() => handleNav("book")}
               className="hover:text-zinc-200"
             >
               Reserve
             </button>
             <button
-              onClick={() => onNav("chauffeur")}
+              onClick={() => handleNav("chauffeur")}
               className="hover:text-zinc-200"
             >
               Chauffeur
             </button>
             <button
-              onClick={() => onNav("profile")}
+              onClick={() => handleNav("profile")}
               className="hover:text-zinc-200"
             >
               Profile
             </button>
             <button
-              onClick={() => onNav("contact")}
+              onClick={() => handleNav("contact")}
               className="hover:text-zinc-200"
             >
               Contact
@@ -342,10 +349,89 @@ function Header({ onNav, profile }) {
           </nav>
           {profile?.fullName && (
             <div className="flex flex-col text-right text-[10px] md:text-xs leading-tight">
-              <span className="text-zinc-400">Signed in as</span>
+              <span className="text-zinc-400">Signed in</span>
               <span className="font-semibold text-white">
                 {profile.fullName}
               </span>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile: profile + hamburger */}
+        <div className="flex sm:hidden items-center gap-3">
+          {profile?.fullName && (
+            <div className="flex flex-col text-right text-[10px] leading-tight max-w-[120px]">
+              <span className="text-zinc-500">Signed in</span>
+              <span className="font-semibold text-white truncate">
+                {profile.fullName}
+              </span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-zinc-700 bg-zinc-900"
+          >
+            <span className="sr-only">Toggle navigation</span>
+            <div className="space-y-[5px]">
+              <span
+                className={`block h-[2px] w-4 bg-white transition-transform ${
+                  menuOpen ? "translate-y-[3.5px] rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`block h-[2px] w-4 bg-white transition-opacity ${
+                  menuOpen ? "opacity-0" : "opacity-100"
+                }`}
+              />
+              <span
+                className={`block h-[2px] w-4 bg-white transition-transform ${
+                  menuOpen ? "-translate-y-[3.5px] -rotate-45" : ""
+                }`}
+              />
+            </div>
+          </button>
+
+          {menuOpen && (
+            <div className="absolute top-full right-4 left-4 mt-3 rounded-2xl bg-zinc-950/95 border border-zinc-800 shadow-xl z-50">
+              <nav className="flex flex-col text-sm py-2">
+                <button
+                  onClick={() => handleNav("home")}
+                  className="px-4 py-2 text-left hover:bg-zinc-900"
+                >
+                  Home
+                </button>
+                <button
+                  onClick={() => handleNav("vehicles")}
+                  className="px-4 py-2 text-left hover:bg-zinc-900"
+                >
+                  Vehicles
+                </button>
+                <button
+                  onClick={() => handleNav("book")}
+                  className="px-4 py-2 text-left hover:bg-zinc-900"
+                >
+                  Reserve
+                </button>
+                <button
+                  onClick={() => handleNav("chauffeur")}
+                  className="px-4 py-2 text-left hover:bg-zinc-900"
+                >
+                  Chauffeur
+                </button>
+                <button
+                  onClick={() => handleNav("profile")}
+                  className="px-4 py-2 text-left hover:bg-zinc-900"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => handleNav("contact")}
+                  className="px-4 py-2 text-left hover:bg-zinc-900"
+                >
+                  Contact
+                </button>
+              </nav>
             </div>
           )}
         </div>
@@ -547,7 +633,6 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
   const [showAmenitiesDetails, setShowAmenitiesDetails] = useState(false);
   const [promoCode, setPromoCode] = useState("");
 
-  // set per-vehicle deposit
   useEffect(() => {
     if (vehicle) {
       setDeposit(getDepositForVehicle(vehicle));
@@ -562,9 +647,6 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     const diff = Math.ceil((B - A) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : 0;
   }
-
-  // Today for disabling past dates
-  const today = new Date().toISOString().split("T")[0];
 
   const days = startDate && endDate ? daysBetween(startDate, endDate) : 0;
   const billableDays = days || 1;
@@ -650,34 +732,32 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
     };
 
     try {
-      // 1) Try to save booking in Supabase (soft failure – DOES NOT BLOCK Stripe)
-      try {
-        if (supabase) {
-          const { error } = await supabase.from("bookings").insert({
-            customer_name: booking.customer.fullName || null,
-            customer_email: booking.customer.email,
-            customer_phone: booking.customer.phone || null,
-            vehicle_id: booking.vehicleId,
-            vehicle_name: booking.vehicleName,
-            start_date: booking.startDate,
-            end_date: booking.endDate,
-            days: booking.days,
-            subtotal: booking.subtotal,
-            deposit: booking.deposit,
-            total: booking.total,
-            extras: booking.extras,
-          });
+      // 1) Supabase booking save
+      const { error } = await supabase.from("bookings").insert({
+        customer_name: booking.customer.fullName || null,
+        customer_email: booking.customer.email,
+        customer_phone: booking.customer.phone || null,
+        vehicle_id: booking.vehicleId,
+        vehicle_name: booking.vehicleName,
+        start_date: booking.startDate,
+        end_date: booking.endDate,
+        days: booking.days,
+        subtotal: booking.subtotal,
+        deposit: booking.deposit,
+        total: booking.total,
+        extras: booking.extras,
+      });
 
-          if (error) {
-            console.error("Supabase booking insert error", error);
-            // DO NOT alert / return here – just log
-          }
-        }
-      } catch (dbErr) {
-        console.error("Supabase booking insert threw", dbErr);
+      if (error) {
+        console.error("Supabase booking insert error", error);
+        alert(
+          "We couldn't save your booking in our system. Please contact us at " +
+            COMPANY.email
+        );
+        return;
       }
 
-      // 2) Send booking email (soft failure)
+      // 2) Send booking email (non-blocking soft error)
       try {
         await fetch("/api/booking", {
           method: "POST",
@@ -713,7 +793,6 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
       const data = await res.json();
 
       if (data.url) {
-        // Redirect to Stripe-hosted Checkout
         window.location.href = data.url;
         return;
       }
@@ -750,6 +829,28 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
         <button onClick={onBack} className="text-sm text-zinc-500 mb-4">
           ← Back
         </button>
+
+        {/* Vehicle visual summary */}
+        <div className="flex gap-4 items-center mb-4">
+          <img
+            src={vehicle.image}
+            alt={vehicle.name}
+            className="w-32 h-24 object-contain rounded-xl bg-zinc-50 border border-zinc-200"
+          />
+          <div className="text-xs text-zinc-600">
+            <div className="text-sm font-semibold text-zinc-900">
+              {vehicle.name}
+            </div>
+            <div className="mt-1">
+              {vehicle.category} • {vehicle.seats} seats
+              {vehicle.color ? ` • ${vehicle.color}` : ""}
+            </div>
+            <div className="mt-2 font-medium text-zinc-900">
+              {formatCurrency(vehicle.pricePerDay)}/day
+            </div>
+          </div>
+        </div>
+
         <h3 className="text-2xl font-bold text-zinc-900">
           Reserve — {vehicle.name}
         </h3>
@@ -765,7 +866,6 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
             <input
               type="date"
               value={startDate}
-              min={today}
               onChange={(e) => {
                 const newStart = e.target.value;
                 setStartDate(newStart);
@@ -781,7 +881,7 @@ function BookingPanel({ vehicle, onBack, onComplete }) {
             <input
               type="date"
               value={endDate}
-              min={startDate || today}
+              min={startDate || undefined} // 🔒 cannot pick before start date
               onChange={(e) => setEndDate(e.target.value)}
               className="mt-2 p-2 border rounded"
             />
@@ -1219,6 +1319,7 @@ function ProfilePage({
         setProfile(loaded);
         if (loaded.email) newsletterSignUp(loaded.email);
       } else {
+        // Fallback: at least remember email
         const minimal = {
           fullName: "",
           email: auth.email,
@@ -1234,7 +1335,9 @@ function ProfilePage({
         auth.email &&
           auth.email.toLowerCase() === COMPANY.email.toLowerCase()
       );
-      alert("Logged in (demo). In production, connect this to real authentication.");
+      alert(
+        "Logged in (demo). In production, connect this to real authentication."
+      );
     } catch (err) {
       console.error("Login error", err);
       alert("We couldn't sign you in. Please try again or contact support.");
@@ -1367,7 +1470,9 @@ function ProfilePage({
               type="email"
               required
               value={auth.email}
-              onChange={(e) => setAuth({ ...auth, email: e.target.value })}
+              onChange={(e) =>
+                setAuth({ ...auth, email: e.target.value })
+              }
               placeholder="Email"
               className="p-3 border rounded text-sm"
             />
@@ -1388,8 +1493,8 @@ function ProfilePage({
               Sign in
             </button>
             <p className="text-xs text-zinc-500">
-              In production, connect this form to your real auth system so
-              guests can securely manage their rentals.
+              In production, connect this form to your real auth system so guests
+              can securely manage their rentals.
             </p>
           </form>
         ) : (
@@ -1470,13 +1575,17 @@ function ProfilePage({
         />
         <input
           value={local.email}
-          onChange={(e) => setLocal({ ...local, email: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, email: e.target.value })
+          }
           placeholder="Email"
           className="p-3 border rounded text-sm"
         />
         <input
           value={local.phone}
-          onChange={(e) => setLocal({ ...local, phone: e.target.value })}
+          onChange={(e) =>
+            setLocal({ ...local, phone: e.target.value })
+          }
           placeholder="Phone"
           className="p-3 border rounded text-sm"
         />
@@ -1922,7 +2031,8 @@ function Contact() {
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="p-6 border rounded-2xl bg-white text-sm">
           <h3 className="font-semibold text-zinc-900">Asani Rentals</h3>
-          <p className="mt-2 text-zinc-700">{COMPANY.tagline}</p>
+          <p className="mt-2 text-zinc-700">{COMPANY.address}</p>
+          <p className="mt-1 text-zinc-700">{COMPANY.tagline}</p>
           <p className="mt-1 text-zinc-700">{COMPANY.phone}</p>
           <p className="mt-1 text-zinc-700">{COMPANY.email}</p>
         </div>
@@ -2165,6 +2275,7 @@ function App() {
             <div className="text-xs text-zinc-500">{COMPANY.tagline}</div>
           </div>
           <div className="mt-4 sm:mt-0 text-center sm:text-right space-y-1 text-xs md:text-sm">
+            <div>{COMPANY.address}</div>
             <div>Phone: {COMPANY.phone}</div>
             <div>Email: {COMPANY.email}</div>
           </div>
