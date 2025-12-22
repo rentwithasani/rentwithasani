@@ -1,3 +1,4 @@
+const COMPANY = { name:"Asani Rentals", email:"reserve@rentwithasani.com", phone:"732-470-8233" };
 const { Resend } = require("resend");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -129,31 +130,59 @@ module.exports = async (req, res) => {
       typeof deposit === "number" ? `$${deposit.toFixed(2)}` : "";
 
     // 1) Customer email
-    await resend.emails.send({
-      from: "reserve@rentwithasani.com", // must match your verified domain
-      to: customerEmail,
-      subject: `Your Asani Rentals booking - ${vehicleName}`,
-      html: buildHtml({
-        title: "Thank you for reserving with Asani Rentals.",
-        lines: [
-          `Hi ${customerName || "there"},`,
-          "",
-          `We’ve received your reservation request for: <strong>${vehicleName}</strong>.`,
-          "",
-          `Dates: <strong>${startDate}</strong> to <strong>${endDate}</strong>`,
-          formattedTotal
-            ? `Estimated trip total (before taxes/fees): <strong>${formattedTotal}</strong>`
-            : "",
-          formattedDeposit
-            ? `Deposit due at booking: <strong>${formattedDeposit}</strong>`
-            : "",
-          "",
-          "Your reservation is held once your payment is successfully completed. You’ll receive a separate receipt from our payment processor.",
-        ],
-      }),
-    });
+    const from = process.env.RESEND_FROM || "Asani Rentals <reserve@rentwithasani.com>";
+const internalTo = process.env.NOTIFY_EMAIL || COMPANY.email;
 
-    // 2) Admin email
+await Promise.all([
+  resend.emails.send({
+    from,
+    to: customerEmail,
+    subject: `Asani Rentals — Reservation Received: ${vehicleName}`,
+    html: buildHtml({
+      preheader: `Reservation received for ${vehicleName}.`,
+      title: "Reservation Received",
+      subtitle: "Asani Rentals Concierge",
+      lines: [
+        `Hi ${customerName || "there"},`,
+        "",
+        `We’ve received your reservation request for: <strong>${vehicleName}</strong>.`,
+        "",
+        `Dates: <strong>${startDate}</strong> to <strong>${endDate}</strong>`,
+        formattedTotal
+          ? `Estimated trip total (before taxes/fees): <strong>${formattedTotal}</strong>`
+          : "",
+        formattedDeposit ? `Deposit: <strong>${formattedDeposit}</strong>` : "",
+        "",
+        `Reservation ID: <strong>${reservationId}</strong>`,
+        policyLink ? `Policies: <a href="${policyLink}">${policyLink}</a>` : "",
+        "",
+        `Need help? ${COMPANY.phone} • ${COMPANY.email}`,
+      ],
+    }),
+  }),
+  resend.emails.send({
+    from,
+    to: internalTo,
+    subject: `NEW RESERVATION — ${vehicleName} — ${customerName || customerEmail}`,
+    html: buildHtml({
+      preheader: `New reservation received: ${vehicleName}`,
+      title: "New Reservation",
+      subtitle: "Internal notification",
+      lines: [
+        `Customer: <strong>${customerName || "N/A"}</strong> (${customerEmail})`,
+        customerPhone ? `Phone: ${customerPhone}` : "",
+        `Vehicle: <strong>${vehicleName}</strong>`,
+        `Dates: <strong>${startDate}</strong> → <strong>${endDate}</strong>`,
+        formattedTotal ? `Estimated total: <strong>${formattedTotal}</strong>` : "",
+        formattedDeposit ? `Deposit: <strong>${formattedDeposit}</strong>` : "",
+        `Reservation ID: <strong>${reservationId}</strong>`,
+        policyLink ? `Policies: <a href="${policyLink}">${policyLink}</a>` : "",
+      ],
+    }),
+  }),
+]);
+
+// 2) Admin email
     await resend.emails.send({
       from: "notifications@rentwithasani.com",
       to: "reserve@rentwithasani.com",
