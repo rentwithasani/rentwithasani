@@ -23,8 +23,7 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
   const safe = (s) => String(s ?? "");
   const bodyLines = (lines || [])
     .filter((l) => l !== null && l !== undefined)
-    .map((l) => safe(l).replace(/
-/g, "<br />").trim())
+    .map((l) => safe(l).replace(/\n/g, "<br />").trim())
     .map((html) => `<p style="margin:6px 0;font-size:14px;color:rgba(15,23,42,0.92);">${html}</p>`)
     .join("");
 
