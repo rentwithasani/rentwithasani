@@ -2,28 +2,93 @@ const { Resend } = require("resend");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Simple HTML layout
-function buildHtml({ title, lines }) {
-  return `
-    <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #111827;">
-      <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">${title}</h1>
-      ${lines
-        .map(
-          (l) =>
-            `<p style="margin: 4px 0; font-size: 14px;">${l
-              .replace(/\n/g, "<br />")
-              .trim()}</p>`
-        )
-        .join("")}
-      <p style="margin-top: 16px; font-size: 12px; color: #6B7280;">
-        If you have any questions, reply to this email or contact us at reserve@rentwithasani.com.
-      </p>
-      <p style="margin-top: 12px; font-size: 12px; color: #9CA3AF;">
-        Asani Rentals
-      </p>
-    </div>
-  `;
+// Luxury black-gradient email layout (Asani concierge style)
+function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
+  const safe = (s) => String(s ?? "");
+  const bodyLines = (lines || [])
+    .filter((l) => l !== null && l !== undefined)
+    .map((l) => safe(l).replace(/
+/g, "<br />").trim())
+    .map((html) => `<p style="margin:6px 0;font-size:14px;color:rgba(15,23,42,0.92);">${html}</p>`)
+    .join("");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#000;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${safe(preheader)}</div>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:radial-gradient(circle at top,#020617,#020617 50%,#000 100%);padding:32px 12px;">
+      <tr>
+        <td align="center">
+          <table width="100%" cellpadding="0" cellspacing="0" style="
+            max-width:640px;
+            border-radius:28px;
+            overflow:hidden;
+            background:linear-gradient(150deg,#050816,#020617,#050816);
+            border:1px solid rgba(148,163,184,0.25);
+            box-shadow:0 30px 70px rgba(0,0,0,0.75);
+          ">
+
+            <!-- HEADER -->
+            <tr>
+              <td style="padding:20px 24px 14px;border-bottom:1px solid rgba(148,163,184,0.18);">
+                <div style="font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">
+                  Premium economy to luxury rentals • Business • Events • Private travel
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;">
+                  <div>
+                    <div style="font-size:22px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#f9fafb;">
+                      ASANI RENTALS
+                    </div>
+                    <div style="margin-top:6px;font-size:13px;color:rgba(226,232,240,0.80);">
+                      ${safe(subtitle)}
+                    </div>
+                  </div>
+                  <div style="
+                    width:120px;height:12px;border-radius:999px;
+                    background:linear-gradient(135deg,#e8d5a6 0%,#b08d3b 45%,#7a5a1a 100%);
+                  "></div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- BODY -->
+            <tr>
+              <td style="background:#ffffff;padding:22px 24px;">
+                <h1 style="margin:0 0 10px;font-size:20px;line-height:1.25;font-weight:800;color:#0f172a;">
+                  ${safe(title)}
+                </h1>
+                ${bodyLines}
+
+                <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(15,23,42,0.10);">
+                  <div style="font-size:11px;color:#64748b;line-height:1.55;">
+                    <strong>Security:</strong> We will never ask you for your password by email or text. Do not share verification links or codes.<br />
+                    <strong>Operations & Charges:</strong> Late returns, tolls/tickets, fuel differences, smoking/cleaning, and damage/loss-of-use may result in additional charges per policy.
+                  </div>
+                  <div style="margin-top:10px;font-size:11px;color:#64748b;">
+                    Concierge support: 732-470-8233 • reserve@rentwithasani.com
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- FOOTER -->
+            <tr>
+              <td style="padding:14px 24px;border-top:1px solid rgba(148,163,184,0.18);">
+                <div style="font-size:11px;color:rgba(226,232,240,0.70);">
+                  © ${new Date().getFullYear()} Asani Rentals. All rights reserved.
+                </div>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 }
+
 
 /**
  * POST /api/booking-email
