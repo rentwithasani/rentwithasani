@@ -1,37 +1,99 @@
 // /api/booking.js
-// Creates Stripe checkout session + sends confirmation email (customer + internal) with paper trail details.
+// Luxury black-gradient booking confirmation for guest + internal
 
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const COMPANY = {
   name: "Asani Rentals",
   email: "reserve@rentwithasani.com",
   phone: "732-470-8233",
-  serviceArea: "United States Tri State Area NY NJ CT",
+  address: "Kalispell MT, 59901",
+  tagline: "Premium economy to luxury rentals • Business • Events • Private travel",
+  slogan: "Arrive like it’s already yours."
 };
 
+// Helpers
 function money(n) {
-  const num = typeof n === "number" ? n : Number(n || 0);
-  return `$${num.toFixed(2)}`;
+  if (typeof n !== "number" || isNaN(n)) return "$0.00";
+  return `$${n.toFixed(2)}`;
+}
+function fmtDate(d) {
+  if (!d) return "";
+  const x = new Date(d);
+  if (isNaN(x.getTime())) return d;
+  return x.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
 }
 
-// Luxury black-gradient email layout (Asani concierge style)
-function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
-  const safe = (s) => String(s ?? "");
-  const bodyLines = (lines || [])
-    .filter((l) => l !== null && l !== undefined)
-    .map((l) => safe(l).replace(/\n/g, "<br />").trim())
-    .map((html) => `<p style="margin:6px 0;font-size:14px;color:rgba(15,23,42,0.92);">${html}</p>`)
-    .join("");
+module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
 
-  return `<!DOCTYPE html>
+  try {
+    const booking = req.body || {};
+    const customer = booking.customer || {};
+
+    if (!customer.email) {
+      res.status(400).json({ error: "Missing customer email." });
+      return;
+    }
+
+    const {
+      vehicleName,
+      vehicleImage,
+      startDate,
+      endDate,
+      days,
+      subtotal,
+      deposit,
+      total,
+      extras = {}
+    } = booking;
+
+    const {
+      insuranceCost,
+      ezPassCost,
+      fuelPrepayCost,
+      amenities = {},
+      amenitiesCost,
+      promoCode,
+      originalDailyRate,
+      discountedDailyRate
+    } = extras;
+
+    const amenityList = [
+      amenities.infantSeat && "Infant seat",
+      amenities.childSeat && "Child seat",
+      amenities.boosterSeat && "Booster seat"
+    ].filter(Boolean);
+
+    const extrasSum =
+      (insuranceCost || 0) +
+      (ezPassCost || 0) +
+      (fuelPrepayCost || 0) +
+      (amenitiesCost || 0);
+
+    const hasExtras = extrasSum > 0;
+
+    const hasDiscount =
+      promoCode &&
+      typeof originalDailyRate === "number" &&
+      typeof discountedDailyRate === "number" &&
+      discountedDailyRate < originalDailyRate;
+
+    const subject = `Asani Rentals — Your ${vehicleName || "vehicle"} reservation`;
+
+    // ---- HTML EMAIL (luxury, dark, refined) ----
+    const html = `
+<!DOCTYPE html>
 <html lang="en">
   <body style="margin:0;padding:0;background:#000;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${safe(preheader)}</div>
-
     <table width="100%" cellpadding="0" cellspacing="0" style="background:radial-gradient(circle at top,#020617,#020617 50%,#000 100%);padding:32px 12px;">
       <tr>
         <td align="center">
@@ -48,50 +110,319 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
             <tr>
               <td style="padding:20px 24px 14px;border-bottom:1px solid rgba(148,163,184,0.18);">
                 <div style="font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">
-                  Premium economy to luxury rentals • Business • Events • Private travel
+                  ${COMPANY.tagline}
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;">
                   <div>
-                    <div style="font-size:22px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#f9fafb;">
-                      ASANI RENTALS
+                    <div style="
+                      font-size:22px;
+                      font-weight:800;
+                      letter-spacing:0.14em;
+                      text-transform:uppercase;
+                      color:#f9fafb;
+                      white-space:nowrap;
+                    ">
+                      Asani Rentals
                     </div>
-                    <div style="margin-top:6px;font-size:13px;color:rgba(226,232,240,0.80);">
-                      ${safe(subtitle)}
+                    <div style="font-size:13px;color:#a3a3a3;margin-top:4px;">
+                      ${COMPANY.slogan}
                     </div>
                   </div>
-                  <div style="
-                    width:120px;height:12px;border-radius:999px;
-                    background:linear-gradient(135deg,#e8d5a6 0%,#b08d3b 45%,#7a5a1a 100%);
-                  "></div>
-                </div>
-              </td>
-            </tr>
-
-            <!-- BODY -->
-            <tr>
-              <td style="background:#ffffff;padding:22px 24px;">
-                <h1 style="margin:0 0 10px;font-size:20px;line-height:1.25;font-weight:800;color:#0f172a;">
-                  ${safe(title)}
-                </h1>
-                ${bodyLines}
-
-                <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(15,23,42,0.10);">
-                  <div style="font-size:11px;color:#64748b;line-height:1.55;">
-                    <strong>Security:</strong> We will never ask you for your password by email or text. Do not share verification links or codes.<br />
-                    <strong>Operations & Charges:</strong> Late returns, tolls/tickets, fuel differences, smoking/cleaning, and damage/loss-of-use may result in additional charges per policy.
-                  </div>
-                  <div style="margin-top:10px;font-size:11px;color:#64748b;">
-                    Concierge support: 732-470-8233 • reserve@rentwithasani.com
+                  <div style="text-align:right;font-size:11px;color:#9ca3af;line-height:1.5;">
+                    <div>${COMPANY.address}</div>
+                    <div>${COMPANY.phone}</div>
+                    <div>${COMPANY.email}</div>
                   </div>
                 </div>
               </td>
             </tr>
 
-            <!-- FOOTER -->
+            <!-- TITLE -->
             <tr>
-              <td style="padding:14px 24px;border-top:1px solid rgba(148,163,184,0.18);">
-                <div style="font-size:11px;color:rgba(226,232,240,0.70);">
-                  © ${new Date().getFullYear()} Asani Rentals. All rights reserved.
+              <td style="padding:20px 24px 10px;">
+                <div style="font-size:13px;color:#9ca3af;margin-bottom:4px;">
+                  Reservation acknowledgement
+                </div>
+                <div style="font-size:20px;font-weight:700;color:#f9fafb;">
+                  Thank you, ${customer.fullName || "Guest"} — your reservation has been received.
+                </div>
+                <div style="font-size:13px;color:#a1a1aa;margin-top:6px;line-height:1.5;">
+                  Our team will confirm availability and send your rental agreement with final details.
+                  Your booking is fully confirmed once your agreement is signed and your deposit is processed.
+                </div>
+              </td>
+            </tr>
+
+            <!-- VEHICLE + TRIP CARD -->
+            <tr>
+              <td style="padding:8px 24px 22px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="
+                  border-radius:20px;
+                  background:radial-gradient(circle at top left,#020617,#020617 60%,#030712);
+                  border:1px solid rgba(148,163,184,0.35);
+                ">
+                  <tr>
+                    <!-- VEHICLE IMAGE -->
+                    ${
+                      vehicleImage
+                        ? `
+                    <td style="width:40%;padding:16px 12px 16px 16px;vertical-align:top;">
+                      <div style="border-radius:16px;overflow:hidden;border:1px solid rgba(55,65,81,0.9);background:#020617;">
+                        <img src="${vehicleImage}" alt="${vehicleName ||
+                          "Vehicle"}" style="display:block;width:100%;height:auto;object-fit:cover;" />
+                      </div>
+                    </td>
+                    <td style="width:60%;padding:16px 16px 16px 4px;vertical-align:top;">
+                      `
+                        : `
+                    <td style="width:100%;padding:16px 18px 10px 18px;vertical-align:top;">
+                      `
+                    }
+                      <div style="font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.22em;margin-bottom:4px;">
+                        Trip overview
+                      </div>
+                      <div style="font-size:18px;font-weight:600;color:#f9fafb;">
+                        ${vehicleName || "Vehicle reservation"}
+                      </div>
+                      <div style="font-size:13px;color:#a3a3a3;margin-top:6px;">
+                        ${days || 1} day${days && days > 1 ? "s" : ""} • ${fmtDate(
+      startDate
+    )} – ${fmtDate(endDate)}
+                      </div>
+                      <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                        Guest:
+                        <span style="color:#e5e7eb;">${customer.fullName || "Guest"}</span>
+                        ${customer.phone ? ` • <span>${customer.phone}</span>` : ""}
+                      </div>
+                      <div style="font-size:12px;color:#9ca3af;margin-top:2px;">
+                        Email: <span style="color:#e5e7eb;">${customer.email}</span>
+                      </div>
+                      <div style="font-size:11px;color:#4b5563;margin-top:8px;line-height:1.4;">
+                        Pickup time and exact location will be confirmed in your agreement or by our concierge team.
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- PRICING -->
+                  <tr>
+                    <td colspan="2" style="padding:4px 18px 14px 18px;">
+                      <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:#e5e7eb;">
+                        <tr>
+                          <td style="padding:4px 0;color:#9ca3af;">Daily rate</td>
+                          <td style="padding:4px 0;text-align:right;">
+                            ${
+                              hasDiscount
+                                ? `
+                              <span style="text-decoration:line-through;color:#6b7280;margin-right:6px;">
+                                ${money(originalDailyRate)}
+                              </span>
+                              <span style="font-weight:600;color:#f9fafb;">
+                                ${money(discountedDailyRate)}
+                              </span>
+                              `
+                                : `<span style="font-weight:600;color:#f9fafb;">${money(
+                                    discountedDailyRate || originalDailyRate || 0
+                                  )}</span>`
+                            } / day
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:4px 0;color:#9ca3af;">
+                            Rental (${days || 1} day${days && days > 1 ? "s" : ""})
+                          </td>
+                          <td style="padding:4px 0;text-align:right;font-weight:500;color:#f9fafb;">
+                            ${money(subtotal || 0)}
+                          </td>
+                        </tr>
+
+                        ${
+                          hasExtras
+                            ? `
+                        <tr>
+                          <td style="padding:4px 0;color:#9ca3af;">
+                            Protection & extras (estimate)
+                          </td>
+                          <td style="padding:4px 0;text-align:right;color:#e5e7eb;">
+                            ${money(extrasSum)}
+                          </td>
+                        </tr>
+                        ${
+                          insuranceCost
+                            ? `
+                        <tr>
+                          <td style="padding:3px 0 0;font-size:11px;color:#9ca3af;">
+                            • Protection plan
+                          </td>
+                          <td style="padding:3px 0 0;font-size:11px;text-align:right;color:#9ca3af;">
+                            ${money(insuranceCost)}
+                          </td>
+                        </tr>
+                        `
+                            : ""
+                        }
+                        ${
+                          ezPassCost
+                            ? `
+                        <tr>
+                          <td style="padding:3px 0 0;font-size:11px;color:#9ca3af;">
+                            • Tolls / EZ-Pass
+                          </td>
+                          <td style="padding:3px 0 0;font-size:11px;text-align:right;color:#9ca3af;">
+                            ${money(ezPassCost)}
+                          </td>
+                        </tr>
+                        `
+                            : ""
+                        }
+                        ${
+                          fuelPrepayCost
+                            ? `
+                        <tr>
+                          <td style="padding:3px 0 0;font-size:11px;color:#9ca3af;">
+                            • Prepaid fuel
+                          </td>
+                          <td style="padding:3px 0 0;font-size:11px;text-align:right;color:#9ca3af;">
+                            ${money(fuelPrepayCost)}
+                          </td>
+                        </tr>
+                        `
+                            : ""
+                        }
+                        ${
+                          amenitiesCost
+                            ? `
+                        <tr>
+                          <td style="padding:3px 0 0;font-size:11px;color:#9ca3af;">
+                            • Child seats${amenityList.length
+                              ? " (" + amenityList.join(", ") + ")"
+                              : ""
+                            }
+                          </td>
+                          <td style="padding:3px 0 0;font-size:11px;text-align:right;color:#9ca3af;">
+                            ${money(amenitiesCost)}
+                          </td>
+                        </tr>
+                        `
+                            : ""
+                        }
+                        `
+                            : ""
+                        }
+
+                        ${
+                          promoCode
+                            ? `
+                        <tr>
+                          <td style="padding:8px 0 0;font-size:11px;color:#22c55e;">
+                            Promo code applied: ${promoCode}
+                          </td>
+                          <td style="padding:8px 0 0;font-size:11px;text-align:right;color:#22c55e;">
+                            Preferred client rate
+                          </td>
+                        </tr>
+                        `
+                            : ""
+                        }
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- TOTAL & DEPOSIT -->
+                  <tr>
+                    <td colspan="2" style="padding:0 18px 16px 18px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="font-size:12px;color:#9ca3af;padding-top:6px;">
+                            Estimated trip total
+                          </td>
+                          <td style="font-size:15px;font-weight:600;color:#f9fafb;text-align:right;padding-top:6px;">
+                            ${money(total || subtotal || 0)}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="font-size:12px;color:#9ca3af;padding-top:4px;">
+                            Deposit to secure your reservation
+                          </td>
+                          <td style="
+                            font-size:19px;
+                            font-weight:700;
+                            text-align:right;
+                            padding-top:4px;
+                            color:#fbbf24; /* soft luxury gold */
+                          ">
+                            ${money(deposit || 0)}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+
+            <!-- GUEST DETAILS + SHORT NOTES -->
+            <tr>
+              <td style="padding:0 24px 6px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="
+                  border-radius:18px;
+                  background:rgba(15,23,42,0.96);
+                  border:1px solid rgba(31,41,55,0.9);
+                ">
+                  <tr>
+                    <td style="padding:14px 18px 10px;">
+                      <div style="font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:8px;">
+                        Guest details
+                      </div>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#9ca3af;">
+                        <tr>
+                          <td style="padding:2px 0;width:32%;">Name</td>
+                          <td style="padding:2px 0;color:#e5e7eb;">${customer.fullName || "Guest"}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:2px 0;">Email</td>
+                          <td style="padding:2px 0;color:#e5e7eb;">${customer.email}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:2px 0;">Phone</td>
+                          <td style="padding:2px 0;color:#e5e7eb;">${customer.phone || "—"}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 18px 14px;">
+                      <div style="font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:6px;margin-top:4px;">
+                        Next steps
+                      </div>
+                      <ul style="margin:0;padding-left:18px;font-size:11px;color:#9ca3af;line-height:1.7;">
+                        <li>You’ll receive your rental agreement with final pricing and pickup details.</li>
+                        <li>Review and sign the agreement to complete your booking.</li>
+                        <li>Bring your license, payment card, and any required insurance documents to pickup.</li>
+                      </ul>
+                      <div style="font-size:11px;color:#6b7280;margin-top:8px;line-height:1.6;">
+                        Security deposits are typically released by your bank or card issuer
+                        within <strong>5–7 business days</strong> after the vehicle is returned
+                        in satisfactory condition, subject to any outstanding balances, tolls,
+                        tickets, fuel or damage charges.
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- FOOTER / LEGAL -->
+            <tr>
+              <td style="padding:10px 24px 24px;">
+                <div style="border-top:1px solid rgba(31,41,55,0.9);padding-top:10px;font-size:11px;color:#6b7280;line-height:1.6;text-align:left;">
+                  This email is a reservation acknowledgement and does not guarantee rental.
+                  Your booking is confirmed once Asani Rentals issues your rental agreement
+                  and your deposit is successfully processed. Any additional surcharges or
+                  conditions will be detailed in your final agreement.
+                  <br/><br/>
+                  For changes or questions, reply to this email or contact us at
+                  <a href="mailto:${COMPANY.email}" style="color:#e5e7eb;text-decoration:none;">${COMPANY.email}</a>.
                 </div>
               </td>
             </tr>
@@ -101,108 +432,69 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
       </tr>
     </table>
   </body>
-</html>`;
-}
+</html>
+`;
 
+    const text = `
+Asani Rentals – Reservation acknowledgement
 
-module.exports = async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).send("Method not allowed");
+Guest:
+- Name: ${customer.fullName || "Guest"}
+- Email: ${customer.email}
+- Phone: ${customer.phone || "N/A"}
 
-  try {
-    const {
-      reservationId,
-      vehicleName,
-      startDate,
-      endDate,
-      customer,
-      total,
-      deposit,
-      policyLink,
-    } = req.body || {};
+Vehicle:
+- ${vehicleName || "Vehicle"}
+- Dates: ${fmtDate(startDate)} to ${fmtDate(endDate)}
+- Days: ${days || 1}
 
-    const customerEmail = customer?.email;
+Pricing (estimate):
+- Daily rate: ${money(discountedDailyRate || originalDailyRate || 0)}
+- Rental subtotal: ${money(subtotal || 0)}
+- Protection & extras (estimate): ${money(extrasSum)}
+- Estimated total: ${money(total || subtotal || 0)}
+- Deposit due: ${money(deposit || 0)}
 
-    if (!reservationId || !vehicleName || !startDate || !endDate || !customerEmail) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+Next steps:
+- We’ll send your rental agreement with final details.
+- Review and sign the agreement to complete your booking.
+- Bring your driver’s license, payment card, and required insurance documents at pickup.
 
-    const publicPolicyLink = policyLink
-      ? `https://rentwithasani.com${policyLink}`
-      : "https://rentwithasani.com/#/policies";
+Security deposits are typically released by your bank or card issuer within
+5–7 business days after the vehicle is returned in satisfactory condition,
+subject to any outstanding balances, tolls, tickets, fuel or damage charges.
 
-    // 1) Create Stripe Checkout Session (deposit/hold is informational; charge uses total)
-    // NOTE: Adjust line items as needed — currently one line item for booking total.
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: customerEmail,
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: { name: `Asani Rentals - ${vehicleName}` },
-            unit_amount: Math.round(Number(total || 0) * 100),
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `https://rentwithasani.com/#/confirmation`,
-      cancel_url: `https://rentwithasani.com/#/profile`,
-      metadata: {
-        reservationId,
-        vehicleName,
-        startDate,
-        endDate,
-        deposit: String(deposit || ""),
-      },
-    });
+This email acknowledges your reservation request.
+Your booking is confirmed once the agreement and deposit are completed.
 
-    // 2) Send confirmation email (customer)
-    const subject = `Reservation ${reservationId} • ${vehicleName}`;
+${COMPANY.name}
+${COMPANY.phone}
+${COMPANY.email}
+${COMPANY.address}
+`;
 
-    const emailLines = [
-      `Reservation ID: <b>${reservationId}</b>`,
-      `Vehicle: <b>${vehicleName}</b>`,
-      `Dates: <b>${startDate}</b> → <b>${endDate}</b>`,
-      `Estimated total: <b>${money(total)}</b>`,
-      `Deposit / authorization hold: <b>${money(deposit)}</b> (where applicable)`,
-      `Rental Policies: <a href="${publicPolicyLink}">${publicPolicyLink}</a>`,
-      `Contact: ${COMPANY.email} • ${COMPANY.phone}`,
-    ];
+    const from = `"Asani Rentals" <${COMPANY.email}>`;
 
-    const incidentFooter = `
-      <b>Incident / claims:</b> If there is an accident, damage, theft, or vandalism, notify us immediately (no later than 2 hours when safe),
-      take photos, and obtain a police report where applicable. Failure to report promptly may result in full renter responsibility.
-    `;
-
-    await resend.emails.send({
-      from: COMPANY.email,
-      to: customerEmail,
-      subject,
-      html: buildHtml({
-        title: "Your reservation is recorded",
-        lines: emailLines,
-        footer: incidentFooter,
+    await Promise.all([
+      resend.emails.send({
+        from,
+        to: customer.email,
+        subject,
+        html,
+        text
       }),
-    });
+      resend.emails.send({
+        from,
+        to: COMPANY.email,
+        subject: `NEW RESERVATION — ${customer.fullName || customer.email || "Guest"}`,
+        html,
+        text
+      })
+    ]);
 
-    // 3) Internal email
-    if (process.env.INTERNAL_NOTIFY_EMAIL) {
-      await resend.emails.send({
-        from: COMPANY.email,
-        to: process.env.INTERNAL_NOTIFY_EMAIL,
-        subject: `[New Booking] ${reservationId} - ${vehicleName}`,
-        html: buildHtml({
-          title: "New booking (paper trail)",
-          lines: emailLines,
-          footer: incidentFooter,
-        }),
-      });
-    }
-
-    // 4) Return session
-    return res.status(200).json({ id: session.id, url: session.url });
-  } catch (e) {
-    console.error("Booking API error:", e);
-    return res.status(500).json({ error: "Server error" });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Booking email error", err);
+    res.status(500).json({ error: "Failed to send booking emails" });
   }
 };
