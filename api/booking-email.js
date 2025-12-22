@@ -1,10 +1,14 @@
-const { Resend } = require("resend");
+const {
+    vehicleImageUrl,
+    vehicleImage,
+ Resend } = require("resend");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Luxury black-gradient email layout (Asani concierge style)
 // Luxury black-gradient email layout (Asani concierge style)
-function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
+// Luxury black-gradient email layout (Asani concierge style) + optional vehicle hero image
+function buildHtml({ title, subtitle = "", lines = [], preheader = "", heroImageUrl = "", heroLabel = "" }) {
   const safe = (s) => String(s ?? "");
   const bodyLines = (lines || [])
     .filter((l) => l !== null && l !== undefined && String(l).trim() !== "")
@@ -13,6 +17,12 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
     .map((html) => `<p style="margin:8px 0;font-size:14px;line-height:1.6;color:rgba(15,23,42,0.92);">${html}</p>`)
     .join("");
 
+  const hero = heroImageUrl
+    ? `<div style="margin:14px 0 0 0;border-radius:18px;overflow:hidden;border:1px solid rgba(15,23,42,0.12);">
+         <img src="${safe(heroImageUrl)}" alt="${safe(heroLabel || "Vehicle")}" style="width:100%;display:block;max-height:320px;object-fit:cover;" />
+       </div>`
+    : (heroLabel ? `<div style="margin-top:12px;display:inline-block;border-radius:999px;padding:8px 12px;border:1px solid rgba(15,23,42,0.10);background:#f8fafc;color:#0f172a;font-weight:900;letter-spacing:.06em;text-transform:uppercase;font-size:11px;">${safe(heroLabel)}</div>` : "");
+
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -20,10 +30,10 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>${safe(title)}</title>
   </head>
-  <body style="margin:0;padding:0;background:#05070d;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;">
+  <body style="margin:0;padding:0;background:#000000 !important;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${safe(preheader)}</div>
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:radial-gradient(circle at top,#0b1220 0%, #05070d 55%, #000 100%);padding:34px 12px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#000000 !important;padding:34px 12px;">
       <tr>
         <td align="center">
           <table width="100%" cellpadding="0" cellspacing="0" style="
@@ -37,15 +47,15 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
             <tr>
               <td style="padding:22px 24px 18px;border-bottom:1px solid rgba(255,255,255,0.10);">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-                  <div style="font-size:11px;letter-spacing:0.26em;text-transform:uppercase;color:rgba(255,255,255,0.70);font-weight:800;">
-                    Asani Rentals • Concierge
+                  <div style="font-size:11px;letter-spacing:0.26em;text-transform:uppercase;color:rgba(255,255,255,0.72);font-weight:900;">
+                    ASANI RENTALS • CONCIERGE
                   </div>
-                  <div style="width:128px;height:10px;border-radius:999px;background:linear-gradient(135deg,#f3e3b9 0%,#b08d3b 45%,#7a5a1a 100%);"></div>
+                  <div style="width:140px;height:10px;border-radius:999px;background:linear-gradient(135deg,#f3e3b9 0%,#b08d3b 45%,#7a5a1a 100%);"></div>
                 </div>
                 <div style="margin-top:14px;font-size:22px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#ffffff;">
                   ${safe(subtitle || "Reservation Update")}
                 </div>
-                <div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,0.78);">
+                <div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,0.80);">
                   Premium economy to luxury rentals • Business • Events • Private travel
                 </div>
               </td>
@@ -56,6 +66,7 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
                 <h1 style="margin:0 0 10px;font-size:20px;line-height:1.25;font-weight:900;color:#0f172a;">
                   ${safe(title)}
                 </h1>
+                ${hero}
                 ${bodyLines}
 
                 <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(15,23,42,0.10);">
@@ -72,7 +83,7 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
 
             <tr>
               <td style="padding:14px 24px;border-top:1px solid rgba(255,255,255,0.10);">
-                <div style="font-size:11px;color:rgba(255,255,255,0.65);">
+                <div style="font-size:11px;color:rgba(255,255,255,0.68);">
                   © ${new Date().getFullYear()} Asani Rentals. All rights reserved.
                 </div>
               </td>
@@ -84,6 +95,7 @@ function buildHtml({ title, subtitle = "", lines = [], preheader = "" }) {
   </body>
 </html>`;
 }
+
 
 
 
@@ -127,12 +139,13 @@ module.exports = async (req, res) => {
 
     // 1) Customer email
     const from = process.env.RESEND_FROM || "Asani Rentals <reserve@rentwithasani.com>";
-const internalTo = process.env.NOTIFY_EMAIL || COMPANY.email;
+const internalTo = ((process.env.NOTIFY_EMAIL && String(process.env.NOTIFY_EMAIL).trim()) || "reserve@rentwithasani.com");
 
 await Promise.all([
   resend.emails.send({
     from,
     to: customerEmail,
+            bcc: internalTo,
     subject: `Asani Rentals — Reservation Received: ${vehicleName}`,
     html: buildHtml({
       preheader: `Reservation received for ${vehicleName}.`,
