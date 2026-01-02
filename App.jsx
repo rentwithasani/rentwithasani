@@ -1,44 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { supabase, requireSupabase } from "./lib/supabaseClient";
+import { supabase } from "./lib/supabaseClient";
 import { loadStripe } from "@stripe/stripe-js";
 import PoliciesPage from "./PoliciesPage";
 import RentalPoliciesSection from "./components/RentalPoliciesSection";
 import EligibilityDisclosure from "./components/EligibilityDisclosure";
 import IncidentInstructions from "./components/IncidentInstructions";
 import { loadBookings, upsertBooking, updateBooking } from "./lib/reservations";
-class ErrorBoundary extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = { hasError:false, error:null };
-  }
-  static getDerivedStateFromError(error){
-    return { hasError:true, error };
-  }
-  componentDidCatch(error, info){
-    console.error("App crashed:", error, info);
-  }
-  render(){
-    if(this.state.hasError){
-      const msg = this.state.error?.message || "Unexpected error.";
-      return (
-        <div style={{ fontFamily:"Arial, sans-serif", padding:24 }}>
-          <h1 style={{ fontSize:22, fontWeight:800, margin:0 }}>Asani Rentals</h1>
-          <p style={{ marginTop:12, maxWidth:720 }}>
-            The site hit a runtime error and stopped rendering. This screen prevents a blank page.
-          </p>
-          <div style={{ marginTop:12, padding:12, border:"1px solid #e5e7eb", borderRadius:12, background:"#fff" }}>
-            <div style={{ fontWeight:700 }}>Error</div>
-            <div style={{ marginTop:6, whiteSpace:"pre-wrap" }}>{msg}</div>
-          </div>
-          <div style={{ marginTop:12, fontSize:12, color:"#555", maxWidth:720 }}>
-            If this mentions Supabase not configured, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel (Production) and redeploy.
-          </div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -1560,7 +1527,34 @@ function ProfilePage({
 
   const [auth, setAuth] = useState({ email: "", password: "" });
   const [createPassword, setCreatePassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
+  
+  const [createConfirmPassword, setCreateConfirmPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showCreateConfirmPassword, setShowCreateConfirmPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+
+
+function passwordScore(pw){
+  const s = String(pw || "");
+  let score = 0;
+  if (s.length >= 8) score += 1;
+  if (s.length >= 12) score += 1;
+  if (/[A-Z]/.test(s)) score += 1;
+  if (/[a-z]/.test(s)) score += 1;
+  if (/[0-9]/.test(s)) score += 1;
+  if (/[^A-Za-z0-9]/.test(s)) score += 1;
+  return Math.min(score, 6);
+}
+
+function strengthLabel(score){
+  if (score <= 1) return "Very weak";
+  if (score === 2) return "Weak";
+  if (score === 3) return "Good";
+  if (score === 4) return "Strong";
+  return "Very strong";
+}
+const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
   const [mode, setMode] = useState("login");
   const [isAdmin, setIsAdmin] = useState(
     profile?.email &&
@@ -1682,6 +1676,11 @@ function ProfilePage({
       alert("Please create a password of at least 6 characters.");
       return;
     }
+if (createPassword !== createConfirmPassword) {
+      alert("Passwords do not match. Please re-enter them.");
+      return;
+    }
+
 
     try {
       // Check if email already exists
@@ -1987,17 +1986,51 @@ function ProfilePage({
               placeholder="Email"
               className="p-3 border rounded text-sm"
             />
-            <input
-              type="password"
-              required
-              value={auth.password}
-              onChange={(e) =>
-                setAuth({ ...auth, password: e.target.value })
-              }
-              placeholder="Password"
-              className="p-3 border rounded text-sm"
-            />
-            <button
+            
+<div className="relative">
+  <input
+    type={showLoginPassword ? "text" : "password"}
+    required
+    value={auth.password}
+    onChange={(e) =>
+      setAuth({ ...auth, password: e.target.value })
+    }
+    onKeyUp={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
+    placeholder="Password"
+    className="p-3 pr-12 border rounded text-sm w-full"
+  />
+  <button
+    type="button"
+    onClick={() => setShowLoginPassword((v) => !v)}
+    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+    aria-label="Toggle password visibility"
+  >
+    {showLoginPassword ? (
+      <span className="inline-flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
+          <path stroke="currentColor" strokeWidth="2" d="M3 3l18 18"/>
+          <path stroke="currentColor" strokeWidth="2" d="M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-4.42"/>
+          <path stroke="currentColor" strokeWidth="2" d="M9.88 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a18.2 18.2 0 0 1-4.2 5.1"/>
+          <path stroke="currentColor" strokeWidth="2" d="M6.3 6.3C3.6 8.6 2 12 2 12s3 7 10 7c1.1 0 2.1-.14 3.02-.4"/>
+        </svg>
+        Hide
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
+          <path stroke="currentColor" strokeWidth="2" d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+        Show
+      </span>
+    )}
+  </button>
+</div>
+{capsLockOn ? (
+  <div className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+    Caps Lock is on.
+  </div>
+) : null}<button
               type="submit"
               className="px-5 py-3 rounded-2xl bg-black text-white font-semibold text-sm"
             >
@@ -2838,11 +2871,6 @@ function ConfirmationScreen({ booking, onNav }) {
 }
 
 function App() {
-  const supa = supabase;
-function ensureSupa(){
-  return requireSupabase();
-}
-
   const [route, setRoute] = useState("home");
 
   useEffect(() => {
@@ -3132,12 +3160,4 @@ function ensureSupa(){
   );
 }
 
-function RootApp(){
-  return (
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  );
-}
-
-export default RootApp;
+export default App;
