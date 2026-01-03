@@ -295,20 +295,20 @@ const SAMPLE_VEHICLES = [
 
 {
   id: "v012",
-  name: "2025 Honda Accord",
+  name: "Honda Accord",
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 210,
   color: "Crystal Black Pearl",
   image:
-    "https://hondanews.com/en-US/honda-automobiles/photos/photo-85d9cee924869f121479b5fa320615e0-2025-honda-accord-touringjpg?channelsConstraint=channel-3033&firstResultIndex=40",
+    "https://images.dealer.com/ddc/vehicles/2025/Honda/Accord%20Hybrid/Sedan/oem/exterior/exterior-640-en_US.jpg",
   description:
     "Refined midsize sedan with a premium cabin feel—ideal for executive travel, city driving, and long-distance comfort.",
   available: true,
 },
 {
   id: "v013",
-  name: "2026 Buick Envista",
+  name: "Buick Envista",
   category: "Luxury Crossover SUV",
   seats: 5,
   pricePerDay: 210,
@@ -321,7 +321,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v014",
-  name: "2026 Mazda CX-90",
+  name: "Mazda CX-90",
   category: "Premium 3-Row SUV",
   seats: 7,
   pricePerDay: 230,
