@@ -21,6 +21,48 @@ const COMPANY = {
 
 
 
+
+
+function ErrorBoundary({ children }) {
+  const [err, setErr] = useState(null);
+
+  useEffect(() => {
+    function onErr(event) {
+      try {
+        const message = event?.error?.message || event?.message || "Unknown error";
+        setErr(message);
+      } catch {}
+    }
+    window.addEventListener("error", onErr);
+    return () => window.removeEventListener("error", onErr);
+  }, []);
+
+  if (err) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="mx-auto max-w-3xl px-5 py-12">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+            <div className="text-xl font-semibold tracking-tight">
+              App Error (runtime)
+            </div>
+            <div className="mt-2 text-sm text-zinc-300">
+              The site encountered a runtime error. This screen prevents the black-page failure so you can deploy safely.
+            </div>
+            <div className="mt-4 rounded-2xl border border-zinc-800 bg-black p-4 font-mono text-xs text-zinc-200 whitespace-pre-wrap">
+              {String(err)}
+            </div>
+            <div className="mt-5 text-sm text-zinc-300">
+              Fix: open browser DevTools → Console, copy the first error line, and paste it here.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+}
+
 // ========= SESSION & MEMBERSHIP HELPERS =========
 const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -702,16 +744,16 @@ function Header({ onNav, profile, onSignOut, isAdmin, onAdmin }) {
                 {profile.fullName}
               </span>
             
-{/* ADMIN_BUTTON_ADDED */}
-{isAdmin ? (
-  <button
-    type="button"
-    onClick={() => (onAdmin ? onAdmin() : onNav("home"))}
-    className="rounded-full border border-zinc-700 bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-900"
-  >
-    Admin
-  </button>
-) : null}
+{/* ADMIN_BUTTON */}
+      {isAdmin ? (
+        <button
+          type="button"
+          onClick={() => (onAdmin ? onAdmin() : onNav('home'))}
+          className="rounded-full border border-zinc-700 bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-900"
+        >
+          Admin
+        </button>
+      ) : null}
 
       {/* SIGN_OUT_BUTTON_ADDED */}
 {profile?.email ? (
@@ -3132,10 +3174,39 @@ function ConfirmationScreen({ booking, onNav }) {
 }
 
 function App() {
+// FETCH_VEHICLE_OVERRIDES
+useEffect(() => {
+  let cancelled = false;
+  async function loadOverrides() {
+    try {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from("vehicle_overrides")
+        .select("vehicle_id, blocked, price_per_day_override, deposit_override");
+      if (error) throw error;
+      const map = {};
+      (data || []).forEach((r) => {
+        map[r.vehicle_id] = {
+          blocked: !!r.blocked,
+          pricePerDayOverride: r.price_per_day_override ?? null,
+          depositOverride: r.deposit_override ?? null,
+        };
+      });
+      if (!cancelled) setVehicleOverrides(map);
+    } catch {
+      if (!cancelled) setVehicleOverrides({});
+    }
+  }
+  loadOverrides();
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
   const [route, setRoute] = useState("home");
 
   
-const [vehicleOverrides, setVehicleOverrides] = useState({});
+  const [vehicleOverrides, setVehicleOverrides] = useState({});
 useEffect(() => {
     const sync = () => {
       const h = (window.location.hash || "").replace("#", "");
@@ -3172,14 +3243,11 @@ const [selected, setSelected] = useState(null);
   
 
 
-const isAdmin = !!(
-  profile?.email &&
-  String(import.meta?.env?.VITE_ADMIN_EMAILS || "")
-    .split(",")
+  const isAdmin = !!(profile?.email && (String(import.meta?.env?.VITE_ADMIN_EMAILS || '')
+    .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean)
-    .includes(String(profile.email).toLowerCase())
-);
+    .includes(String(profile.email).toLowerCase())));
 // AUTO_LOGOUT_WIRED
 useEffect(() => {
   const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
@@ -3227,37 +3295,6 @@ useEffect(() => {
   } catch {}
 }, []);
 
-
-
-// FETCH_VEHICLE_OVERRIDES
-useEffect(() => {
-  let cancelled = false;
-  async function loadOverrides() {
-    try {
-      if (!supabase) return;
-      const { data, error } = await supabase
-        .from("vehicle_overrides")
-        .select("vehicle_id, blocked, price_per_day_override, deposit_override");
-      if (error) throw error;
-      const map = {};
-      (data || []).forEach((r) => {
-        map[r.vehicle_id] = {
-          blocked: !!r.blocked,
-          pricePerDayOverride: r.price_per_day_override ?? null,
-          depositOverride: r.deposit_override ?? null,
-        };
-      });
-      if (!cancelled) setVehicleOverrides(map);
-    } catch {
-      // Non-blocking
-      if (!cancelled) setVehicleOverrides({});
-    }
-  }
-  loadOverrides();
-  return () => {
-    cancelled = true;
-  };
-}, []);
 function handleSignOut() {
   try {
     localStorage.removeItem("asani:profile");
@@ -3558,7 +3595,6 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
 
   async function refreshOverrides() {
     try {
-      if (!supabase) throw new Error("Supabase not configured");
       const { data, error } = await supabase
         .from("vehicle_overrides")
         .select("vehicle_id, blocked, price_per_day_override, deposit_override");
@@ -3580,19 +3616,18 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
       );
       setMsg("");
     } catch (e) {
-      setMsg("Could not load overrides. Run the Supabase SQL and confirm RLS/admin setup.");
+      setMsg("Could not load overrides. Run the Supabase SQL for vehicle_overrides.");
     }
   }
 
   useEffect(() => {
-    if (isAdmin) refreshOverrides();
-  }, [isAdmin]);
+    if (supabase && isAdmin) refreshOverrides();
+  }, [supabase, isAdmin]);
 
   async function saveRow(r) {
     setSaving(true);
     setMsg("");
     try {
-      if (!supabase) throw new Error("Supabase not configured");
       const payload = {
         vehicle_id: r.vehicle_id,
         blocked: !!r.blocked,
@@ -3607,7 +3642,7 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
       if (error) throw error;
       setMsg("Saved.");
     } catch (e) {
-      setMsg("Save failed. Confirm your admin email is allowlisted and policies are applied.");
+      setMsg("Save failed. Ensure your email is allowlisted in Supabase admin_allowlist.");
     } finally {
       setSaving(false);
     }
@@ -3619,7 +3654,7 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
         <div className="rounded-3xl border border-zinc-200 bg-white p-6">
           <div className="text-lg font-semibold text-zinc-900">Admin</div>
           <div className="mt-2 text-sm text-zinc-600">
-            Access denied. Your account is not on the admin allowlist.
+            Access denied.
           </div>
         </div>
       </div>
@@ -3634,7 +3669,7 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
             Admin Dashboard
           </div>
           <div className="mt-1 text-sm text-zinc-600">
-            Block cars, adjust pricing, and override deposits.
+            Block cars, adjust pricing, override deposits.
           </div>
         </div>
         <button
@@ -3713,9 +3748,7 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
                 onChange={(e) =>
                   setRows((prev) =>
                     prev.map((x) =>
-                      x.vehicle_id === r.vehicle_id
-                        ? { ...x, blocked: e.target.checked }
-                        : x
+                      x.vehicle_id === r.vehicle_id ? { ...x, blocked: e.target.checked } : x
                     )
                   )
                 }
