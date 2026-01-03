@@ -301,7 +301,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 210,
   color: "Crystal Black Pearl",
   image:
-    "https://socal.hondadealers.com/-/media/Honda-Automobiles/Vehicles/2025/accord-sedan/AW/Carshot/carshot_AccordHybrid_front_ACCORDHYBRIDSPORT_2025_CrystalBlackPearl_CY2F5SJW_NH-731P.png",
+    "https://images.dealer.com/ddc/vehicles/2026/Honda/Accord%20Hybrid/Sedan/trim_Sport_f8c0c6/perspective/front-left/2026_76.png",
   description:
     "Refined midsize sedan with a premium cabin feel—ideal for executive travel, city driving, and long-distance comfort.",
   available: true,
@@ -367,7 +367,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 200,
   color: "Black / Gray",
   image:
-    "https://di-uploads-pod17.dealerinspire.com/elkgrovevolkswagen/uploads/2025/10/2026-Jetta-VW-Trim-Level-SEL-1024x512.jpeg",
+    "https://vehicle-images.dealerinspire.com/stock-images/thumbnails/large/chrome/c910520d7c74126f4464770b68facb2c.png",
   description:
     "Clean, comfortable sedan with modern styling—great for commuting, business travel, and daily reliability.",
   available: true,
@@ -380,7 +380,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 200,
   color: "Gray",
   image:
-    "https://d2ivfcfbdvj3sm.cloudfront.net/XQvEBFY_K9sT4N_i/55793/color_no_cr/color_0640_032_png/MY2025/55793/55793_cc0640_032_A2B.webp?c=172&p=243&m=1&o=png&s=v_5jusqzETMaLe9zX7JZU3",
+    "https://s7d1.scene7.com/is/image/hyundai/2026-sonata-hybrid-blue-fwd-carbon-blue-vehicle-browse-hero:Browse?fmt=webp-alpha",
   description:
     "Upscale midsize sedan with a smooth ride and premium features—ideal for executive comfort on longer trips.",
   available: true,
@@ -432,7 +432,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 200,
   color: "Gray",
   image:
-    "https://gld-creative.s3.us-west-2.amazonaws.com/2025-nissan-altima-sv-f485554336b0-600x300.png",
+    "https://dealerimages.dealereprocess.com/image/upload/v1692729252/1/nissan/Model_Redesign_Altima/altima-sr-super-black.png",
   description:
     "Comfortable, dependable sedan with excellent highway manners—ideal for commuting and longer-distance travel.",
   available: true,
