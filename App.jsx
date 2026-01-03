@@ -298,7 +298,7 @@ const SAMPLE_VEHICLES = [
   name: "Honda Accord",
   category: "Premium Economy Sedan",
   seats: 5,
-  pricePerDay: 210,
+  pricePerDay: 200,
   color: "Crystal Black Pearl",
   image:
     "https://images.dealer.com/ddc/vehicles/2026/Honda/Accord%20Hybrid/Sedan/trim_Sport_f8c0c6/perspective/front-left/2026_76.png",
