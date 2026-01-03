@@ -19,6 +19,30 @@ const COMPANY = {
   slogan: "Arrive like it’s already yours.",
 };
 
+
+
+// ========= SESSION & MEMBERSHIP HELPERS =========
+const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+function generateAccountNumber() {
+  return "AR-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+}
+
+function touchSession() {
+  try {
+    localStorage.setItem("asani:lastActivity", Date.now().toString());
+  } catch {}
+}
+
+function getLastActivity() {
+  try {
+    const v = localStorage.getItem("asani:lastActivity");
+    return v ? parseInt(v, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function LegalShell({ title, onBack, children }) {
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-10">
@@ -1155,7 +1179,8 @@ function BookingPanel({ vehicle, onBack, onComplete, profile, onNav }) {
       }
 
       // 4) Update local state in parent
-      onComplete(booking);
+      trackRentalHistory(booking?.vehicleName || booking?.vehicle?.name || booking?.vehicle || booking?.name);
+onComplete(booking);
     } catch (err) {
       console.error("Booking error", err);
       alert(
@@ -1796,8 +1821,10 @@ const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
 
       const loaded = normalizeUserRow(data, auth.email);
       setLocal(loaded);
-      setProfile(loaded);
-      if (loaded.email) newsletterSignUp(loaded.email);
+      if (!loaded?.accountNumber) loaded.accountNumber = generateAccountNumber();
+try { localStorage.setItem("asani:profile", JSON.stringify(loaded)); } catch {}
+setProfile(loaded);
+if (loaded.email) newsletterSignUp(loaded.email);
 
       setIsLoggedIn(true);
       setIsAdmin(
@@ -1874,8 +1901,10 @@ if (createPassword !== createConfirmPassword) {
         return;
       }
 
-      setProfile(local);
-      if (local.email) newsletterSignUp(local.email);
+      if (!local?.accountNumber) local.accountNumber = generateAccountNumber();
+try { localStorage.setItem("asani:profile", JSON.stringify(local)); } catch {}
+setProfile(local);
+if (local.email) newsletterSignUp(local.email);
       setIsLoggedIn(true);
       setIsAdmin(
         local.email &&
@@ -1924,8 +1953,10 @@ if (createPassword !== createConfirmPassword) {
         return;
       }
 
-      setProfile(local);
-      if (local.email) newsletterSignUp(local.email);
+      if (!local?.accountNumber) local.accountNumber = generateAccountNumber();
+try { localStorage.setItem("asani:profile", JSON.stringify(local)); } catch {}
+setProfile(local);
+if (local.email) newsletterSignUp(local.email);
       alert("Profile saved.");
     } catch (err) {
       console.error("Save profile error", err);
@@ -3039,9 +3070,60 @@ function App() {
   const [selected, setSelected] = useState(null);
     const [profile, setProfile] = useState(null);
 
-  function handleSignOut() {
-    setProfile(null);
-    // If later you store tokens/localStorage, clear them here too.
+  
+
+// AUTO_LOGOUT_WIRED
+useEffect(() => {
+  const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+  const onActivity = () => touchSession();
+  events.forEach((e) => window.addEventListener(e, onActivity));
+  touchSession();
+
+  const interval = setInterval(() => {
+    const last = getLastActivity();
+    if (profile?.email && last && Date.now() - last > SESSION_TIMEOUT_MS) {
+      try { alert("You were signed out due to inactivity."); } catch {}
+      if (!null?.accountNumber) null.accountNumber = generateAccountNumber();
+try { localStorage.setItem("asani:profile", JSON.stringify(null)); } catch {}
+setProfile(null);
+try { localStorage.removeItem("asani:profile"); } catch {}
+    }
+  }, 30000);
+
+  return () => {
+    events.forEach((e) => window.removeEventListener(e, onActivity));
+    clearInterval(interval);
+  };
+}, [profile]);
+
+
+
+
+
+function trackRentalHistory(vehicleName) {
+  if (!vehicleName) return;
+  try {
+    const p = profile ? { ...profile } : JSON.parse(localStorage.getItem("asani:profile") || "{}");
+    p.lastRentedVehicle = vehicleName;
+    p.previousRentals = Array.isArray(p.previousRentals) ? [...p.previousRentals, vehicleName] : [vehicleName];
+    if (!p.accountNumber) p.accountNumber = generateAccountNumber();
+    localStorage.setItem("asani:profile", JSON.stringify(p));
+    setProfile(p);
+  } catch {}
+}
+// LOAD_PROFILE_ON_BOOT
+useEffect(() => {
+  try {
+    const p = localStorage.getItem("asani:profile");
+    if (p) setProfile(JSON.parse(p));
+  } catch {}
+}, []);
+
+function handleSignOut() {
+    if (!null?.accountNumber) null.accountNumber = generateAccountNumber();
+try { localStorage.setItem("asani:profile", JSON.stringify(null)); } catch {}
+setProfile(null);
+// If later you store tokens/localStorage, clear them here too.
   }
   
   const [bookings, setBookings] = useState([]);
