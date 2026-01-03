@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, lazy, Suspense} from "react";
 import { supabase } from "./lib/supabaseClient";
 import { loadStripe } from "@stripe/stripe-js";
 import PoliciesPage from "./PoliciesPage";
@@ -591,7 +591,7 @@ function FleetFilters({
   );
 }
 
-function Header({ onNav, profile, onSignOut }) {
+function Header({ onNav, profile, onSignOut, isAdmin, onAdmin }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   function handleNav(route) {
@@ -702,7 +702,18 @@ function Header({ onNav, profile, onSignOut }) {
                 {profile.fullName}
               </span>
             
-{/* SIGN_OUT_BUTTON_ADDED */}
+{/* ADMIN_LINK_BUTTON */}
+      {isAdmin ? (
+        <button
+          type="button"
+          onClick={() => (onAdmin ? onAdmin() : onNav('home'))}
+          className="rounded-full border border-zinc-700 bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-900"
+        >
+          Admin
+        </button>
+      ) : null}
+
+      {/* SIGN_OUT_BUTTON_ADDED */}
 {profile?.email ? (
   <button
     type="button"
@@ -3121,7 +3132,9 @@ function ConfirmationScreen({ booking, onNav }) {
 }
 
 function App() {
-  const [route, setRoute] = useState("home");
+  
+  const LazyAdminDashboard = lazy(() => import('./AdminDashboard.jsx'));
+const [route, setRoute] = useState("home");
 
   useEffect(() => {
     const sync = () => {
@@ -3144,6 +3157,12 @@ function App() {
 
   
 
+
+  const isAdmin = !!(profile?.email && (String(import.meta?.env?.VITE_ADMIN_EMAILS || '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(String(profile.email).toLowerCase())));
 // AUTO_LOGOUT_WIRED
 useEffect(() => {
   const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
