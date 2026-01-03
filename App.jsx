@@ -702,16 +702,16 @@ function Header({ onNav, profile, onSignOut, isAdmin, onAdmin }) {
                 {profile.fullName}
               </span>
             
-{/* ADMIN_BUTTON */}
-      {isAdmin ? (
-        <button
-          type="button"
-          onClick={() => (onAdmin ? onAdmin() : onNav('home'))}
-          className="rounded-full border border-zinc-700 bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-900"
-        >
-          Admin
-        </button>
-      ) : null}
+{/* ADMIN_BUTTON_ADDED */}
+{isAdmin ? (
+  <button
+    type="button"
+    onClick={() => (onAdmin ? onAdmin() : onNav("home"))}
+    className="rounded-full border border-zinc-700 bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-900"
+  >
+    Admin
+  </button>
+) : null}
 
       {/* SIGN_OUT_BUTTON_ADDED */}
 {profile?.email ? (
@@ -3135,7 +3135,7 @@ function App() {
   const [route, setRoute] = useState("home");
 
   
-  const [vehicleOverrides, setVehicleOverrides] = useState({});
+const [vehicleOverrides, setVehicleOverrides] = useState({});
 useEffect(() => {
     const sync = () => {
       const h = (window.location.hash || "").replace("#", "");
@@ -3172,11 +3172,14 @@ const [selected, setSelected] = useState(null);
   
 
 
-  const isAdmin = !!(profile?.email && (String(import.meta?.env?.VITE_ADMIN_EMAILS || '')
-    .split(',')
+const isAdmin = !!(
+  profile?.email &&
+  String(import.meta?.env?.VITE_ADMIN_EMAILS || "")
+    .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean)
-    .includes(String(profile.email).toLowerCase())));
+    .includes(String(profile.email).toLowerCase())
+);
 // AUTO_LOGOUT_WIRED
 useEffect(() => {
   const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
@@ -3246,6 +3249,7 @@ useEffect(() => {
       });
       if (!cancelled) setVehicleOverrides(map);
     } catch {
+      // Non-blocking
       if (!cancelled) setVehicleOverrides({});
     }
   }
@@ -3554,6 +3558,7 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
 
   async function refreshOverrides() {
     try {
+      if (!supabase) throw new Error("Supabase not configured");
       const { data, error } = await supabase
         .from("vehicle_overrides")
         .select("vehicle_id, blocked, price_per_day_override, deposit_override");
@@ -3574,19 +3579,20 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
         })
       );
       setMsg("");
-    } catch {
-      setMsg("Could not load overrides. Check Supabase table/policies.");
+    } catch (e) {
+      setMsg("Could not load overrides. Run the Supabase SQL and confirm RLS/admin setup.");
     }
   }
 
   useEffect(() => {
-    if (supabase && isAdmin) refreshOverrides();
-  }, [supabase, isAdmin]);
+    if (isAdmin) refreshOverrides();
+  }, [isAdmin]);
 
   async function saveRow(r) {
     setSaving(true);
     setMsg("");
     try {
+      if (!supabase) throw new Error("Supabase not configured");
       const payload = {
         vehicle_id: r.vehicle_id,
         blocked: !!r.blocked,
@@ -3600,8 +3606,8 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
       });
       if (error) throw error;
       setMsg("Saved.");
-    } catch {
-      setMsg("Save failed. Make sure your admin allowlist is configured.");
+    } catch (e) {
+      setMsg("Save failed. Confirm your admin email is allowlisted and policies are applied.");
     } finally {
       setSaving(false);
     }
@@ -3663,7 +3669,9 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
           >
             <div className="col-span-4">
               <div className="font-semibold text-zinc-900">{r.name}</div>
-              <div className="text-xs text-zinc-500">{r.vehicle_id} • {r.category}</div>
+              <div className="text-xs text-zinc-500">
+                {r.vehicle_id} • {r.category}
+              </div>
             </div>
             <div className="col-span-2 text-zinc-800">${r.current_price}</div>
             <div className="col-span-2">
@@ -3705,7 +3713,9 @@ function AdminDashboard({ vehicles, supabase, isAdmin }) {
                 onChange={(e) =>
                   setRows((prev) =>
                     prev.map((x) =>
-                      x.vehicle_id === r.vehicle_id ? { ...x, blocked: e.target.checked } : x
+                      x.vehicle_id === r.vehicle_id
+                        ? { ...x, blocked: e.target.checked }
+                        : x
                     )
                   )
                 }
