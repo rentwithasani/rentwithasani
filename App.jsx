@@ -194,7 +194,7 @@ const SAMPLE_VEHICLES = [
     category: "Premium Economy Sedan",
     seats: 5,
     pricePerDay: 90,
-    color: "Grey",
+    color: "Gray",
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_500/v1/svp/dep/21kiafortelxssd3t/kia_21fortelxssd3t_angularfront_gravitygray",
     description:
@@ -207,7 +207,7 @@ const SAMPLE_VEHICLES = [
     category: "Super SUV",
     seats: 5,
     pricePerDay: 1500,
-    color: "Yellow",
+    color: "White",
     image:
       "https://www.lamborghinilongisland.com/imagetag/2333/main/l/New-2019-Lamborghini-Urus-1540414873.jpg",
     description:
@@ -233,7 +233,7 @@ const SAMPLE_VEHICLES = [
     category: "Sport Sedan",
     seats: 5,
     pricePerDay: 150,
-    color: "Metallic Grey",
+    color: "Metallic Black",
     image:
       "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/DDcY5uJ1Hoc2PfKiaPzOoTor54RCDSxmNSMjhIMjMcSABjV1Plsg4az8WgGOqVD42Px_fBnRGfbq6YMoQr9Bwgwa4vs3hsjk7OZwcAD2au-Xj2_jOK1rejFnAEpjN8liQtu0_zWdBrt_zZ94kYd0yB-LZ9J239IX_tK5l7rorkk7c-qGpYTQuQ/cc_2025BMC222011556_01_640_668.png",
     description:
