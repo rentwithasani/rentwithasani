@@ -193,7 +193,7 @@ const SAMPLE_VEHICLES = [
     name: "Kia Forte",
     category: "Premium Economy Sedan",
     seats: 5,
-    pricePerDay: 75,
+    pricePerDay: 90,
     color: "Grey",
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_500/v1/svp/dep/21kiafortelxssd3t/kia_21fortelxssd3t_angularfront_gravitygray",
@@ -295,20 +295,20 @@ const SAMPLE_VEHICLES = [
 
 {
   id: "v012",
-  name: "Honda Accord",
+  name: "2025 Honda Accord",
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 210,
   color: "Crystal Black Pearl",
   image:
-    "https://images.dealer.com/ddc/vehicles/2025/Honda/Accord%20Hybrid/Sedan/oem/exterior/exterior-640-en_US.jpg",
+    "https://hondanews.com/en-US/honda-automobiles/photos/photo-85d9cee924869f121479b5fa320615e0-2025-honda-accord-touringjpg?channelsConstraint=channel-3033&firstResultIndex=40",
   description:
     "Refined midsize sedan with a premium cabin feel—ideal for executive travel, city driving, and long-distance comfort.",
   available: true,
 },
 {
   id: "v013",
-  name: "Buick Envista",
+  name: "2026 Buick Envista",
   category: "Luxury Crossover SUV",
   seats: 5,
   pricePerDay: 210,
@@ -321,7 +321,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v014",
-  name: "Mazda CX-90",
+  name: "2026 Mazda CX-90",
   category: "Premium 3-Row SUV",
   seats: 7,
   pricePerDay: 230,
@@ -330,6 +330,111 @@ const SAMPLE_VEHICLES = [
     "https://dealerimages.dealereprocess.com/image/upload/v1756499853/1/mazda/2026/CX90/2026-CX90-Inline-6-Preferred-Deep-Crystal-Blue.png",
   description:
     "Premium three-row SUV with a refined cabin and strong road presence—ideal for families, groups, and luggage-heavy trips.",
+  available: true,
+},
+
+{
+  id: "v015",
+  name: "2026 Volkswagen Tiguan",
+  category: "Luxury SUV",
+  seats: 5,
+  pricePerDay: 250,
+  color: "Deep Black Pearl",
+  image:
+    "https://images.dealer.com/ddc/vehicles/2026/Volkswagen/Tiguan/SUV/trim_20T_SE_d3f143/color/Deep%20Black%20Pearl-2T2T-18%2C18%2C20-640-en_US.jpg?impolicy=resize&w=414",
+  description:
+    "Spacious, refined SUV with modern tech and a confident ride—ideal for family trips and premium daily use.",
+  available: true,
+},
+{
+  id: "v016",
+  name: "2026 Volkswagen Taos",
+  category: "Premium Economy SUV",
+  seats: 5,
+  pricePerDay: 210,
+  color: "White / Silver",
+  image:
+    "https://vehicle-images.dealerinspire.com/stock-images/thumbnails/large/chrome/627b567cae6f95dc7e5e023e30a50c27.png",
+  description:
+    "Compact SUV with great efficiency and comfort—perfect for city driving, airport runs, and weekend getaways.",
+  available: true,
+},
+{
+  id: "v017",
+  name: "2026 Volkswagen Jetta",
+  category: "Premium Economy Sedan",
+  seats: 5,
+  pricePerDay: 200,
+  color: "Black / Gray",
+  image:
+    "https://di-uploads-pod17.dealerinspire.com/elkgrovevolkswagen/uploads/2025/10/2026-Jetta-VW-Trim-Level-SEL-1024x512.jpeg",
+  description:
+    "Clean, comfortable sedan with modern styling—great for commuting, business travel, and daily reliability.",
+  available: true,
+},
+{
+  id: "v018",
+  name: "2025 Hyundai Sonata",
+  category: "Premium Economy Sedan",
+  seats: 5,
+  pricePerDay: 200,
+  color: "Gray",
+  image:
+    "https://d2ivfcfbdvj3sm.cloudfront.net/XQvEBFY_K9sT4N_i/55793/color_no_cr/color_0640_032_png/MY2025/55793/55793_cc0640_032_A2B.webp?c=172&p=243&m=1&o=png&s=v_5jusqzETMaLe9zX7JZU3",
+  description:
+    "Upscale midsize sedan with a smooth ride and premium features—ideal for executive comfort on longer trips.",
+  available: true,
+},
+{
+  id: "v019",
+  name: "2026 Mazda CX-50",
+  category: "Luxury SUV",
+  seats: 5,
+  pricePerDay: 200,
+  color: "Gray",
+  image:
+    "https://pictures.dealer.com/m/mnao/1234/c3a249f0381342acaec0b72be158c28a.png",
+  description:
+    "Stylish crossover with a premium cabin and confident handling—great for city-to-upstate travel and weekend escapes.",
+  available: true,
+},
+{
+  id: "v020",
+  name: "2021 Audi A8L",
+  category: "Exotic / Chauffeur Luxury",
+  seats: 5,
+  pricePerDay: 350,
+  color: "Black",
+  image:
+    "https://file.kelleybluebookimages.com/kbb/base/evox/CP/14923/2021-Audi-A8-front_14923_032_2400x1800_0E0E.png",
+  description:
+    "Flagship long-wheelbase luxury sedan—best for VIP chauffeured service, executive travel, and high-end occasions.",
+  available: true,
+},
+{
+  id: "v021",
+  name: "2026 Volvo XC-40",
+  category: "Luxury SUV",
+  seats: 5,
+  pricePerDay: 230,
+  color: "White / Silver",
+  image:
+    "https://vehicle-images.dealerinspire.com/stock-images/thumbnails/large/chrome/bc9e0f2a2fc733cf3bc454f570c02452.png",
+  description:
+    "Premium compact SUV with Scandinavian design and a quiet ride—perfect for stylish city travel and comfort.",
+  available: true,
+},
+{
+  id: "v022",
+  name: "2025 Nissan Altima",
+  category: "Premium Economy Sedan",
+  seats: 5,
+  pricePerDay: 200,
+  color: "Gray",
+  image:
+    "https://gld-creative.s3.us-west-2.amazonaws.com/2025-nissan-altima-sv-f485554336b0-600x300.png",
+  description:
+    "Comfortable, dependable sedan with excellent highway manners—ideal for commuting and longer-distance travel.",
   available: true,
 },
 ];
