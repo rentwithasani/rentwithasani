@@ -3152,7 +3152,21 @@ useEffect(() => {
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   const [vehicles, setVehicles] = useState(SAMPLE_VEHICLES);
-  const [selected, setSelected] = useState(null);
+  
+// APPLY_VEHICLE_OVERRIDES (runtime-safe)
+const vehiclesWithOverrides = (vehicles || []).map((v) => {
+  const o = vehicleOverrides?.[v.id];
+  if (!o) return v;
+  return {
+    ...v,
+    available: o.blocked ? false : v.available,
+    pricePerDay:
+      o.pricePerDayOverride != null ? Number(o.pricePerDayOverride) : v.pricePerDay,
+    _depositOverride:
+      o.depositOverride != null ? Number(o.depositOverride) : undefined,
+  };
+});
+const [selected, setSelected] = useState(null);
     const [profile, setProfile] = useState(null);
 
   
