@@ -301,7 +301,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 210,
   color: "Crystal Black Pearl",
   image:
-    "https://hondanews.com/en-US/honda-automobiles/photos/photo-85d9cee924869f121479b5fa320615e0-2025-honda-accord-touringjpg?channelsConstraint=channel-3033&firstResultIndex=40",
+    "https://socal.hondadealers.com/-/media/Honda-Automobiles/Vehicles/2025/accord-sedan/AW/Carshot/carshot_AccordHybrid_front_ACCORDHYBRIDSPORT_2025_CrystalBlackPearl_CY2F5SJW_NH-731P.png",
   description:
     "Refined midsize sedan with a premium cabin feel—ideal for executive travel, city driving, and long-distance comfort.",
   available: true,
