@@ -513,7 +513,7 @@ function getDepositForVehicle(vehicle) {
     case "v007": // BMW 3
     case "v008": // BMW 5
       return 500;
-      case "v0020": // Audi A8L
+      case "v020": // Audi A8L
       return 500;
     case "v001": // X1 M
     case "v002": // CR-V
