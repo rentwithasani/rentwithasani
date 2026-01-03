@@ -591,7 +591,7 @@ function FleetFilters({
   );
 }
 
-function Header({ onNav, profile }) {
+function Header({ onNav, profile, onSignOut }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   function handleNav(route) {
@@ -701,7 +701,18 @@ function Header({ onNav, profile }) {
               <span className="font-semibold text-white">
                 {profile.fullName}
               </span>
-            </div>
+            
+{/* SIGN_OUT_BUTTON_ADDED */}
+{profile?.email ? (
+  <button
+    type="button"
+    onClick={() => (onSignOut ? onSignOut() : onNav("home"))}
+    className="rounded-full border border-zinc-700 bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-900"
+  >
+    Sign Out
+  </button>
+) : null}
+</div>
           )}
         </div>
 
@@ -1698,7 +1709,24 @@ function ProfilePage({
   );
 
   
-  // ENSURE_ACCOUNT_NUMBER_PROFILEPAGE
+  
+  const [wishlistItems, setWishlistItems] = useState([]);
+// ENSURE_ACCOUNT_NUMBER_PROFILEPAGE
+// PROFILE_WISHLIST_SECTION
+useEffect(() => {
+  try {
+    if (!profile?.email) {
+      setWishlistItems([]);
+      return;
+    }
+    const key = `asani:wishlist:${profile.email}`;
+    const items = JSON.parse(localStorage.getItem(key) || "[]");
+    setWishlistItems(Array.isArray(items) ? items : []);
+  } catch {
+    setWishlistItems([]);
+  }
+}, [profile?.email]);
+
   useEffect(() => {
     if (!profile?.email) return;
     if (profile?.accountNumber) return;
@@ -3164,13 +3192,20 @@ useEffect(() => {
 }, []);
 
 function handleSignOut() {
-    if (!null?.accountNumber) null.accountNumber = generateAccountNumber();
-try { localStorage.setItem("asani:profile", JSON.stringify(null)); } catch {}
-setProfile(null);
-// If later you store tokens/localStorage, clear them here too.
-  }
-  
-  const [bookings, setBookings] = useState([]);
+  try {
+    localStorage.removeItem("asani:profile");
+  } catch {}
+  try {
+    // Also clear activity timer so it doesn't immediately sign out a fresh session
+    localStorage.removeItem("asani:lastActivity");
+  } catch {}
+  setProfile(null);
+  // Keep user on home
+  setRoute("home");
+  setSelected(null);
+}
+
+const [bookings, setBookings] = useState([]);
   const [lastBooking, setLastBooking] = useState(null);
   const [newsletter, setNewsletter] = useState([]);
   const [filterCategory, setFilterCategory] = useState("all");
@@ -3212,6 +3247,7 @@ setProfile(null);
   }
 
     async function handleSaveWishlist(vehicle) {
+
     try {
       // User must be logged in / have a profile email
       if (!profile || !profile.email) {
@@ -3219,7 +3255,7 @@ setProfile(null);
           "Please create or sign in to your profile before saving vehicles to your wishlist."
         );
         return;
-      }
+  }
 
       const { error } = await supabase.from("wishlist").insert({
         user_email: profile.email,
