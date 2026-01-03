@@ -295,7 +295,7 @@ const SAMPLE_VEHICLES = [
 
 {
   id: "v012",
-  name: "2025 Honda Accord",
+  name: "Honda Accord",
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 210,
@@ -308,7 +308,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v013",
-  name: "2026 Buick Envista",
+  name: "Buick Envista",
   category: "Luxury Crossover SUV",
   seats: 5,
   pricePerDay: 210,
@@ -321,7 +321,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v014",
-  name: "2026 Mazda CX-90",
+  name: "Mazda CX-90",
   category: "Premium 3-Row SUV",
   seats: 7,
   pricePerDay: 230,
@@ -335,7 +335,7 @@ const SAMPLE_VEHICLES = [
 
 {
   id: "v015",
-  name: "2026 Volkswagen Tiguan",
+  name: "Volkswagen Tiguan",
   category: "Luxury SUV",
   seats: 5,
   pricePerDay: 250,
@@ -348,7 +348,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v016",
-  name: "2026 Volkswagen Taos",
+  name: "Volkswagen Taos",
   category: "Premium Economy SUV",
   seats: 5,
   pricePerDay: 210,
@@ -361,7 +361,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v017",
-  name: "2026 Volkswagen Jetta",
+  name: "Volkswagen Jetta",
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 200,
@@ -374,7 +374,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v018",
-  name: "2025 Hyundai Sonata",
+  name: "Hyundai Sonata",
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 200,
@@ -387,7 +387,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v019",
-  name: "2026 Mazda CX-50",
+  name: "Mazda CX-50",
   category: "Luxury SUV",
   seats: 5,
   pricePerDay: 200,
@@ -400,20 +400,20 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v020",
-  name: "2021 Audi A8L",
+  name: "Audi A8L",
   category: "Exotic / Chauffeur Luxury",
   seats: 5,
   pricePerDay: 350,
   color: "Black",
   image:
-    "https://file.kelleybluebookimages.com/kbb/base/evox/CP/14923/2021-Audi-A8-front_14923_032_2400x1800_0E0E.png",
+    "https://images.dealer.com/ddc/vehicles/2021/Audi/A8/Sedan/perspective/front-left/2021_76.png",
   description:
     "Flagship long-wheelbase luxury sedan—best for VIP chauffeured service, executive travel, and high-end occasions.",
   available: true,
 },
 {
   id: "v021",
-  name: "2026 Volvo XC-40",
+  name: "Volvo XC-40",
   category: "Luxury SUV",
   seats: 5,
   pricePerDay: 230,
@@ -426,7 +426,7 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v022",
-  name: "2025 Nissan Altima",
+  name: "Nissan Altima",
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 200,
@@ -512,6 +512,8 @@ function getDepositForVehicle(vehicle) {
       return 1000;
     case "v007": // BMW 3
     case "v008": // BMW 5
+      return 500;
+      case "v0012": // Audi A8L
       return 500;
     case "v001": // X1 M
     case "v002": // CR-V
