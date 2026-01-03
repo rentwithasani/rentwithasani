@@ -26,12 +26,31 @@ export default function AdminDashboard({
 }) {
   const [tab, setTab] = useState("vehicles");
   const [msg, setMsg] = useState("");
+    const [adminEmail, setAdminEmail] = useState("");
+
+    async function logAdminAction(action, details) {
+      try {
+        if (!supabase) return;
+        await supabase.from("admin_audit").insert({ action, details: details || null });
+      } catch {
+        // non-blocking
+      }
+    }
+
 
   // -------- VEHICLE OVERRIDES --------
   const [vrows, setVrows] = useState([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+      (async () => {
+        try {
+          if (!supabase) return;
+          const { data } = await supabase.auth.getSession();
+          setAdminEmail(data?.session?.user?.email || "");
+        } catch {}
+      })();
+
     setVrows(
       (vehicles || []).map((v) => ({
         vehicle_id: v.id,
@@ -90,6 +109,7 @@ export default function AdminDashboard({
       });
       if (error) throw error;
       setMsg("Saved.");
+        logAdminAction('vehicle_override_upsert', { vehicle_id: r.vehicle_id, blocked: !!r.blocked, price_per_day_override: payload.price_per_day_override, deposit_override: payload.deposit_override });
     } catch {
       setMsg("Save failed. Ensure your email is allowlisted in admin_allowlist.");
     } finally {
@@ -138,6 +158,7 @@ export default function AdminDashboard({
       setBlockReason("");
       await refreshBlocks();
       setMsg("Block created.");
+        logAdminAction('vehicle_block_create', { vehicle_id: blockVehicleId, start_date: blockStart, end_date: blockEnd, reason: blockReason || null });
     } catch {
       setMsg("Failed to create block. Ensure you have admin write access.");
     }
@@ -150,6 +171,7 @@ export default function AdminDashboard({
       if (error) throw error;
       await refreshBlocks();
       setMsg("Block removed.");
+        logAdminAction('vehicle_block_delete', { block_id: id });
     } catch {
       setMsg("Failed to delete block.");
     }
@@ -185,6 +207,7 @@ export default function AdminDashboard({
       if (error) throw error;
       await refreshUsers();
       setMsg(disabled ? "User disabled." : "User enabled.");
+        logAdminAction('user_disabled_update', { email, disabled });
     } catch {
       setMsg("Failed to update user. Ensure admin RLS for users_admin_write exists.");
     }
@@ -197,6 +220,7 @@ export default function AdminDashboard({
       if (error) throw error;
       await refreshUsers();
       setMsg("Tier updated.");
+        logAdminAction('user_tier_update', { email, tier });
     } catch {
       setMsg("Failed to update tier.");
     }
@@ -261,6 +285,7 @@ export default function AdminDashboard({
       setChargeDesc("");
       await loadCharges(selectedBookingId);
       setMsg("Charge added.");
+        logAdminAction('booking_charge_add', { booking_id: selectedBookingId, amount: amt, description: chargeDesc || 'Additional charge' });
     } catch {
       setMsg("Failed to add charge. Confirm booking_charges RLS.");
     }
@@ -273,6 +298,7 @@ export default function AdminDashboard({
       if (error) throw error;
       await loadCharges(selectedBookingId);
       setMsg("Charge removed.");
+        logAdminAction('booking_charge_delete', { charge_id: id, booking_id: selectedBookingId });
     } catch {
       setMsg("Failed to remove charge.");
     }
@@ -317,7 +343,18 @@ export default function AdminDashboard({
         </button>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      {/* ADMIN_VERIFIED_PANEL */}
+<div className="mt-4 rounded-3xl border border-zinc-200 bg-white p-4">
+  <div className="text-sm font-semibold text-zinc-900">Admin Verified</div>
+  <div className="mt-1 text-xs text-zinc-600">
+    Signed in as <span className="font-semibold">{adminEmail || "—"}</span>
+  </div>
+  <div className="mt-2 text-xs text-zinc-600">
+    This panel confirms admin detection live (email + session present).
+  </div>
+</div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
         <TabButton active={tab === "vehicles"} onClick={() => setTab("vehicles")}>
           Vehicles
         </TabButton>
