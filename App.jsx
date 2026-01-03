@@ -952,7 +952,7 @@ function VehiclesPage({ vehicles, onSelect, onSave, canReserve = true }) {
         occasion.
       </p>
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        {vehicles.map((v) => (
+        {vehiclesWithOverrides.map((v) => (
           <VehicleCard
             key={v.id}
             v={v}
@@ -967,9 +967,11 @@ function VehiclesPage({ vehicles, onSelect, onSave, canReserve = true }) {
 }
 
 // ========= BOOKING PANEL =========
-function BookingPanel({ vehicle, onBack, onComplete, profile, onNav }) {
+function BookingPanel({ vehicle, onBack, onComplete, profile, onNav, vehicleBlocks }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [blockMsg, setBlockMsg] = useState("");
+
   const [deposit, setDeposit] = useState(350);
   const [customer, setCustomer] = useState({
     fullName: "",
@@ -977,6 +979,36 @@ function BookingPanel({ vehicle, onBack, onComplete, profile, onNav }) {
     phone: "",
   });
   const [insurance, setInsurance] = useState("none");
+
+  // BOOKING_BLOCKS_CHECK
+useEffect(() => {
+  try {
+    if (!vehicle?.id || !startDate || !endDate) {
+      setBlockMsg("");
+      return;
+    }
+    const s = new Date(startDate);
+    const e = new Date(endDate);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) {
+      setBlockMsg("");
+      return;
+    }
+    const overlaps = (vehicleBlocks || []).some((b) => {
+      if (b.vehicle_id !== vehicle.id) return false;
+      const bs = new Date(b.start_date);
+      const be = new Date(b.end_date);
+      return s <= be && e >= bs;
+    });
+    setBlockMsg(
+      overlaps
+        ? "This vehicle is blocked for the selected dates. Please choose different dates or contact us."
+        : ""
+    );
+  } catch {
+    setBlockMsg("");
+  }
+}, [vehicle?.id, startDate, endDate, vehicleBlocks]);
+
   const [riskAccepted, setRiskAccepted] = useState(false);
   const [policiesAccepted, setPoliciesAccepted] = useState(false);
   const [ezPass, setEzPass] = useState(false);
@@ -3136,7 +3168,10 @@ function App() {
   const LazyAdminDashboard = lazy(() => import('./AdminDashboard.jsx'));
 const [route, setRoute] = useState("home");
 
-  useEffect(() => {
+  
+  const [vehicleOverrides, setVehicleOverrides] = useState({});
+  const [vehicleBlocks, setVehicleBlocks] = useState([]);
+useEffect(() => {
     const sync = () => {
       const h = (window.location.hash || "").replace("#", "");
       const path = h.startsWith("/") ? h.slice(1) : h;
@@ -3152,7 +3187,21 @@ const [route, setRoute] = useState("home");
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   const [vehicles, setVehicles] = useState(SAMPLE_VEHICLES);
-  const [selected, setSelected] = useState(null);
+  
+// APPLY_VEHICLE_OVERRIDES (runtime-safe)
+const vehiclesWithOverrides = (vehicles || []).map((v) => {
+  const o = vehicleOverrides?.[v.id];
+  if (!o) return v;
+  return {
+    ...v,
+    available: o.blocked ? false : v.available,
+    pricePerDay:
+      o.pricePerDayOverride != null ? Number(o.pricePerDayOverride) : v.pricePerDay,
+    _depositOverride:
+      o.depositOverride != null ? Number(o.depositOverride) : undefined,
+  };
+});
+const [selected, setSelected] = useState(null);
     const [profile, setProfile] = useState(null);
 
   
@@ -3210,6 +3259,74 @@ useEffect(() => {
   } catch {}
 }, []);
 
+
+
+
+
+// ENFORCE_DISABLED_USERS
+useEffect(() => {
+  let cancelled = false;
+  async function checkDisabled() {
+    try {
+      if (!supabase || !profile?.email) return;
+      const { data, error } = await supabase
+        .from("users")
+        .select("disabled")
+        .eq("email", profile.email)
+        .maybeSingle();
+      if (error) throw error;
+      if (!cancelled && data?.disabled) {
+        alert("Your account has been temporarily disabled. Please contact reserve@rentwithasani.com.");
+        handleSignOut();
+      }
+    } catch {
+      // non-blocking
+    }
+  }
+  checkDisabled();
+  return () => {
+    cancelled = true;
+  };
+}, [profile?.email]);
+// FETCH_ADMIN_DATA_NONBLOCKING (overrides + blocks)
+useEffect(() => {
+  let cancelled = false;
+  async function load() {
+    try {
+      if (!supabase) return;
+      const [{ data: oData }, { data: bData }] = await Promise.all([
+        supabase
+          .from("vehicle_overrides")
+          .select("vehicle_id, blocked, price_per_day_override, deposit_override"),
+        supabase
+          .from("vehicle_blocks")
+          .select("id, vehicle_id, start_date, end_date, reason, created_at")
+          .order("created_at", { ascending: false }),
+      ]);
+      const map = {};
+      (oData || []).forEach((r) => {
+        map[r.vehicle_id] = {
+          blocked: !!r.blocked,
+          pricePerDayOverride: r.price_per_day_override ?? null,
+          depositOverride: r.deposit_override ?? null,
+        };
+      });
+      if (!cancelled) {
+        setVehicleOverrides(map);
+        setVehicleBlocks(Array.isArray(bData) ? bData : []);
+      }
+    } catch {
+      if (!cancelled) {
+        setVehicleOverrides({});
+        setVehicleBlocks([]);
+      }
+    }
+  }
+  load();
+  return () => {
+    cancelled = true;
+  };
+}, []);
 function handleSignOut() {
   try {
     localStorage.removeItem("asani:profile");
@@ -3302,7 +3419,7 @@ const [bookings, setBookings] = useState([]);
     }
   }
 
-  const categories = vehicles.map((v) => v.category);
+  const categories = vehiclesWithOverrides.map((v) => v.category);
   const filteredSortedVehicles = applyVehicleFilters(
     vehicles,
     filterCategory,
