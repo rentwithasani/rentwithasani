@@ -324,7 +324,7 @@ const SAMPLE_VEHICLES = [
   name: "Mazda CX-90",
   category: "Premium 3-Row SUV",
   seats: 7,
-  pricePerDay: 230,
+  pricePerDay: 250,
   color: "Deep Crystal Blue",
   image:
     "https://dealerimages.dealereprocess.com/image/upload/v1756499853/1/mazda/2026/CX90/2026-CX90-Inline-6-Preferred-Deep-Crystal-Blue.png",
