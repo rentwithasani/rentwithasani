@@ -391,7 +391,7 @@ const SAMPLE_VEHICLES = [
   category: "Luxury SUV",
   seats: 5,
   pricePerDay: 200,
-  color: "Gray",
+  color: "Green",
   image:
     "https://pictures.dealer.com/m/mnao/1234/c3a249f0381342acaec0b72be158c28a.png",
   description:
@@ -406,7 +406,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 350,
   color: "Black",
   image:
-    "https://images.dealer.com/ddc/vehicles/2021/Audi/A8/Sedan/perspective/front-left/2021_76.png",
+    "https://platform.cstatic-images.com/in/v2/stock_photos/64d2dfe5-1511-4733-895c-000c6fe7ce5c/3123d6b1-62b1-4db7-a437-34506f1054a6.png",
   description:
     "Flagship long-wheelbase luxury sedan—best for VIP chauffeured service, executive travel, and high-end occasions.",
   available: true,
