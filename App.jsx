@@ -292,6 +292,46 @@ const SAMPLE_VEHICLES = [
       "Iconic G-Wagon with AMG power, off-road attitude, and a high-status cabin suited for red-carpet arrivals.",
     available: true,
   },
+
+{
+  id: "v012",
+  name: "2025 Honda Accord",
+  category: "Premium Economy Sedan",
+  seats: 5,
+  pricePerDay: 210,
+  color: "Crystal Black Pearl",
+  image:
+    "https://hondanews.com/en-US/honda-automobiles/photos/photo-85d9cee924869f121479b5fa320615e0-2025-honda-accord-touringjpg?channelsConstraint=channel-3033&firstResultIndex=40",
+  description:
+    "Refined midsize sedan with a premium cabin feel—ideal for executive travel, city driving, and long-distance comfort.",
+  available: true,
+},
+{
+  id: "v013",
+  name: "2026 Buick Envista",
+  category: "Luxury Crossover SUV",
+  seats: 5,
+  pricePerDay: 210,
+  color: "Ebony Twilight Metallic",
+  image:
+    "https://www.buick.com/content/dam/buick/na/us/en/index/vehicles/2026/crossovers-suvs/envista-avenir/02-images/2026-envista-avenir-color-changer-ext-ebony-twilight-metallic-2000x1000.jpg?imwidth=1920",
+  description:
+    "Upscale crossover with sleek styling and a quiet ride—perfect for date nights, client meetings, and elevated daily use.",
+  available: true,
+},
+{
+  id: "v014",
+  name: "2026 Mazda CX-90",
+  category: "Premium 3-Row SUV",
+  seats: 7,
+  pricePerDay: 230,
+  color: "Deep Crystal Blue",
+  image:
+    "https://dealerimages.dealereprocess.com/image/upload/v1756499853/1/mazda/2026/CX90/2026-CX90-Inline-6-Preferred-Deep-Crystal-Blue.png",
+  description:
+    "Premium three-row SUV with a refined cabin and strong road presence—ideal for families, groups, and luggage-heavy trips.",
+  available: true,
+},
 ];
 
 // HERO SLIDES
