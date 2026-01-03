@@ -1697,7 +1697,19 @@ function ProfilePage({
     }
   );
 
-  const [auth, setAuth] = useState({ email: "", password: "" });
+  
+  // ENSURE_ACCOUNT_NUMBER_PROFILEPAGE
+  useEffect(() => {
+    if (!profile?.email) return;
+    if (profile?.accountNumber) return;
+    try {
+      const next = { ...(profile || {}), accountNumber: generateAccountNumber() };
+      localStorage.setItem("asani:profile", JSON.stringify(next));
+      setProfile(next);
+      setLocal(next);
+    } catch {}
+  }, [profile?.email]);
+const [auth, setAuth] = useState({ email: "", password: "" });
   const [createPassword, setCreatePassword] = useState("");
   
   const [createConfirmPassword, setCreateConfirmPassword] = useState("");
@@ -2291,6 +2303,38 @@ if (local.email) newsletterSignUp(local.email);
       <p className="text-zinc-600 mt-2 text-sm">
         Keep your details up to date for a smooth, white-glove rental experience.
       </p>
+
+<div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Account Number</div>
+    <div className="mt-2 text-xl font-extrabold text-zinc-900">
+      {local.accountNumber || "AR-—"}
+    </div>
+    <div className="mt-1 text-xs text-zinc-500">
+      Keep this for support verification and priority concierge handling.
+    </div>
+  </div>
+
+  <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Last Vehicle Rented</div>
+    <div className="mt-2 text-base font-bold text-zinc-900">
+      {local.lastRentedVehicle || "—"}
+    </div>
+    <div className="mt-1 text-xs text-zinc-500">
+      We use this to personalize recommendations and expedite rebooking.
+    </div>
+  </div>
+
+  <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Rental History</div>
+    <div className="mt-2 text-base font-bold text-zinc-900">
+      {(Array.isArray(local.previousRentals) ? local.previousRentals.length : 0)} total rentals
+    </div>
+    <div className="mt-1 text-xs text-zinc-500">
+      History is tied to your profile on this device. Optional cloud sync can be enabled via database fields.
+    </div>
+  </div>
+</div>
 
       {/* Profile form */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
