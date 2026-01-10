@@ -19,30 +19,6 @@ const COMPANY = {
   slogan: "Arrive like it’s already yours.",
 };
 
-
-
-// ========= SESSION & MEMBERSHIP HELPERS =========
-const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
-
-function generateAccountNumber() {
-  return "AR-" + Math.random().toString(36).slice(2, 10).toUpperCase();
-}
-
-function touchSession() {
-  try {
-    localStorage.setItem("asani:lastActivity", Date.now().toString());
-  } catch {}
-}
-
-function getLastActivity() {
-  try {
-    const v = localStorage.getItem("asani:lastActivity");
-    return v ? parseInt(v, 10) : 0;
-  } catch {
-    return 0;
-  }
-}
-
 function LegalShell({ title, onBack, children }) {
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-10">
@@ -591,7 +567,7 @@ function FleetFilters({
   );
 }
 
-function Header({ onNav, profile, onSignOut }) {
+function Header({ onNav, profile }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   function handleNav(route) {
@@ -701,18 +677,7 @@ function Header({ onNav, profile, onSignOut }) {
               <span className="font-semibold text-white">
                 {profile.fullName}
               </span>
-            
-{/* SIGN_OUT_BUTTON_ADDED */}
-{profile?.email ? (
-  <button
-    type="button"
-    onClick={() => (onSignOut ? onSignOut() : onNav("home"))}
-    className="rounded-full border border-zinc-700 bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-900"
-  >
-    Sign Out
-  </button>
-) : null}
-</div>
+            </div>
           )}
         </div>
 
@@ -1190,8 +1155,7 @@ function BookingPanel({ vehicle, onBack, onComplete, profile, onNav }) {
       }
 
       // 4) Update local state in parent
-      trackRentalHistory(booking?.vehicleName || booking?.vehicle?.name || booking?.vehicle || booking?.name);
-onComplete(booking);
+      onComplete(booking);
     } catch (err) {
       console.error("Booking error", err);
       alert(
@@ -1705,73 +1669,80 @@ function ProfilePage({
       state: "",
       postalCode: "",
       country: "",
+      accountNumber: "",
+      lastRentedVehicle: "",
+      previousRentals: [],
     }
   );
 
-  
-  
-  const [wishlistItems, setWishlistItems] = useState([]);
-// ENSURE_ACCOUNT_NUMBER_PROFILEPAGE
-// PROFILE_WISHLIST_SECTION
-useEffect(() => {
-  try {
-    if (!profile?.email) {
-      setWishlistItems([]);
-      return;
-    }
-    const key = `asani:wishlist:${profile.email}`;
-    const items = JSON.parse(localStorage.getItem(key) || "[]");
-    setWishlistItems(Array.isArray(items) ? items : []);
-  } catch {
-    setWishlistItems([]);
-  }
-}, [profile?.email]);
+  // --- Admin allowlist from environment (Vercel: Settings -> Env Vars) ---
+  const ADMIN_ALLOWLIST = String(import.meta?.env?.VITE_ADMIN_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
 
-  useEffect(() => {
-    if (!profile?.email) return;
-    if (profile?.accountNumber) return;
-    try {
-      const next = { ...(profile || {}), accountNumber: generateAccountNumber() };
-      localStorage.setItem("asani:profile", JSON.stringify(next));
-      setProfile(next);
-      setLocal(next);
-    } catch {}
-  }, [profile?.email]);
-const [auth, setAuth] = useState({ email: "", password: "" });
+  function isAllowlistedAdmin(email) {
+    return !!email && ADMIN_ALLOWLIST.includes(String(email).toLowerCase());
+  }
+// --- Profile row helpers (prevents "can't create profile" when email confirmation delays session) ---
+async function upsertUserRow(nextProfile) {
+  const payload = {
+    email: nextProfile.email,
+    full_name: nextProfile.fullName || null,
+    phone: nextProfile.phone || null,
+    drivers_license: nextProfile.driversLicense || null,
+    license_expiry: nextProfile.licenseExpiry || null,
+    address_line1: nextProfile.addressLine1 || null,
+    address_line2: nextProfile.addressLine2 || null,
+    city: nextProfile.city || null,
+    state: nextProfile.state || null,
+    postal_code: nextProfile.postalCode || null,
+    country: nextProfile.country || null,
+    account_number: nextProfile.accountNumber || null,
+    last_rented_vehicle: nextProfile.lastRentedVehicle || null,
+    previous_rentals: nextProfile.previousRentals || null,
+  };
+
+  const { error } = await supabase.from("users").upsert(payload, { onConflict: "email" });
+  if (error) throw error;
+}
+
+function stashPendingProfile(nextProfile) {
+  try { localStorage.setItem("asani:pending_profile", JSON.stringify(nextProfile)); } catch {}
+}
+
+function readPendingProfile(email) {
+  try {
+    const raw = localStorage.getItem("asani:pending_profile");
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (!p?.email) return null;
+    if (email && String(p.email).toLowerCase() !== String(email).toLowerCase()) return null;
+    return p;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingProfile() {
+  try { localStorage.removeItem("asani:pending_profile"); } catch {}
+}
+
+
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [auth, setAuth] = useState({ email: "", password: "" });
   const [createPassword, setCreatePassword] = useState("");
-  
   const [createConfirmPassword, setCreateConfirmPassword] = useState("");
+
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [showCreateConfirmPassword, setShowCreateConfirmPassword] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
 
-
-function passwordScore(pw){
-  const s = String(pw || "");
-  let score = 0;
-  if (s.length >= 8) score += 1;
-  if (s.length >= 12) score += 1;
-  if (/[A-Z]/.test(s)) score += 1;
-  if (/[a-z]/.test(s)) score += 1;
-  if (/[0-9]/.test(s)) score += 1;
-  if (/[^A-Za-z0-9]/.test(s)) score += 1;
-  return Math.min(score, 6);
-}
-
-function strengthLabel(score){
-  if (score <= 1) return "Very weak";
-  if (score === 2) return "Weak";
-  if (score === 3) return "Good";
-  if (score === 4) return "Strong";
-  return "Very strong";
-}
-const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mode, setMode] = useState("login");
-  const [isAdmin, setIsAdmin] = useState(
-    profile?.email &&
-      profile.email.toLowerCase() === COMPANY.email.toLowerCase()
-  );
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const [drafts, setDrafts] = useState(vehicles || []);
   const [newVehicle, setNewVehicle] = useState({
     name: "",
@@ -1782,6 +1753,27 @@ const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
     image: "",
     description: "",
   });
+
+  // Password strength (UI only)
+  function passwordScore(pw) {
+    const s = String(pw || "");
+    let score = 0;
+    if (s.length >= 8) score += 1;
+    if (s.length >= 12) score += 1;
+    if (/[A-Z]/.test(s)) score += 1;
+    if (/[a-z]/.test(s)) score += 1;
+    if (/[0-9]/.test(s)) score += 1;
+    if (/[^A-Za-z0-9]/.test(s)) score += 1;
+    return Math.min(score, 6);
+  }
+
+  function strengthLabel(score) {
+    if (score <= 1) return "Very weak";
+    if (score === 2) return "Weak";
+    if (score === 3) return "Good";
+    if (score === 4) return "Strong";
+    return "Very strong";
+  }
 
   useEffect(() => {
     setDrafts(vehicles || []);
@@ -1802,6 +1794,9 @@ const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
         state: "",
         postalCode: "",
         country: "",
+        accountNumber: "",
+        lastRentedVehicle: "",
+        previousRentals: [],
       };
     }
 
@@ -1817,10 +1812,170 @@ const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
       state: row.state || "",
       postalCode: row.postal_code || "",
       country: row.country || "",
+      accountNumber: row.account_number || row.accountNumber || "",
+      lastRentedVehicle: row.last_rented_vehicle || row.lastRentedVehicle || "",
+      previousRentals: Array.isArray(row.previous_rentals) ? row.previous_rentals : (row.previousRentals || []),
     };
   }
 
-  // SIGN IN: email + password check
+  // --- Load Supabase Auth session (real environment setup) ---
+  useEffect(() => {
+    let mounted = true;
+
+    async function boot() {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const email = data?.session?.user?.email || "";
+        if (!mounted) return;
+
+        if (!email) {
+          setIsLoggedIn(false);
+          setIsAdmin(false);
+          return;
+        }
+
+        // Fetch profile row
+        const { data: row, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", email)
+          .maybeSingle();
+
+        if (!mounted) return;
+
+        if (error) {
+          console.error("Profile fetch error", error);
+          // Keep session but show minimal local profile so UI doesn't black-screen
+          const fallback = { ...(profile || {}), email };
+          setProfile(fallback);
+          setLocal(fallback);
+          setIsLoggedIn(true);
+          setIsAdmin(isAllowlistedAdmin(email));
+          return;
+        }
+
+        const loaded = normalizeUserRow(row, email);
+
+        // Ensure account number exists
+        if (!loaded.accountNumber) {
+          const nextAccount = generateAccountNumber();
+          loaded.accountNumber = nextAccount;
+          try {
+            await supabase.from("users").upsert(
+              { email, account_number: nextAccount },
+              { onConflict: "email" }
+            );
+          } catch {}
+        }
+
+        setProfile(loaded);
+        setLocal(loaded);
+        setIsLoggedIn(true);
+        setIsAdmin(isAllowlistedAdmin(email));
+        if (email) newsletterSignUp(email);
+      } catch (e) {
+        console.error("Auth boot error", e);
+      }
+    }
+
+    boot();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      const email = session?.user?.email || "";
+      if (!email) {
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+        setProfile(null);
+        return;
+      }
+      setIsLoggedIn(true);
+      setIsAdmin(isAllowlistedAdmin(email));
+    });
+
+    return () => {
+      mounted = false;
+      try { sub?.subscription?.unsubscribe?.(); } catch {}
+    };
+  }, []);
+
+  // Wishlist: localStorage keyed by email (kept stable)
+  useEffect(() => {
+    try {
+      if (!profile?.email) {
+        setWishlistItems([]);
+        return;
+      }
+      const key = `asani:wishlist:${profile.email}`;
+      const items = JSON.parse(localStorage.getItem(key) || "[]");
+      setWishlistItems(Array.isArray(items) ? items : []);
+    } catch {
+      setWishlistItems([]);
+    }
+  }, [profile?.email]);
+
+  // Auto sign-out after 15 minutes of inactivity (continuous use keeps signed in)
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    let t;
+    const timeoutMs = 15 * 60 * 1000;
+
+    const reset = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => {
+        handleSignOut(true);
+      }, timeoutMs);
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach((ev) => window.addEventListener(ev, reset, { passive: true }));
+
+    reset();
+
+    return () => {
+      if (t) clearTimeout(t);
+      events.forEach((ev) => window.removeEventListener(ev, reset));
+    };
+  }, [isLoggedIn]);
+
+  async function handleSignOut(silent) {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Supabase signOut error", e);
+    }
+
+    try { localStorage.removeItem("asani:profile"); } catch {}
+    try { localStorage.removeItem("asani_auth_method"); } catch {}
+
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    setProfile(null);
+
+    setLocal({
+      fullName: "",
+      email: "",
+      phone: "",
+      driversLicense: "",
+      licenseExpiry: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "",
+      accountNumber: "",
+      lastRentedVehicle: "",
+      previousRentals: [],
+    });
+
+    setAuth({ email: "", password: "" });
+    setMode("login");
+
+    if (!silent) alert("Signed out.");
+  }
+
+  // SIGN IN: Supabase Auth (real environment session)
   async function handleLogin(e) {
     e.preventDefault();
     if (!auth.email || !auth.password) {
@@ -1829,48 +1984,55 @@ const [isLoggedIn, setIsLoggedIn] = useState(!!profile?.email);
     }
 
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", auth.email)
-        .maybeSingle();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: auth.email,
+        password: auth.password,
+      });
 
       if (error) {
-        console.error("Supabase user fetch error", error);
-        alert("We had a problem signing you in. Please try again.");
+        alert(error.message || "Could not sign in. Please try again.");
         return;
       }
 
-      if (!data) {
-        alert(
-          "We don't see a profile with that email yet. Please create a profile first."
-        );
-        setMode("create");
-        setLocal((prev) => ({
-          ...prev,
-          email: auth.email,
-        }));
-        return;
+      const email = data?.user?.email || auth.email;
+
+      // Track password login (admin gate)
+      try { localStorage.setItem("asani_auth_method", "password"); } catch {}
+
+      // Load profile row
+      const { data: row, error: rowErr } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (rowErr) {
+        console.error("Profile fetch error", rowErr);
       }
 
-      // Basic password check (stored in users.password)
-      if (!data.password || data.password !== auth.password) {
-        alert("Incorrect password. Please try again.");
-        return;
-      }
+      
+const base = normalizeUserRow(row, email);
+const pending = readPendingProfile(email);
+const loaded = { ...base, ...(pending || {}) , email };
 
-      const loaded = normalizeUserRow(data, auth.email);
-      setLocal(loaded);
-      if (!loaded?.accountNumber) loaded.accountNumber = generateAccountNumber();
+if (!loaded.accountNumber) loaded.accountNumber = generateAccountNumber();
+
+// Ensure row exists / update basics (best-effort). If RLS blocks inserts during email confirmation,
+// we keep a pending profile to be applied after the next successful authenticated login.
+try {
+  await upsertUserRow(loaded);
+  clearPendingProfile();
+} catch (e) {
+  console.error("Profile upsert blocked or failed", e);
+  stashPendingProfile(loaded);
+}
 try { localStorage.setItem("asani:profile", JSON.stringify(loaded)); } catch {}
-setProfile(loaded);
-if (loaded.email) newsletterSignUp(loaded.email);
-
+      setProfile(loaded);
+      setLocal(loaded);
       setIsLoggedIn(true);
-      setIsAdmin(
-        loaded.email &&
-          loaded.email.toLowerCase() === COMPANY.email.toLowerCase()
-      );
+      setIsAdmin(isAllowlistedAdmin(email));
+      if (email) newsletterSignUp(email);
+
       alert("Signed in.");
     } catch (err) {
       console.error("Login error", err);
@@ -1878,7 +2040,7 @@ if (loaded.email) newsletterSignUp(loaded.email);
     }
   }
 
-  // CREATE PROFILE – with password + duplicate email check
+  // CREATE PROFILE: Supabase Auth sign-up + user row insert
   async function handleCreate(e) {
     e.preventDefault();
 
@@ -1890,69 +2052,85 @@ if (loaded.email) newsletterSignUp(loaded.email);
       alert("Please create a password of at least 6 characters.");
       return;
     }
-if (createPassword !== createConfirmPassword) {
+    if (createPassword !== createConfirmPassword) {
       alert("Passwords do not match. Please re-enter them.");
       return;
     }
 
-
     try {
-      // Check if email already exists
-      const { data: existing, error: checkError } = await supabase
-        .from("users")
-        .select("email")
-        .eq("email", local.email)
-        .maybeSingle();
+      const email = String(local.email || "").trim();
 
-      if (checkError) {
-        console.error("Supabase email check error", checkError);
-      }
-
-      if (existing?.email) {
-        alert(
-          "We already have a profile with this email. Please sign in instead."
-        );
-        setMode("login");
-        setAuth((prev) => ({ ...prev, email: local.email }));
-        return;
-      }
-
-      // Create new row in users table, including password
-      const { error } = await supabase.from("users").insert({
-        email: local.email,
-        full_name: local.fullName,
-        phone: local.phone,
-        drivers_license: local.driversLicense,
-        license_expiry: local.licenseExpiry || null,
-        address_line1: local.addressLine1 || null,
-        address_line2: local.addressLine2 || null,
-        city: local.city || null,
-        state: local.state || null,
-        postal_code: local.postalCode || null,
-        country: local.country || null,
-        password: createPassword, // basic password storage
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: createPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/profile`,
+        },
       });
 
       if (error) {
-        console.error("Supabase user insert error", error);
-        alert(
-          "We couldn't create your profile at the moment. Please try again or contact us."
-        );
+        alert(error.message || "Could not create account. Please try again.");
         return;
       }
 
-      if (!local?.accountNumber) local.accountNumber = generateAccountNumber();
-try { localStorage.setItem("asani:profile", JSON.stringify(local)); } catch {}
-setProfile(local);
-if (local.email) newsletterSignUp(local.email);
-      setIsLoggedIn(true);
-      setIsAdmin(
-        local.email &&
-          local.email.toLowerCase() === COMPANY.email.toLowerCase()
+      // We still create the profile row immediately (even if email confirmation is required)
+      const next = {
+        ...local,
+        email,
+        accountNumber: local.accountNumber || generateAccountNumber(),
+      };
+
+      // Track password login for admin gate after confirmed sign-in
+      try { localStorage.setItem("asani_auth_method", "password"); } catch {}
+
+      const { error: upsertErr } = await supabase.from("users").upsert(
+        {
+          email: next.email,
+          full_name: next.fullName || null,
+          phone: next.phone || null,
+          drivers_license: next.driversLicense || null,
+          license_expiry: next.licenseExpiry || null,
+          address_line1: next.addressLine1 || null,
+          address_line2: next.addressLine2 || null,
+          city: next.city || null,
+          state: next.state || null,
+          postal_code: next.postalCode || null,
+          country: next.country || null,
+          account_number: next.accountNumber || null,
+        },
+        { onConflict: "email" }
       );
+
+      
+if (upsertErr) {
+  console.error("Profile upsert error", upsertErr);
+  // If RLS blocks this during confirmation flow, keep a pending profile for later.
+  stashPendingProfile(next);
+} else {
+  clearPendingProfile();
+}
+      try { localStorage.setItem("asani:profile", JSON.stringify(next)); } catch {}
+      setProfile(next);
+      setLocal(next);
+      if (next.email) newsletterSignUp(next.email);
+
+      // If confirmations are enabled, user must confirm then sign in.
+      const confirmationRequired = !data?.session;
+
+      if (confirmationRequired) {
+        // Keep pending profile so we can apply it after email confirmation + sign-in
+        stashPendingProfile(next);
+        alert("Account created. Please check your email to confirm, then sign in.");
+        setMode("login");
+        setAuth((prev) => ({ ...prev, email }));
+        return;
+      }
+
+      // Session exists (no confirmation required)
+      setIsLoggedIn(true);
+      setIsAdmin(isAllowlistedAdmin(email));
       alert("Your profile has been created.");
 
-      // Go back to main page to view vehicles
       if (typeof onProfileCreated === "function") {
         onProfileCreated();
       }
@@ -1962,7 +2140,7 @@ if (local.email) newsletterSignUp(local.email);
     }
   }
 
-  // SAVE UPDATES for existing profile (no password change here)
+  // SAVE profile updates
   async function save() {
     if (!local.email) {
       alert("Email is required to save your profile.");
@@ -1970,22 +2148,24 @@ if (local.email) newsletterSignUp(local.email);
     }
 
     try {
-      const { error } = await supabase.from("users").upsert(
-        {
-          email: local.email,
-          full_name: local.fullName,
-          phone: local.phone,
-          drivers_license: local.driversLicense,
-          license_expiry: local.licenseExpiry || null,
-          address_line1: local.addressLine1 || null,
-          address_line2: local.addressLine2 || null,
-          city: local.city || null,
-          state: local.state || null,
-          postal_code: local.postalCode || null,
-          country: local.country || null,
-        },
-        { onConflict: "email" }
-      );
+      const payload = {
+        email: local.email,
+        full_name: local.fullName || null,
+        phone: local.phone || null,
+        drivers_license: local.driversLicense || null,
+        license_expiry: local.licenseExpiry || null,
+        address_line1: local.addressLine1 || null,
+        address_line2: local.addressLine2 || null,
+        city: local.city || null,
+        state: local.state || null,
+        postal_code: local.postalCode || null,
+        country: local.country || null,
+        account_number: local.accountNumber || null,
+        last_rented_vehicle: local.lastRentedVehicle || null,
+        previous_rentals: Array.isArray(local.previousRentals) ? local.previousRentals : [],
+      };
+
+      const { error } = await supabase.from("users").upsert(payload, { onConflict: "email" });
 
       if (error) {
         console.error("Supabase user upsert error", error);
@@ -1994,9 +2174,9 @@ if (local.email) newsletterSignUp(local.email);
       }
 
       if (!local?.accountNumber) local.accountNumber = generateAccountNumber();
-try { localStorage.setItem("asani:profile", JSON.stringify(local)); } catch {}
-setProfile(local);
-if (local.email) newsletterSignUp(local.email);
+      try { localStorage.setItem("asani:profile", JSON.stringify(local)); } catch {}
+      setProfile(local);
+      if (local.email) newsletterSignUp(local.email);
       alert("Profile saved.");
     } catch (err) {
       console.error("Save profile error", err);
@@ -2004,7 +2184,7 @@ if (local.email) newsletterSignUp(local.email);
     }
   }
 
-  // FLEET ADMIN HELPERS (unchanged)
+  // FLEET ADMIN HELPERS (demo) — unchanged
   function updateVehicleField(id, field, value) {
     setDrafts((current) =>
       current.map((v) =>
@@ -2025,9 +2205,7 @@ if (local.email) newsletterSignUp(local.email);
 
   function saveFleetChanges() {
     setVehicles(drafts);
-    alert(
-      "Fleet updated (demo). In production these changes would be saved to your database."
-    );
+    alert("Fleet updated (demo). In production these changes would be saved to your database.");
   }
 
   function handleAddVehicle(e) {
@@ -2068,127 +2246,18 @@ if (local.email) newsletterSignUp(local.email);
           for faster reservations and personalized service.
         </p>
 
-        {isLoggedIn && (
-          <div className="mt-6 space-y-6">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-zinc-900">Booking history</h3>
-                <button type="button" className="text-sm underline" onClick={() => (onNav ? onNav("confirmation") : null)}>
-                  View last confirmation
-                </button>
-              </div>
-
-              {(!bookings || bookings.length === 0) ? (
-                <div className="mt-3 text-sm text-zinc-600">No bookings yet.</div>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {bookings.slice(0, 20).map((b) => (
-                    <div key={b.reservationId} className="rounded-xl border border-zinc-200 p-4 text-sm text-zinc-700">
-                      <div className="flex flex-wrap justify-between gap-2">
-                        <div className="font-semibold text-zinc-900">{b.vehicleName}</div>
-                        <div className="text-xs text-zinc-500">{b.status || "pending"}</div>
-                      </div>
-                      <div className="mt-1">Reservation ID: <b>{b.reservationId}</b></div>
-                      <div className="mt-1">{b.startDate} → {b.endDate}</div>
-                      <div className="mt-1">Total (est.): ${Number(b.total || 0).toFixed(2)} • Deposit/Hold: ${Number(b.deposit || 0).toFixed(2)}</div>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          className="px-3 py-1 rounded-full bg-zinc-100 text-zinc-800"
-                          onClick={() => (onNav ? onNav("incident") : null)}
-                        >
-                          Report incident
-                        </button>
-
-                        <button
-                          type="button"
-                          className="px-3 py-1 rounded-full bg-zinc-100 text-zinc-800"
-                          onClick={async () => {
-                            const ok = confirm("Request cancellation for this reservation? We will email you an update.");
-                            if (!ok) return;
-                            try {
-                              const next = updateBooking(profile?.email, b.reservationId, { cancellationStatus: "pending" });
-                              setBookings(next);
-                              await fetch("/api/cancellation-request", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ reservationId: b.reservationId, email: profile?.email, vehicleName: b.vehicleName, startDate: b.startDate, endDate: b.endDate }),
-                              });
-                              alert("Cancellation request submitted.");
-                            } catch (e) {
-                              console.error(e);
-                              alert("Could not submit cancellation request. Please email reserve@rentwithasani.com.");
-                            }
-                          }}
-                        >
-                          Request cancellation
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
-              <h3 className="text-sm font-semibold text-zinc-900">Damage documentation (photos)</h3>
-              <div className="mt-2 text-sm text-zinc-700">
-                Upload timestamped photos and tie them to a reservation for claim support.
-              </div>
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input id="reservationIdInput" placeholder="Reservation ID" className="p-3 border rounded text-sm w-full" />
-                <input id="damagePhotosInput" type="file" multiple accept="image/*" className="p-3 border rounded text-sm w-full" />
-              </div>
-              <button
-                type="button"
-                className="mt-3 px-4 py-2 rounded-full bg-black text-white text-sm"
-                onClick={async () => {
-                  const reservationId = document.getElementById("reservationIdInput")?.value?.trim();
-                  const files = document.getElementById("damagePhotosInput")?.files;
-                  if (!reservationId || !files || files.length === 0) {
-                    alert("Enter Reservation ID and select photos.");
-                    return;
-                  }
-                  try {
-                    const form = new FormData();
-                    form.append("reservationId", reservationId);
-                    for (const f of files) form.append("files", f);
-                    const res = await fetch("/api/damage-upload", { method: "POST", body: form });
-                    if (!res.ok) throw new Error(await res.text());
-                    alert("Uploaded. Saved to your reservation record where available.");
-                  } catch (e) {
-                    console.error(e);
-                    alert("Upload failed. If you need urgent help, email photos and the Reservation ID to reserve@rentwithasani.com.");
-                  }
-                }}
-              >
-                Upload photos
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="mt-6 flex gap-4 border-b pb-4 text-sm">
           <button
             type="button"
             onClick={() => setMode("login")}
-            className={`px-3 py-1 rounded-full ${
-              mode === "login"
-                ? "bg-black text-white"
-                : "bg-zinc-100 text-zinc-700"
-            }`}
+            className={`px-3 py-1 rounded-full ${mode === "login" ? "bg-black text-white" : "bg-zinc-100 text-zinc-700"}`}
           >
             Sign in
           </button>
           <button
             type="button"
             onClick={() => setMode("create")}
-            className={`px-3 py-1 rounded-full ${
-              mode === "create"
-                ? "bg-black text-white"
-                : "bg-zinc-100 text-zinc-700"
-            }`}
+            className={`px-3 py-1 rounded-full ${mode === "create" ? "bg-black text-white" : "bg-zinc-100 text-zinc-700"}`}
           >
             Create profile
           </button>
@@ -2204,54 +2273,34 @@ if (local.email) newsletterSignUp(local.email);
               placeholder="Email"
               className="p-3 border rounded text-sm"
             />
-            
-<div className="relative">
-  <input
-    type={showLoginPassword ? "text" : "password"}
-    required
-    value={auth.password}
-    onChange={(e) =>
-      setAuth({ ...auth, password: e.target.value })
-    }
-    onKeyUp={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
-    placeholder="Password"
-    className="p-3 pr-12 border rounded text-sm w-full"
-  />
-  <button
-    type="button"
-    onClick={() => setShowLoginPassword((v) => !v)}
-    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
-    aria-label="Toggle password visibility"
-  >
-    {showLoginPassword ? (
-      <span className="inline-flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
-          <path stroke="currentColor" strokeWidth="2" d="M3 3l18 18"/>
-          <path stroke="currentColor" strokeWidth="2" d="M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-4.42"/>
-          <path stroke="currentColor" strokeWidth="2" d="M9.88 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a18.2 18.2 0 0 1-4.2 5.1"/>
-          <path stroke="currentColor" strokeWidth="2" d="M6.3 6.3C3.6 8.6 2 12 2 12s3 7 10 7c1.1 0 2.1-.14 3.02-.4"/>
-        </svg>
-        Hide
-      </span>
-    ) : (
-      <span className="inline-flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
-          <path stroke="currentColor" strokeWidth="2" d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-        </svg>
-        Show
-      </span>
-    )}
-  </button>
-</div>
-{capsLockOn ? (
-  <div className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-    Caps Lock is on.
-  </div>
-) : null}<button
-              type="submit"
-              className="px-5 py-3 rounded-2xl bg-black text-white font-semibold text-sm"
-            >
+
+            <div className="relative">
+              <input
+                type={showLoginPassword ? "text" : "password"}
+                required
+                value={auth.password}
+                onChange={(e) => setAuth({ ...auth, password: e.target.value })}
+                onKeyUp={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
+                placeholder="Password"
+                className="p-3 pr-12 border rounded text-sm w-full"
+              />
+              <button
+                type="button"
+                onClick={() => setShowLoginPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                aria-label="Toggle password visibility"
+              >
+                {showLoginPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+
+            {capsLockOn ? (
+              <div className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                Caps Lock is on.
+              </div>
+            ) : null}
+
+            <button type="submit" className="px-5 py-3 rounded-2xl bg-black text-white font-semibold text-sm">
               Sign in
             </button>
           </form>
@@ -2259,9 +2308,7 @@ if (local.email) newsletterSignUp(local.email);
           <form className="mt-6 grid grid-cols-1 gap-4" onSubmit={handleCreate}>
             <input
               value={local.fullName}
-              onChange={(e) =>
-                setLocal({ ...local, fullName: e.target.value })
-              }
+              onChange={(e) => setLocal({ ...local, fullName: e.target.value })}
               placeholder="Full name"
               className="p-3 border rounded text-sm"
               required
@@ -2274,46 +2321,48 @@ if (local.email) newsletterSignUp(local.email);
               className="p-3 border rounded text-sm"
               required
             />
-            <input
-              value={local.phone}
-              onChange={(e) => setLocal({ ...local, phone: e.target.value })}
-              placeholder="Mobile phone"
-              className="p-3 border rounded text-sm"
-            />
-            <input
-              value={local.driversLicense}
-              onChange={(e) =>
-                setLocal({ ...local, driversLicense: e.target.value })
-              }
-              placeholder="Driver's license number"
-              className="p-3 border rounded text-sm"
-            />
-            <label className="text-xs text-zinc-600">
-              License expiry
+
+            <div className="relative">
               <input
-                type="date"
-                value={local.licenseExpiry}
-                onChange={(e) =>
-                  setLocal({ ...local, licenseExpiry: e.target.value })
-                }
-                className="mt-1 p-3 border rounded text-sm w-full"
-              />
-            </label>
-            <label className="text-xs text-zinc-600">
-              Create password
-              <input
-                type="password"
+                type={showCreatePassword ? "text" : "password"}
                 value={createPassword}
                 onChange={(e) => setCreatePassword(e.target.value)}
-                placeholder="At least 6 characters"
-                className="mt-1 p-3 border rounded text-sm w-full"
+                placeholder="Create password (min 6 chars)"
+                className="p-3 pr-12 border rounded text-sm w-full"
                 required
               />
-            </label>
-            <button
-              type="submit"
-              className="px-5 py-3 rounded-2xl bg-black text-white font-semibold text-sm"
-            >
+              <button
+                type="button"
+                onClick={() => setShowCreatePassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+              >
+                {showCreatePassword ? "Hide" : "Show"}
+              </button>
+            </div>
+
+            <div className="text-xs text-zinc-600">
+              Strength: <span className="font-semibold">{strengthLabel(passwordScore(createPassword))}</span>
+            </div>
+
+            <div className="relative">
+              <input
+                type={showCreateConfirmPassword ? "text" : "password"}
+                value={createConfirmPassword}
+                onChange={(e) => setCreateConfirmPassword(e.target.value)}
+                placeholder="Repeat password"
+                className="p-3 pr-12 border rounded text-sm w-full"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCreateConfirmPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+              >
+                {showCreateConfirmPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+
+            <button type="submit" className="px-5 py-3 rounded-2xl bg-black text-white font-semibold text-sm">
               Create profile
             </button>
           </form>
@@ -2325,181 +2374,89 @@ if (local.email) newsletterSignUp(local.email);
   // ---------- LOGGED-IN VIEW ----------
   return (
     <section className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12">
-      <h2 className="text-2xl font-bold text-zinc-900">
-        Welcome{local.fullName ? `, ${local.fullName}` : ""}.
-      </h2>
-      <p className="text-zinc-600 mt-2 text-sm">
-        Keep your details up to date for a smooth, white-glove rental experience.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-zinc-900">
+            Welcome{local.fullName ? `, ${local.fullName}` : ""}.
+          </h2>
+          <p className="text-zinc-600 mt-2 text-sm">
+            Keep your details up to date for a smooth, white-glove rental experience.
+          </p>
+        </div>
 
-<div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-  <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-    <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Account Number</div>
-    <div className="mt-2 text-xl font-extrabold text-zinc-900">
-      {local.accountNumber || "AR-—"}
-    </div>
-    <div className="mt-1 text-xs text-zinc-500">
-      Keep this for support verification and priority concierge handling.
-    </div>
-  </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleSignOut(false)}
+            className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-800 hover:bg-zinc-50"
+          >
+            Sign out
+          </button>
+          {isAdmin ? (
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+              Admin Mode
+            </span>
+          ) : null}
+        </div>
+      </div>
 
-  <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-    <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Last Vehicle Rented</div>
-    <div className="mt-2 text-base font-bold text-zinc-900">
-      {local.lastRentedVehicle || "—"}
-    </div>
-    <div className="mt-1 text-xs text-zinc-500">
-      We use this to personalize recommendations and expedite rebooking.
-    </div>
-  </div>
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Account Number</div>
+          <div className="mt-2 text-xl font-extrabold text-zinc-900">{local.accountNumber || "AR-—"}</div>
+          <div className="mt-1 text-xs text-zinc-500">Keep this for support verification and priority concierge handling.</div>
+        </div>
 
-  <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-    <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Rental History</div>
-    <div className="mt-2 text-base font-bold text-zinc-900">
-      {(Array.isArray(local.previousRentals) ? local.previousRentals.length : 0)} total rentals
-    </div>
-    <div className="mt-1 text-xs text-zinc-500">
-      History is tied to your profile on this device. Optional cloud sync can be enabled via database fields.
-    </div>
-  </div>
-</div>
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Last Vehicle Rented</div>
+          <div className="mt-2 text-base font-bold text-zinc-900">{local.lastRentedVehicle || "—"}</div>
+          <div className="mt-1 text-xs text-zinc-500">We use this to personalize recommendations and expedite rebooking.</div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="text-xs font-black tracking-[0.22em] uppercase text-zinc-500">Wishlist</div>
+          <div className="mt-2 text-base font-bold text-zinc-900">{wishlistItems.length} saved</div>
+          <div className="mt-1 text-xs text-zinc-500">Saved vehicles are tied to your account email.</div>
+        </div>
+      </div>
 
       {/* Profile form */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-900">
-            Contact details
-          </h3>
-          <input
-            value={local.fullName}
-            onChange={(e) =>
-              setLocal({ ...local, fullName: e.target.value })
-            }
-            placeholder="Full name"
-            className="p-3 border rounded text-sm w-full"
-          />
-          <input
-            value={local.email}
-            onChange={(e) => setLocal({ ...local, email: e.target.value })}
-            placeholder="Email"
-            className="p-3 border rounded text-sm w-full"
-          />
-          <input
-            value={local.phone}
-            onChange={(e) => setLocal({ ...local, phone: e.target.value })}
-            placeholder="Mobile phone"
-            className="p-3 border rounded text-sm w-full"
-          />
+          <h3 className="text-sm font-semibold text-zinc-900">Contact details</h3>
+          <input value={local.fullName} onChange={(e) => setLocal({ ...local, fullName: e.target.value })} placeholder="Full name" className="p-3 border rounded text-sm w-full" />
+          <input value={local.email} onChange={(e) => setLocal({ ...local, email: e.target.value })} placeholder="Email" className="p-3 border rounded text-sm w-full" />
+          <input value={local.phone} onChange={(e) => setLocal({ ...local, phone: e.target.value })} placeholder="Mobile phone" className="p-3 border rounded text-sm w-full" />
 
-          <h3 className="mt-4 text-sm font-semibold text-zinc-900">
-            Driver&apos;s license
-          </h3>
-          <input
-            value={local.driversLicense}
-            onChange={(e) =>
-              setLocal({ ...local, driversLicense: e.target.value })
-            }
-            placeholder="License number"
-            className="p-3 border rounded text-sm w-full"
-          />
+          <h3 className="mt-4 text-sm font-semibold text-zinc-900">Driver's license</h3>
+          <input value={local.driversLicense} onChange={(e) => setLocal({ ...local, driversLicense: e.target.value })} placeholder="License number" className="p-3 border rounded text-sm w-full" />
           <label className="text-xs text-zinc-600">
             License expiry
-            <input
-              type="date"
-              value={local.licenseExpiry}
-              onChange={(e) =>
-                setLocal({ ...local, licenseExpiry: e.target.value })
-              }
-              className="mt-1 p-3 border rounded text-sm w-full"
-            />
+            <input type="date" value={local.licenseExpiry} onChange={(e) => setLocal({ ...local, licenseExpiry: e.target.value })} className="mt-1 p-3 border rounded text-sm w-full" />
           </label>
         </div>
 
         {/* Address side */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-zinc-900">Address</h3>
-          <input
-            value={local.addressLine1}
-            onChange={(e) =>
-              setLocal({ ...local, addressLine1: e.target.value })
-            }
-            placeholder="Street address"
-            className="p-3 border rounded text-sm w-full"
-          />
-          <input
-            value={local.addressLine2}
-            onChange={(e) =>
-              setLocal({ ...local, addressLine2: e.target.value })
-            }
-            placeholder="Apt, suite, building (optional)"
-            className="p-3 border rounded text-sm w-full"
-          />
+          <input value={local.addressLine1} onChange={(e) => setLocal({ ...local, addressLine1: e.target.value })} placeholder="Street address" className="p-3 border rounded text-sm w-full" />
+          <input value={local.addressLine2} onChange={(e) => setLocal({ ...local, addressLine2: e.target.value })} placeholder="Apt, suite, building (optional)" className="p-3 border rounded text-sm w-full" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
-              value={local.city}
-              onChange={(e) =>
-                setLocal({ ...local, city: e.target.value })
-              }
-              placeholder="City"
-              className="p-3 border rounded text-sm w-full"
-            />
-            <input
-              value={local.state}
-              onChange={(e) =>
-                setLocal({ ...local, state: e.target.value })
-              }
-              placeholder="State / Province"
-              className="p-3 border rounded text-sm w-full"
-            />
+            <input value={local.city} onChange={(e) => setLocal({ ...local, city: e.target.value })} placeholder="City" className="p-3 border rounded text-sm w-full" />
+            <input value={local.state} onChange={(e) => setLocal({ ...local, state: e.target.value })} placeholder="State / Province" className="p-3 border rounded text-sm w-full" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
-              value={local.postalCode}
-              onChange={(e) =>
-                setLocal({ ...local, postalCode: e.target.value })
-              }
-              placeholder="ZIP / Postal code"
-              className="p-3 border rounded text-sm w-full"
-            />
-            <input
-              value={local.country}
-              onChange={(e) =>
-                setLocal({ ...local, country: e.target.value })
-              }
-              placeholder="Country"
-              className="p-3 border rounded text-sm w-full"
-            />
+            <input value={local.postalCode} onChange={(e) => setLocal({ ...local, postalCode: e.target.value })} placeholder="ZIP / Postal code" className="p-3 border rounded text-sm w-full" />
+            <input value={local.country} onChange={(e) => setLocal({ ...local, country: e.target.value })} placeholder="Country" className="p-3 border rounded text-sm w-full" />
           </div>
 
           <div className="flex gap-3 mt-4">
-            <button
-              onClick={save}
-              className="px-5 py-3 rounded-2xl bg-black text-white font-semibold text-sm"
-            >
+            <button onClick={save} className="px-5 py-3 rounded-2xl bg-black text-white font-semibold text-sm">
               Save profile
             </button>
             <button
-              onClick={() =>
-                setLocal(
-                  normalizeUserRow(
-                    {
-                      full_name: profile?.fullName,
-                      email: profile?.email,
-                      phone: profile?.phone,
-                      drivers_license: profile?.driversLicense,
-                      license_expiry: profile?.licenseExpiry,
-                      address_line1: profile?.addressLine1,
-                      address_line2: profile?.addressLine2,
-                      city: profile?.city,
-                      state: profile?.state,
-                      postal_code: profile?.postalCode,
-                      country: profile?.country,
-                    },
-                    profile?.email
-                  )
-                )
-              }
+              onClick={() => setLocal(profile ? { ...profile } : local)}
               className="px-5 py-3 rounded-2xl border text-sm"
             >
               Reset changes
@@ -2508,191 +2465,53 @@ if (local.email) newsletterSignUp(local.email);
         </div>
       </div>
 
-      {/* Admin fleet section (same as before) */}
-      {isAdmin && (
+      {/* Admin fleet section (demo) */}
+      {isAdmin ? (
         <div className="mt-12 border-t pt-8">
-          <h3 className="text-xl font-semibold text-zinc-900">
-            Admin — Fleet management
-          </h3>
+          <h3 className="text-xl font-semibold text-zinc-900">Admin — Fleet management</h3>
           <p className="text-zinc-600 mt-2 text-sm">
-            Update pricing, availability, and add new vehicles. Changes apply
-            immediately in this demo.
+            Update pricing, availability, and add new vehicles. Changes apply immediately in this demo.
           </p>
-
           <div className="mt-6 space-y-6">
             <div className="p-4 border rounded-2xl bg-white overflow-auto">
-              <h4 className="font-semibold text-zinc-900 mb-3 text-sm">
-                Existing vehicles
-              </h4>
+              <h4 className="font-semibold text-zinc-900 mb-3 text-sm">Existing vehicles</h4>
               <div className="min-w-full text-xs sm:text-sm">
                 <div className="grid grid-cols-7 gap-2 font-semibold text-zinc-700 mb-2">
-                  <div>Name</div>
-                  <div>Category</div>
-                  <div>Price / day</div>
-                  <div>Seats</div>
-                  <div>Available</div>
-                  <div>Color</div>
-                  <div>Image URL</div>
+                  <div>Name</div><div>Category</div><div>Price / day</div><div>Seats</div><div>Available</div><div>Color</div><div>Image URL</div>
                 </div>
                 {drafts.map((v) => (
                   <div key={v.id} className="grid grid-cols-7 gap-2 mb-2">
-                    <input
-                      value={v.name}
-                      onChange={(e) =>
-                        updateVehicleField(v.id, "name", e.target.value)
-                      }
-                      className="p-1 border rounded text-xs"
-                    />
-                    <input
-                      value={v.category}
-                      onChange={(e) =>
-                        updateVehicleField(v.id, "category", e.target.value)
-                      }
-                      className="p-1 border rounded text-xs"
-                    />
-                    <input
-                      type="number"
-                      value={v.pricePerDay}
-                      onChange={(e) =>
-                        updateVehicleField(
-                          v.id,
-                          "pricePerDay",
-                          e.target.value
-                        )
-                      }
-                      className="p-1 border rounded text-xs"
-                    />
-                    <input
-                      type="number"
-                      value={v.seats}
-                      onChange={(e) =>
-                        updateVehicleField(v.id, "seats", e.target.value)
-                      }
-                      className="p-1 border rounded text-xs"
-                    />
+                    <input value={v.name} onChange={(e) => updateVehicleField(v.id, "name", e.target.value)} className="p-1 border rounded text-xs" />
+                    <input value={v.category} onChange={(e) => updateVehicleField(v.id, "category", e.target.value)} className="p-1 border rounded text-xs" />
+                    <input type="number" value={v.pricePerDay} onChange={(e) => updateVehicleField(v.id, "pricePerDay", e.target.value)} className="p-1 border rounded text-xs" />
+                    <input type="number" value={v.seats} onChange={(e) => updateVehicleField(v.id, "seats", e.target.value)} className="p-1 border rounded text-xs" />
                     <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={v.available !== false}
-                        onChange={(e) =>
-                          updateVehicleField(
-                            v.id,
-                            "available",
-                            e.target.checked
-                          )
-                        }
-                      />
+                      <input type="checkbox" checked={v.available !== false} onChange={(e) => updateVehicleField(v.id, "available", e.target.checked)} />
                     </div>
-                    <input
-                      value={v.color || ""}
-                      onChange={(e) =>
-                        updateVehicleField(v.id, "color", e.target.value)
-                      }
-                      className="p-1 border rounded text-xs"
-                    />
-                    <input
-                      value={v.image || ""}
-                      onChange={(e) =>
-                        updateVehicleField(v.id, "image", e.target.value)
-                      }
-                      className="p-1 border rounded text-xs"
-                    />
+                    <input value={v.color || ""} onChange={(e) => updateVehicleField(v.id, "color", e.target.value)} className="p-1 border rounded text-xs" />
+                    <input value={v.image || ""} onChange={(e) => updateVehicleField(v.id, "image", e.target.value)} className="p-1 border rounded text-xs" />
                   </div>
                 ))}
               </div>
               <div className="mt-3 flex justify-end">
-                <button
-                  onClick={saveFleetChanges}
-                  className="px-4 py-2 rounded-2xl bg-black text-white text-xs font-semibold"
-                >
+                <button onClick={saveFleetChanges} className="px-4 py-2 rounded-2xl bg-black text-white text-xs font-semibold">
                   Save changes
                 </button>
               </div>
             </div>
 
             <div className="p-4 border rounded-2xl bg-white">
-              <h4 className="font-semibold text-zinc-900 mb-3 text-sm">
-                Add new vehicle
-              </h4>
-              <form
-                className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"
-                onSubmit={handleAddVehicle}
-              >
-                <input
-                  value={newVehicle.name}
-                  onChange={(e) =>
-                    setNewVehicle({ ...newVehicle, name: e.target.value })
-                  }
-                  placeholder="Name (e.g. BMW X1 M Package)"
-                  className="p-2 border rounded"
-                  required
-                />
-                <input
-                  value={newVehicle.category}
-                  onChange={(e) =>
-                    setNewVehicle({
-                      ...newVehicle,
-                      category: e.target.value,
-                    })
-                  }
-                  placeholder="Category (e.g. Premium SUV)"
-                  className="p-2 border rounded"
-                  required
-                />
-                <input
-                  type="number"
-                  value={newVehicle.pricePerDay}
-                  onChange={(e) =>
-                    setNewVehicle({
-                      ...newVehicle,
-                      pricePerDay: e.target.value,
-                    })
-                  }
-                  placeholder="Price per day"
-                  className="p-2 border rounded"
-                />
-                <input
-                  type="number"
-                  value={newVehicle.seats}
-                  onChange={(e) =>
-                    setNewVehicle({ ...newVehicle, seats: e.target.value })
-                  }
-                  placeholder="Seats"
-                  className="p-2 border rounded"
-                />
-                <input
-                  value={newVehicle.color}
-                  onChange={(e) =>
-                    setNewVehicle({ ...newVehicle, color: e.target.value })
-                  }
-                  placeholder="Color"
-                  className="p-2 border rounded"
-                />
-                <input
-                  value={newVehicle.image}
-                  onChange={(e) =>
-                    setNewVehicle({ ...newVehicle, image: e.target.value })
-                  }
-                  placeholder="Image URL (optional)"
-                  className="p-2 border rounded"
-                />
-                <textarea
-                  value={newVehicle.description}
-                  onChange={(e) =>
-                    setNewVehicle({
-                      ...newVehicle,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="Description"
-                  className="sm:col-span-2 p-2 border rounded"
-                  rows={3}
-                />
+              <h4 className="font-semibold text-zinc-900 mb-3 text-sm">Add new vehicle</h4>
+              <form className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm" onSubmit={handleAddVehicle}>
+                <input value={newVehicle.name} onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })} placeholder="Name" className="p-2 border rounded" required />
+                <input value={newVehicle.category} onChange={(e) => setNewVehicle({ ...newVehicle, category: e.target.value })} placeholder="Category" className="p-2 border rounded" required />
+                <input type="number" value={newVehicle.pricePerDay} onChange={(e) => setNewVehicle({ ...newVehicle, pricePerDay: e.target.value })} placeholder="Price per day" className="p-2 border rounded" />
+                <input type="number" value={newVehicle.seats} onChange={(e) => setNewVehicle({ ...newVehicle, seats: e.target.value })} placeholder="Seats" className="p-2 border rounded" />
+                <input value={newVehicle.color} onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })} placeholder="Color" className="p-2 border rounded" />
+                <input value={newVehicle.image} onChange={(e) => setNewVehicle({ ...newVehicle, image: e.target.value })} placeholder="Image URL" className="p-2 border rounded" />
+                <textarea value={newVehicle.description} onChange={(e) => setNewVehicle({ ...newVehicle, description: e.target.value })} placeholder="Description" className="sm:col-span-2 p-2 border rounded" rows={3} />
                 <div className="sm:col-span-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-2xl bg-black text-white text-xs font-semibold"
-                  >
+                  <button type="submit" className="px-4 py-2 rounded-2xl bg-black text-white text-xs font-semibold">
                     Add vehicle
                   </button>
                 </div>
@@ -2700,423 +2519,8 @@ if (local.email) newsletterSignUp(local.email);
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </section>
-  );
-}
-
-// ========= CHAUFFEUR =========
-function ChauffeurRequest({ profile }) {
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const payload = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      phone: formData.get("phone"),
-      serviceType: formData.get("serviceType"),
-      date: formData.get("date"),
-      time: formData.get("time"),
-      passengers: formData.get("passengers"),
-      hours: formData.get("hours"),
-      pickup: formData.get("pickup"),
-      dropoff: formData.get("dropoff"),
-      notes: formData.get("notes"),
-      to: COMPANY.email,
-    };
-
-    // Persist a record immediately (paper trail) — local fallback.
-    try {
-      upsertBooking(booking.customer.email, booking);
-    } catch (e) {
-      console.warn("Local booking persist failed", e);
-    }
-
-    try {
-      const res = await fetch("/api/chauffeur", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error("Request failed");
-      alert(
-        "Your chauffeur request has been received. Our team will contact you to confirm availability and pricing."
-      );
-      e.target.reset();
-    } catch (err) {
-      console.error("Chauffeur request error", err);
-      alert(
-        "We had a problem submitting your request. Please try again or contact us directly at " +
-          COMPANY.email
-      );
-    }
-  }
-
-  return (
-    <section className="max-w-4xl mx-auto px-4 md:px-6 py-10 md:py-12">
-      <h2 className="text-2xl font-bold text-zinc-900">Chauffeur services</h2>
-      <p className="mt-2 text-sm text-zinc-600">
-        Request a professional chauffeur for a Sprinter, black SUV, elite
-        luxury sedan, or our{" "}
-        <span className="font-semibold">armed chauffeur</span> option for
-        elevated security.
-      </p>
-      <form
-        className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 border rounded-2xl bg-white"
-        onSubmit={handleSubmit}
-      >
-        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
-          Full name
-          <input
-            name="name"
-            className="mt-2 p-2 border rounded text-sm"
-            required
-            placeholder="John Doe"
-            defaultValue={profile?.fullName || ""}
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
-          Email
-          <input
-            name="email"
-            type="email"
-            className="mt-2 p-2 border rounded text-sm"
-            required
-            placeholder="you@domain.com"
-            defaultValue={profile?.email || ""}
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
-          Phone
-          <input
-            name="phone"
-            className="mt-2 p-2 border rounded text-sm"
-            required
-            placeholder="(555) 555-5555"
-            defaultValue={profile?.phone || ""}
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700 md:col-span-1">
-          Service type
-          <select
-            name="serviceType"
-            className="mt-2 p-2 border rounded text-sm"
-            defaultValue="sprinter"
-          >
-            <option value="sprinter">Sprinter</option>
-            <option value="black-suv">Black truck / black SUV</option>
-            <option value="elite-luxury">Elite luxury sedan</option>
-            <option value="armed-chauffeur">
-              Armed chauffeur (licensed protection)
-            </option>
-          </select>
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700">
-          Date
-          <input
-            name="date"
-            type="date"
-            className="mt-2 p-2 border rounded text-sm"
-            required
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700">
-          Time
-          <input
-            name="time"
-            type="time"
-            className="mt-2 p-2 border rounded text-sm"
-            required
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700">
-          Number of passengers
-          <input
-            name="passengers"
-            type="number"
-            min="1"
-            className="mt-2 p-2 border rounded text-sm"
-            placeholder="2"
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700">
-          Estimated hours
-          <input
-            name="hours"
-            type="number"
-            min="1"
-            className="mt-2 p-2 border rounded text-sm"
-            placeholder="4"
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
-          Pick-up location
-          <input
-            name="pickup"
-            className="mt-2 p-2 border rounded text-sm"
-            required
-            placeholder="Hotel / address / airport"
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
-          Drop-off or itinerary
-          <input
-            name="dropoff"
-            className="mt-2 p-2 border rounded text-sm"
-            required
-            placeholder="Destination or brief itinerary"
-          />
-        </label>
-        <label className="flex flex-col text-sm text-zinc-700 md:col-span-2">
-          Notes
-          <textarea
-            name="notes"
-            rows={4}
-            className="mt-2 p-2 border rounded text-sm"
-            placeholder="Flight details, occasion (wedding, corporate, night out), security needs, or special requests."
-          />
-        </label>
-        <div className="md:col-span-2 flex justify-end">
-          <button
-            type="submit"
-            className="px-6 py-3 rounded-2xl bg-black text-white text-sm font-semibold"
-          >
-            Submit request
-          </button>
-        </div>
-      </form>
-    </section>
-  );
-}
-
-// ========= CONTACT =========
-function Contact() {
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const payload = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      message: formData.get("message"),
-      to: COMPANY.email,
-    };
-
-    // Persist a record immediately (paper trail) — local fallback.
-    try {
-      upsertBooking(booking.customer.email, booking);
-    } catch (e) {
-      console.warn("Local booking persist failed", e);
-    }
-
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error("Request failed");
-      alert("Message sent. We'll be in touch shortly.");
-      e.target.reset();
-    } catch (err) {
-      console.error("Contact error", err);
-      alert(
-        "We had a problem submitting your message. Please try again or email us directly at " +
-          COMPANY.email
-      );
-    }
-  }
-
-  return (
-    <section className="max-w-4xl mx-auto px-4 md:px-6 py-10 md:py-12">
-      <h2 className="text-2xl font-bold text-zinc-900">Contact</h2>
-      <div className="mt-4 text-zinc-600 text-sm">
-        For reservations, partnerships, and corporate accounts:
-      </div>
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="p-6 border rounded-2xl bg-white text-sm">
-          <h3 className="font-semibold text-zinc-900">Asani Rentals</h3>
-          <p className="mt-2 text-zinc-700">{COMPANY.tagline}</p>
-          <p className="mt-1 text-zinc-700">{COMPANY.serviceArea}</p>
-          <p className="mt-1 text-zinc-700">{COMPANY.phone}</p>
-          <p className="mt-1 text-zinc-700">{COMPANY.email}</p>
-        </div>
-        <form
-          className="p-6 border rounded-2xl bg-white text-sm"
-          onSubmit={handleSubmit}
-        >
-          <label className="flex flex-col text-sm text-zinc-700">
-            Name
-            <input
-              name="name"
-              className="mt-2 p-2 border rounded text-sm"
-              required
-            />
-          </label>
-          <label className="flex flex-col mt-3 text-sm text-zinc-700">
-            Email
-            <input
-              name="email"
-              className="mt-2 p-2 border rounded text-sm"
-              required
-              type="email"
-            />
-          </label>
-          <label className="flex flex-col mt-3 text-sm text-zinc-700">
-            Message
-            <textarea
-              name="message"
-              className="mt-2 p-2 border rounded text-sm"
-              rows={4}
-              required
-            />
-          </label>
-          <div className="mt-4">
-            <button className="px-4 py-2 rounded-2xl bg-black text-white text-sm">
-              Send message
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-  );
-}
-
-// ========= NEWSLETTER =========
-function NewsletterForm({ onSign }) {
-  const [email, setEmail] = useState("");
-
-    function handleSubmit(e) {
-    e.preventDefault();
-    if (!email) return;
-    onSign(email);
-    setEmail("");
-    alert(
-      "You’re all set. We’ll email you exclusive rates, upgrades, and new vehicle alerts from Asani Rentals."
-    );
-  }
-  
-  return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      <input
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@domain.com"
-        className="w-full p-3 border rounded text-sm"
-      />
-      <div className="mt-3 flex justify-end">
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-2xl bg-black text-white text-sm"
-        >
-          Subscribe
-        </button>
-      </div>
-    </form>
-  );
-}
-
-// ========= ROOT APP =========
-
-function InsurancePage({ onBack, onNav }) {
-  return (
-    <LegalShell title="Insurance (Plain English)" onBack={onBack}>
-      <div className="space-y-6">
-        <section>
-          <h3 className="font-semibold text-zinc-900 mb-2">What insurance is required?</h3>
-          <div className="space-y-2">
-            <div>You must have a valid auto insurance policy that transfers to rental vehicles, or accept an approved protection option if offered.</div>
-            <div>We may request proof of insurance and identity verification before vehicle release.</div>
-          </div>
-        </section>
-
-        <section>
-          <h3 className="font-semibold text-zinc-900 mb-2">What is NOT included?</h3>
-          <div className="space-y-2">
-            <div>Normal exclusions may apply (for example: unapproved drivers, prohibited use, reckless driving, intoxication, unauthorized geographic travel).</div>
-            <div>Personal items inside the vehicle are not covered by the vehicle’s insurance.</div>
-          </div>
-        </section>
-
-        <section>
-          <h3 className="font-semibold text-zinc-900 mb-2">When do you pay out of pocket?</h3>
-          <div className="space-y-2">
-            <div>You are responsible for deductible amounts, uncovered losses, administrative fees, towing/storage, and loss of use where permitted.</div>
-            <div>If you drive without required coverage or violate rental terms, you may be fully responsible for all losses.</div>
-          </div>
-        </section>
-
-        <div className="pt-4 border-t text-sm text-zinc-700">
-          Need details fast?{" "}
-          <button type="button" className="underline" onClick={() => (onNav ? onNav("policies") : null)}>
-            Review Rental Policies
-          </button>
-          .
-        </div>
-      </div>
-    </LegalShell>
-  );
-}
-
-function IncidentPage({ onBack }) {
-  return (
-    <LegalShell title="Report an Incident" onBack={onBack}>
-      <IncidentInstructions />
-      <div className="mt-6 text-sm text-zinc-700 space-y-2">
-        <div><b>Contact:</b> reserve@rentwithasani.com • 732-470-8233</div>
-        <div><b>Tip:</b> Keep all receipts, tow invoices, and police report numbers. Upload photos in your profile under the reservation.</div>
-      </div>
-    </LegalShell>
-  );
-}
-
-function ConfirmationScreen({ booking, onNav }) {
-  if (!booking) {
-    return (
-      <LegalShell title="Confirmation" onBack={() => (onNav ? onNav("home") : null)}>
-        <div className="text-sm text-zinc-700">
-          No recent reservation found. You can view your bookings in your profile.
-        </div>
-      </LegalShell>
-    );
-  }
-
-  return (
-    <LegalShell title="Reservation Confirmation" onBack={() => (onNav ? onNav("home") : null)}>
-      <div className="space-y-6">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
-          <div className="text-sm text-zinc-700">Reservation ID</div>
-          <div className="text-xl font-semibold text-zinc-900 mt-1">{booking.reservationId}</div>
-
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-zinc-700">
-            <div><b>Vehicle:</b> {booking.vehicleName}</div>
-            <div><b>Dates:</b> {booking.startDate} → {booking.endDate}</div>
-            <div><b>Total (est.):</b> ${Number(booking.total || 0).toFixed(2)}</div>
-            <div><b>Deposit/Hold:</b> ${Number(booking.deposit || 0).toFixed(2)}</div>
-          </div>
-
-          <div className="mt-4 text-sm text-zinc-700">
-            We’ve emailed a copy of this confirmation to <b>{booking.customer?.email}</b>.
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button type="button" className="px-4 py-2 rounded-full bg-black text-white text-sm" onClick={() => (onNav ? onNav("profile") : null)}>
-              View in Profile
-            </button>
-            <button type="button" className="px-4 py-2 rounded-full bg-zinc-100 text-zinc-800 text-sm" onClick={() => (onNav ? onNav("policies") : null)}>
-              Rental Policies
-            </button>
-            <button type="button" className="px-4 py-2 rounded-full bg-zinc-100 text-zinc-800 text-sm" onClick={() => (onNav ? onNav("insurance") : null)}>
-              Insurance
-            </button>
-          </div>
-        </div>
-
-        <IncidentInstructions />
-      </div>
-    </LegalShell>
   );
 }
 
@@ -3142,70 +2546,12 @@ function App() {
   const [selected, setSelected] = useState(null);
     const [profile, setProfile] = useState(null);
 
+  function handleSignOut() {
+    setProfile(null);
+    // If later you store tokens/localStorage, clear them here too.
+  }
   
-
-// AUTO_LOGOUT_WIRED
-useEffect(() => {
-  const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
-  const onActivity = () => touchSession();
-  events.forEach((e) => window.addEventListener(e, onActivity));
-  touchSession();
-
-  const interval = setInterval(() => {
-    const last = getLastActivity();
-    if (profile?.email && last && Date.now() - last > SESSION_TIMEOUT_MS) {
-      try { alert("You were signed out due to inactivity."); } catch {}
-      if (!null?.accountNumber) null.accountNumber = generateAccountNumber();
-try { localStorage.setItem("asani:profile", JSON.stringify(null)); } catch {}
-setProfile(null);
-try { localStorage.removeItem("asani:profile"); } catch {}
-    }
-  }, 30000);
-
-  return () => {
-    events.forEach((e) => window.removeEventListener(e, onActivity));
-    clearInterval(interval);
-  };
-}, [profile]);
-
-
-
-
-
-function trackRentalHistory(vehicleName) {
-  if (!vehicleName) return;
-  try {
-    const p = profile ? { ...profile } : JSON.parse(localStorage.getItem("asani:profile") || "{}");
-    p.lastRentedVehicle = vehicleName;
-    p.previousRentals = Array.isArray(p.previousRentals) ? [...p.previousRentals, vehicleName] : [vehicleName];
-    if (!p.accountNumber) p.accountNumber = generateAccountNumber();
-    localStorage.setItem("asani:profile", JSON.stringify(p));
-    setProfile(p);
-  } catch {}
-}
-// LOAD_PROFILE_ON_BOOT
-useEffect(() => {
-  try {
-    const p = localStorage.getItem("asani:profile");
-    if (p) setProfile(JSON.parse(p));
-  } catch {}
-}, []);
-
-function handleSignOut() {
-  try {
-    localStorage.removeItem("asani:profile");
-  } catch {}
-  try {
-    // Also clear activity timer so it doesn't immediately sign out a fresh session
-    localStorage.removeItem("asani:lastActivity");
-  } catch {}
-  setProfile(null);
-  // Keep user on home
-  setRoute("home");
-  setSelected(null);
-}
-
-const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [lastBooking, setLastBooking] = useState(null);
   const [newsletter, setNewsletter] = useState([]);
   const [filterCategory, setFilterCategory] = useState("all");
@@ -3247,7 +2593,6 @@ const [bookings, setBookings] = useState([]);
   }
 
     async function handleSaveWishlist(vehicle) {
-
     try {
       // User must be logged in / have a profile email
       if (!profile || !profile.email) {
@@ -3255,7 +2600,7 @@ const [bookings, setBookings] = useState([]);
           "Please create or sign in to your profile before saving vehicles to your wishlist."
         );
         return;
-  }
+      }
 
       const { error } = await supabase.from("wishlist").insert({
         user_email: profile.email,
