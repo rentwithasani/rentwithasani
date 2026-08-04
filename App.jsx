@@ -194,7 +194,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 200,
     color: "Black",
     image:
-      "https://mystrongad.com/ZEK_DenisEakinKia/Interactive/K5/2023/CAR%20CUTS/2023-Kia-K5-Exterior-Black.png",
+      "https://cdn-ds.com/stock/2026-Kia-K5-GT-LINE-Roseville-CA/seo/DON18027-KNAG64J76T5510244/sz_834743/4ea94e09c7d26555be1389c71e06b68c.png",
     description:
       "Fuel-efficient sedan with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
@@ -323,9 +323,9 @@ const SAMPLE_VEHICLES = [
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 200,
-  color: "Crystal Black Pearl",
+  color: "White",
   image:
-    "https://images.dealer.com/ddc/vehicles/2026/Honda/Accord%20Hybrid/Sedan/trim_Sport_f8c0c6/perspective/front-left/2026_76.png",
+    "https://vehicle-images.carscommerce.inc/stock-images/chrome/e8ec94c7603e4c69e3e0b41b0dd35ffc.png",
   description:
     "Refined midsize sedan with a premium cabin feel—ideal for executive travel, city driving, and long-distance comfort.",
   available: true,
@@ -454,9 +454,9 @@ const SAMPLE_VEHICLES = [
   category: "Premium Economy Sedan",
   seats: 5,
   pricePerDay: 200,
-  color: "Gray",
+  color: "White",
   image:
-    "https://dealerimages.dealereprocess.com/image/upload/v1692729252/1/nissan/Model_Redesign_Altima/altima-sr-super-black.png",
+    "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/roRGwiVUUcZTPve5yHPvUtSIxYRupZ_0pEsPWnzsrF9I6VJkP6FwjQ2-oV1HOSzPCO564KiGD8y_mKtLkm4vrPtHqGre8G66Vd6LHCpv6sOGncglQ-v0siL95r4jahEp1MdOIU02zEcYMtXQQOolZ_D9faKYomK6cLY2FSVk4o4/cc_2026NIC042008883_01_640_QAB.png",
   description:
     "Comfortable, dependable sedan with excellent highway manners—ideal for commuting and longer-distance travel.",
   available: true,
