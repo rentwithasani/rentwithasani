@@ -285,7 +285,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 400,
     color: "Obsidian Black",
     image:
-      "https://vehicle-images.dealerinspire.com/stock-images/chrome/d5bcd7597123f034ff8aca12872d03e6.png",
+      "https://angellimo.com/wp-content/uploads/2023/04/cc_2023MBCCK0005_01_640_197.png",
     description:
       "Flagship Mercedes sedan with first-class comfort, ambient lighting, and a true chauffeured rear seat.",
     available: true,
@@ -378,7 +378,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 200,
   color: "White / Silver",
   image:
-    "https://vehicle-images.dealerinspire.com/stock-images/thumbnails/large/chrome/627b567cae6f95dc7e5e023e30a50c27.png",
+    "https://service.secureoffersites.com/images/GetEvoxImage?styleid=478609&type=png&crop=true&ColorCode=2T2T",
   description:
     "Compact SUV with great efficiency and comfort—perfect for city driving, airport runs, and weekend getaways.",
   available: true,
@@ -391,7 +391,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 200,
   color: "Black / Gray",
   image:
-    "https://vehicle-images.dealerinspire.com/stock-images/thumbnails/large/chrome/c910520d7c74126f4464770b68facb2c.png",
+    "https://vehicle-images.carscommerce.inc/stock-images/chrome/50ec83eedf21338f9b65e02c29854c64.png",
   description:
     "Clean, comfortable sedan with modern styling—great for commuting, business travel, and daily reliability.",
   available: true,
