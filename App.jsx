@@ -175,54 +175,54 @@ function PrivacyPage({ onBack }) {
 const SAMPLE_VEHICLES = [
   {
     id: "v001",
-    name: "BMW X1 M Package",
+    name: "Jeep Grand Cherokee",
     category: "Premium Economy SUV",
     seats: 5,
-    pricePerDay: 120,
-    color: "Estoril Blue Metallic",
+    pricePerDay: 250,
+    color: "Gray",
     image:
-      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
+      "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/It38wX8WXQivo8iiX3aiflXq9atjDWsn3APYdZ4f_iFyrG2xFwmmditjM4sJ-VMTuBh5PKiK8t70EDy2XWToH-nYIehZvB0ZBNAQh0Xg-jxF-V9-CMKbDywm6OXA3TxOStNtbfc-3wcw11VB8GAOkMe6UnDMTN3QpchHFj48WCZ5nvmS3pNSxA/cc_2026JES052043483_01_640_PW7.png",
     description:
-      "Sporty compact SUV with M styling, agile handling, and everyday comfort for daily drives or weekend escapes.",
+      "Sporty sleek, agile handling, and everyday comfort for daily drives or weekend escapes.",
     available: true,
   },
   {
     id: "v002",
-    name: "Honda CR-V Hybrid Sport",
-    category: "Premium SUV",
+    name: "Kia K5 GT-Line",
+    category: "Premium Sedan",
     seats: 5,
-    pricePerDay: 150,
-    color: "Urban Gray Pearl",
+    pricePerDay: 200,
+    color: "Black",
     image:
-      "https://vehicle-images.dealerinspire.com/3dc5-110004598/thumbnails/large/7FARS6H54SE100583/c7206170b726e1316bdc1efa8374f7ae.png",
+      "https://mystrongad.com/ZEK_DenisEakinKia/Interactive/K5/2023/CAR%20CUTS/2023-Kia-K5-Exterior-Black.png",
     description:
-      "Fuel-efficient hybrid SUV with a refined ride, great cargo space, and modern tech for family or business travel.",
+      "Fuel-efficient sedan with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
   },
   {
     id: "v003",
-    name: "Nissan Versa",
-    category: "Economy Sedan",
+    name: "Audi A5",
+    category: "Premium Sedan",
     seats: 5,
-    pricePerDay: 90,
+    pricePerDay: 300,
     color: "Silver",
     image:
-      "https://cdn.jdpower.com/ChromeImageGallery/Expanded/Transparent/640/2023NIC10_640/2023NIC100001_640_01.png",
+      "https://gld-creative.s3.us-west-2.amazonaws.com/2025-audi-a5-sportback-prestige-model-trim-dff4abc7a337-600x300.png",
     description:
       "Compact, efficient, and budget-friendly sedan ideal for city trips, errands, and everyday transportation.",
     available: true,
   },
   {
     id: "v004",
-    name: "Kia Forte",
-    category: "Premium Economy Sedan",
+    name: "Range Rover",
+    category: "Premium SUV",
     seats: 5,
-    pricePerDay: 90,
-    color: "Gray",
+    pricePerDay: 400,
+    color: "Green",
     image:
-      "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_500/v1/svp/dep/21kiafortelxssd3t/kia_21fortelxssd3t_angularfront_gravitygray",
+      "https://vehicle-images.carscommerce.inc/stock-images/chrome/643845a7db325306d2df357cbfca0ec3.png",
     description:
-      "Modern compact sedan with strong fuel economy, sharp styling, and a comfortable interior.",
+      "Modern compact SUV with strong fuel economy, sharp styling, and a comfortable interior.",
     available: true,
   },
   {
@@ -240,13 +240,13 @@ const SAMPLE_VEHICLES = [
   },
   {
     id: "v006",
-    name: "Rolls Royce Ghost",
+    name: "Rolls Royce Culinan",
     category: "Ultra Luxury Sedan",
     seats: 4,
     pricePerDay: 1800,
-    color: "Black",
+    color: "White",
     image:
-      "https://www.motortrend.com/uploads/2021/12/2022-Rolls-Royce-Ghost.png",
+      "https://hips.hearstapps.com/mtg-prod/65a35b33308c7d0008f36fcd/rolls-royce-cullinan.png",
     description:
       "The definition of quiet luxury — effortless power, handcrafted materials, and a serene rear-seat experience.",
     available: true,
@@ -282,7 +282,7 @@ const SAMPLE_VEHICLES = [
     name: "Mercedes S Class",
     category: "Flagship Luxury Sedan",
     seats: 4,
-    pricePerDay: 350,
+    pricePerDay: 400,
     color: "Obsidian Black",
     image:
       "https://vehicle-images.dealerinspire.com/stock-images/chrome/d5bcd7597123f034ff8aca12872d03e6.png",
@@ -295,7 +295,7 @@ const SAMPLE_VEHICLES = [
     name: "Cadillac Escalade",
     category: "Full-size Luxury SUV",
     seats: 7,
-    pricePerDay: 350,
+    pricePerDay: 750,
     color: "Black",
     image:
       "https://d2ivfcfbdvj3sm.cloudfront.net/8nQjctTo7dtJ6WW6/54121/stills_0640_png/MY2024/54121/54121_st0640_116.webp?c=172&p=164&m=1&o=png&s=wuewtb27_XAtqo0e5m3jQS",
@@ -308,7 +308,7 @@ const SAMPLE_VEHICLES = [
     name: "Mercedes G-Wagon G63 AMG",
     category: "Luxury Performance SUV",
     seats: 5,
-    pricePerDay: 950,
+    pricePerDay: 1500,
     color: "Matte Black",
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_600/v1/svp/dep/25mercedesbenzgclassamgg63suv/mercedesbenz_25gclassamgg63suv_angularfront_black",
@@ -362,7 +362,7 @@ const SAMPLE_VEHICLES = [
   name: "Volkswagen Tiguan",
   category: "Luxury SUV",
   seats: 5,
-  pricePerDay: 250,
+  pricePerDay: 200,
   color: "Deep Black Pearl",
   image:
     "https://images.dealer.com/ddc/vehicles/2026/Volkswagen/Tiguan/SUV/trim_20T_SE_d3f143/color/Deep%20Black%20Pearl-2T2T-18%2C18%2C20-640-en_US.jpg?impolicy=resize&w=414",
@@ -375,7 +375,7 @@ const SAMPLE_VEHICLES = [
   name: "Volkswagen Taos",
   category: "Premium Economy SUV",
   seats: 5,
-  pricePerDay: 210,
+  pricePerDay: 200,
   color: "White / Silver",
   image:
     "https://vehicle-images.dealerinspire.com/stock-images/thumbnails/large/chrome/627b567cae6f95dc7e5e023e30a50c27.png",
@@ -443,7 +443,7 @@ const SAMPLE_VEHICLES = [
   pricePerDay: 230,
   color: "White / Silver",
   image:
-    "https://vehicle-images.dealerinspire.com/stock-images/thumbnails/large/chrome/bc9e0f2a2fc733cf3bc454f570c02452.png",
+    "https://s7d9.scene7.com/is/image/streamcompanies/Outro-Jellybean-22-Volvo-XC40?$Original-Dimensions-RGB-PNG$",
   description:
     "Premium compact SUV with Scandinavian design and a quiet ride—perfect for stylish city travel and comfort.",
   available: true,
