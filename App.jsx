@@ -218,7 +218,7 @@ const SAMPLE_VEHICLES = [
     category: "Premium SUV",
     seats: 5,
     pricePerDay: 400,
-    color: "Green",
+    color: "White",
     image:
       "https://vehicle-images.carscommerce.inc/stock-images/chrome/643845a7db325306d2df357cbfca0ec3.png",
     description:
@@ -241,7 +241,7 @@ const SAMPLE_VEHICLES = [
   {
     id: "v006",
     name: "Rolls Royce Culinan",
-    category: "Ultra Luxury Sedan",
+    category: "Ultra Luxury SUV",
     seats: 4,
     pricePerDay: 1800,
     color: "White",
@@ -308,7 +308,7 @@ const SAMPLE_VEHICLES = [
     name: "Mercedes G-Wagon G63 AMG",
     category: "Luxury Performance SUV",
     seats: 5,
-    pricePerDay: 1500,
+    pricePerDay: 1300,
     color: "Matte Black",
     image:
       "https://dealerimages.dealereprocess.com/image/upload/c_limit,f_auto,fl_lossy,w_600/v1/svp/dep/25mercedesbenzgclassamgg63suv/mercedesbenz_25gclassamgg63suv_angularfront_black",
@@ -335,7 +335,7 @@ const SAMPLE_VEHICLES = [
   name: "Buick Envista",
   category: "Luxury Crossover SUV",
   seats: 5,
-  pricePerDay: 210,
+  pricePerDay: 200,
   color: "Ebony Twilight Metallic",
   image:
     "https://www.buick.com/content/dam/buick/na/us/en/index/vehicles/2026/crossovers-suvs/envista-avenir/02-images/2026-envista-avenir-color-changer-ext-ebony-twilight-metallic-2000x1000.jpg?imwidth=1920",
@@ -412,7 +412,7 @@ const SAMPLE_VEHICLES = [
 {
   id: "v019",
   name: "Mazda CX-50",
-  category: "Luxury SUV",
+  category: "Premium Economy SUV",
   seats: 5,
   pricePerDay: 200,
   color: "Green",
@@ -474,17 +474,17 @@ const HERO_SLIDES = [
   },
   {
     id: "s2",
-    title: "Rolls Royce Ghost",
-    subtitle: "Ultra luxury sedan • Chauffeur-ready",
+    title: "Rolls Royce Cullinan",
+    subtitle: "Ultra luxury suv • Chauffeur-ready",
     image:
-      "https://www.motortrend.com/uploads/2021/12/2022-Rolls-Royce-Ghost.png",
+      "https://hips.hearstapps.com/mtg-prod/65a35b33308c7d0008f36fcd/rolls-royce-cullinan.png",
   },
   {
     id: "s3",
     title: "Mercedes S Class",
     subtitle: "Flagship chauffeured comfort • Black with privacy glass",
     image:
-      "https://vehicle-images.dealerinspire.com/stock-images/chrome/d5bcd7597123f034ff8aca12872d03e6.png",
+      "https://angellimo.com/wp-content/uploads/2023/04/cc_2023MBCCK0005_01_640_197.png",
   },
   {
     id: "s4",
@@ -495,10 +495,10 @@ const HERO_SLIDES = [
   },
   {
     id: "s5",
-    title: "BMW X1 M Package",
-    subtitle: "Premium economy SUV • Estoril Blue Metallic",
+    title: "Kia K5 GT-Line",
+    subtitle: "Premium economy Sedan • White",
     image:
-      "https://file.kelleybluebookimages.com/kbb/base/evox/CP/10908/2017-BMW-X1-front_10908_032_2400x1800_A96.png",
+      "https://cdn-ds.com/stock/2026-Kia-K5-GT-LINE-Roseville-CA/seo/DON18027-KNAG64J76T5510244/sz_834743/4ea94e09c7d26555be1389c71e06b68c.png",
   },
 ];
 
