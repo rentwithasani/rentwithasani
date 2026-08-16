@@ -205,7 +205,7 @@ const SAMPLE_VEHICLES = [
     category: "Premium Sedan",
     seats: 5,
     pricePerDay: 300,
-    color: "Silver",
+    color: "Blue",
     image:
       "https://gld-creative.s3.us-west-2.amazonaws.com/2025-audi-a5-sportback-prestige-model-trim-dff4abc7a337-600x300.png",
     description:
@@ -424,15 +424,15 @@ const SAMPLE_VEHICLES = [
 },
 {
   id: "v020",
-  name: "Audi A8L",
-  category: "Exotic / Chauffeur Luxury",
+  name: "Toyota Camry",
+  category: "Premium Economy Car",
   seats: 5,
-  pricePerDay: 350,
+  pricePerDay: 200,
   color: "Black",
   image:
-    "https://platform.cstatic-images.com/in/v2/stock_photos/64d2dfe5-1511-4733-895c-000c6fe7ce5c/3123d6b1-62b1-4db7-a437-34506f1054a6.png",
+    "https://media.rti.toyota.com/adobe/assets/urn:aaid:aem:d7f89ab6-1ca1-48e1-ab06-30a038576497/as/image.png?size=1200,663",
   description:
-    "Flagship long-wheelbase luxury sedan—best for VIP chauffeured service, executive travel, and high-end occasions.",
+    "Preimum everyday vehicle that excels in comfort and great on gas",
   available: true,
 },
 {
@@ -466,7 +466,7 @@ const SAMPLE_VEHICLES = [
   name: "Audi A5",
   category: "Premium Luxury Sedan",
   seats: 5,
-  pricePerDay: 250,
+  pricePerDay: 300,
   color: "Gray",
   image:
     "https://mediaservice.audi.com/media/fast/v3_x2TbWhbVRjHT3_pi6Y3SW9m0yS7NiX33rBWapM0rauSsXYfVlCkUFcUP8ST5JqkzRs3N21H58sXXxAFUZkfHOqgKMhwDsfwlTkG6mAVNgaOITj8pK6iKHYDcXgjnPM75-H5_3nOh_858ZvoaduCx-dO_DV0q_eOR64jxHpTCM-W6HHadr7RJYRYwFupyZI1sdy0SkOGnBq31p1xudqcSCfT0-NuPXsok1wf37tWdvfKuKxWA6LPNYqejv15F10vuei94qK7Kf5np3OxgzOdmsMeV73uDp7v-ITf37arTWnL2r0Fu9Gsq3tkPiXlZEFOp9PukZyakZNybyaVyWSKqfx9yWmZttIFtxd03d8Kj2xI0dsqZArJlOh9sp2W8rDo7jyXkae4-ziDrxJaJPQx4VtEDjC2j9FrRN8georoJ8QmiH1A7HNil4j_QPxP9C70ZfTfMW-TmCSxgtiPV8H7HN6zKDaBEcIbhE-y-wJaHS2P9iyaQ-wBjDcxvsPcQaRRzxJUGTxKKEVoP9ESWgRNw_BgjGFcwzyFtw_vJso-_BnUBsHHCH7D6FUiK0QuEtkhuo3ehxHAiGPkMDYxJ-mfo_9vlNMEwwQPEnof30l8nzK6g28HNYuaQy2inke9RPAeglMEFwmuEfkS7WG0I4z5Gf6R4ZsM_8PwbWLdxAaIXyB-Az2CfhTdQf8CYwnjJuYuzDHMBczrKJv4juM7je8XAg0Cxxg4xMAm0Q30GcItwm8ReY_oo0TPEP0MzWL4HMPn0b-ix0RRCVzlLp3BMqHXCZ1j6GXCy4RfxHwC8xjmlhtLRB_iCHfewPsg3kW8y3gv05-nf4P-r1EUlA_xvYLvCn4f_hj-ZwjMEniBwDuE5om8RvQndutoH6FdJnY_sSViq8T_Rd-DepBggMgikafRFPQt9J8R7voV8QeKB2UE_zaBbdQu1LcJbRD63o3au1Z9tWI36jWr7mTnG-2WlTtQlrV8wy7mDsi6LMrcnCysNKvSsVqJtUrRKWdTM-lkomxVSmUn6wY4mZDVZllmHbttJQqyZtkyu-i0i5VGbjaXziWTrqDufkCn0qi3sguNVqVze6hjT7Qcy7Ir9ZKsl6pWNpVM1CzHnenIVctuuapsepdndmnhP2Jwu1roAwAA.png",
