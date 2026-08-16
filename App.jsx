@@ -194,7 +194,7 @@ const SAMPLE_VEHICLES = [
     pricePerDay: 200,
     color: "Black",
     image:
-      "https://cdn-ds.com/stock/2026-Kia-K5-GT-LINE-Roseville-CA/seo/DON18027-KNAG64J76T5510244/sz_834743/4ea94e09c7d26555be1389c71e06b68c.png",
+      "https://media.chromedata.com/MediaGallery/media/MjkzOTU4Xk1lZGlhIEdhbGxlcnk/cNlFM3W66zku4ii0c2vnCUQdn76FIC-88zPqKzl41fuYQMt9j1rNM_vpQAeUyZDkm3r8cjp-bw967tAw747tf1xIjP9E80RnfWuyOB5OZvRaRnzcae6gb7X1uevXWDR2fckiRARxfoqsmmh13dkRuF9DNGqtnuNunDmoWA-raMZb0FVOqDEP63IDxe5Ty742/cc_2026KIC201983860_01_640_ABP.png",
     description:
       "Fuel-efficient sedan with a refined ride, great cargo space, and modern tech for family or business travel.",
     available: true,
