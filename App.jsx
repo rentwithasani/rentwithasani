@@ -474,6 +474,19 @@ const SAMPLE_VEHICLES = [
     "Comfortable, dependable sedan with excellent highway manners—ideal for commuting and longer-distance travel.",
   available: true,
 },
+{
+  id: "v024",
+  name: "BMW X4M",
+  category: "Premium Luxury SUV",
+  seats: 4,
+  pricePerDay: 400,
+  color: "Gray",
+  image:
+    "https://www.pngmart.com/files/22/BMW-X4M-PNG-Isolated-Pic.png",
+  description:
+    "Comfortable, dependable sedan with excellent highway manners—ideal for commuting and longer-distance travel.",
+  available: true,
+},
 ];
 
 // HERO SLIDES
